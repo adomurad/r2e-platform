@@ -1,8 +1,8 @@
 platform ""
     requires {} { main : Task {} [Exit I32 Str]_ }
-    exposes [Stdout]
+    exposes [Console]
     packages {}
-    imports [Stdout]
+    imports [Console]
     provides [mainForHost]
 
 mainForHost : Task {} I32
@@ -14,11 +14,11 @@ mainForHost =
                 if Str.isEmpty str then
                     Task.err code
                 else
-                    Stdout.line str
+                    Console.printLine str
                     |> Task.onErr \_ -> Task.err code
                     |> Task.await \{} -> Task.err code
 
             Err err ->
-                Stdout.line "Program exited early with error: $(Inspect.toStr err)"
+                Console.printLine "Program exited early with error: $(Inspect.toStr err)"
                 |> Task.onErr \_ -> Task.err 1
                 |> Task.await \_ -> Task.err 1

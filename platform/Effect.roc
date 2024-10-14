@@ -2,9 +2,11 @@
 hosted Effect
     exposes [
         stdoutLine,
+        stdinLine,
     ]
     imports []
 
 # effects that are provided by the host
 stdoutLine : Str -> Task {} Str
-# stdoutLine : Str -> Effect (Result {} Str)
+
+stdinLine : {} -> Task Str Str

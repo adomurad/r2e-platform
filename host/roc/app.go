@@ -34,3 +34,20 @@ func roc_fx_stdoutLine(msg *RocStr) C.struct_ResultVoidStr {
 		disciminant: 1,
 	}
 }
+
+//export roc_fx_stdinLine
+func roc_fx_stdinLine() C.struct_ResultVoidStr {
+	var input string
+	fmt.Scanln(&input)
+
+	rocStr := NewRocStr(input)
+
+	var result C.struct_ResultVoidStr
+
+	result.disciminant = 1
+
+	payloadPtr := unsafe.Pointer(&result.payload)
+	*(*C.struct_RocStr)(payloadPtr) = rocStr.C()
+
+	return result
+}

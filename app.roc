@@ -1,8 +1,9 @@
 # example application
 app [main] { pf: platform "platform/main.roc" }
 
-import pf.Stdout
+import pf.Console
 
 main =
-    Stdout.line! "Hello!"
-    Stdout.line! "is this working?"
+    Console.printLine! "Hello!"
+    res = Console.readLine!
+    Console.printLine! "is this working?: $(res)"
