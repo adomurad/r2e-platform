@@ -3,6 +3,10 @@ hosted Effect
     exposes [
         stdoutLine,
         stdinLine,
+        wait,
+        # setup,
+        startsession,
+        deletesession,
     ]
     imports []
 
@@ -10,3 +14,10 @@ hosted Effect
 stdoutLine : Str -> Task {} Str
 
 stdinLine : {} -> Task Str Str
+
+# setup : {} -> Task {} Str
+
+wait : U64 -> Task {} Str
+
+startsession : {} -> Task Str Str
+deletesession : Str -> Task {} Str

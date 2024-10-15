@@ -1,5 +1,5 @@
 # example of how to define an effect from the platform
-module [printLine, readLine, Err]
+module [printLine, readLine, wait]
 
 import Effect
 
@@ -23,36 +23,40 @@ import Effect
 ##
 ## **Other** - This is a catch-all for any error not specifically categorized by the other ErrorKind
 ## variants.
-Err : [
-    BrokenPipe,
-    WouldBlock,
-    WriteZero,
-    Unsupported,
-    Interrupted,
-    OutOfMemory,
-    Other Str,
-]
+# Err : [
+#     BrokenPipe,
+#     WouldBlock,
+#     WriteZero,
+#     Unsupported,
+#     Interrupted,
+#     OutOfMemory,
+#     Other Str,
+# ]
 
-handleErr = \err ->
-    when err is
-        e if e == "ErrorKind::BrokenPipe" -> StdoutErr BrokenPipe
-        e if e == "ErrorKind::WouldBlock" -> StdoutErr WouldBlock
-        e if e == "ErrorKind::WriteZero" -> StdoutErr WriteZero
-        e if e == "ErrorKind::Unsupported" -> StdoutErr Unsupported
-        e if e == "ErrorKind::Interrupted" -> StdoutErr Interrupted
-        e if e == "ErrorKind::OutOfMemory" -> StdoutErr OutOfMemory
-        str -> StdoutErr (Other str)
+# handleErr = \err ->
+#     when err is
+#         e if e == "ErrorKind::BrokenPipe" -> StdoutErr BrokenPipe
+#         e if e == "ErrorKind::WouldBlock" -> StdoutErr WouldBlock
+#         e if e == "ErrorKind::WriteZero" -> StdoutErr WriteZero
+#         e if e == "ErrorKind::Unsupported" -> StdoutErr Unsupported
+#         e if e == "ErrorKind::Interrupted" -> StdoutErr Interrupted
+#         e if e == "ErrorKind::OutOfMemory" -> StdoutErr OutOfMemory
+#         str -> StdoutErr (Other str)
 
 ## Write the given string to [standard output](https://en.wikipedia.org/wiki/Standard_streams#Standard_output_(stdout)),
 ## followed by a newline.
 ##
 ## > To write to `stdout` without the newline, see [Stdout.write].
 ##
-printLine : Str -> Task {} [StdoutErr Err]
+printLine : Str -> Task {} []
 printLine = \str ->
     Effect.stdoutLine str
-    |> Task.mapErr handleErr
+    |> Task.mapErr \_ -> crash "stdout should not fail"
 
-readLine : Task Str [StrdinError]
+readLine : Task Str []
 readLine =
-    Effect.stdinLine {} |> Task.mapErr \_ -> StrdinError
+    Effect.stdinLine {} |> Task.mapErr \_ -> crash "stdin should not fail"
+
+wait : U64 -> Task {} []
+wait = \timeout ->
+    Effect.wait timeout |> Task.mapErr \_ -> crash "sleep should not fail"

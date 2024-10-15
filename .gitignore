@@ -12,3 +12,5 @@ host/libhost.h
 
 # generated files
 # host/roc
+
+browser_files
