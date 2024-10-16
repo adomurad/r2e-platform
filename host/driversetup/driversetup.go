@@ -3,28 +3,35 @@ package driversetup
 import (
 	"archive/zip"
 	"fmt"
+	"host/setup"
+	"host/utils"
+	"host/webdriver"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
+	"time"
 )
 
 // RunChromedriver runs the chromedriver and listens for crashes
 func RunChromedriver() (*exec.Cmd, error) {
-	paths, err := getChromePaths()
+	paths, err := setup.GetChromePaths()
 	if err != nil {
 		return nil, err
 	}
 
 	// Create the command to run ./chromedriver
-	cmd := exec.Command(paths.driverPath)
+	cmd := exec.Command(paths.DriverPath)
+	// cmd := exec.Command(paths.DriverPath, "--verbose")
+
+	// cmd.Stdout = os.Stdout
+	// cmd.Stderr = os.Stderr
 
 	// Start the process in the background
 	if err := cmd.Start(); err != nil {
-		log.Fatalf("Failed to start chromedriver: %v", err)
+		// log.Fatalf("Failed to start chromedriver: %v", err)
+		return nil, err
 	}
 
 	// Log that the process has started
@@ -46,6 +53,29 @@ func RunChromedriver() (*exec.Cmd, error) {
 	return cmd, nil
 }
 
+func WaitForDriverReady(timeout time.Duration) error {
+	startTime := time.Now()
+
+	for {
+		isReady, err := webdriver.GetStatus()
+		if isReady {
+			return nil
+		}
+
+		elapsed := time.Now().Sub(startTime)
+
+		if elapsed > timeout {
+			if err != nil {
+				return fmt.Errorf("WebDriverSetupError: %w", err)
+			} else {
+				return fmt.Errorf("WebDriverSetupError: web driver did not start in time [%.1f s]", timeout.Seconds())
+			}
+		}
+
+		time.Sleep(100 * time.Millisecond)
+	}
+}
+
 // handleCleanup ensures chromedriver is killed when the app exits
 func HandleCleanup(cmd *exec.Cmd) {
 	if cmd != nil && cmd.Process != nil {
@@ -58,95 +88,47 @@ func HandleCleanup(cmd *exec.Cmd) {
 	}
 }
 
-type BrowserPaths struct {
-	browserVersion string
-	osName         string
-	dirPath        string
-	browserPath    string
-	browserDirPath string
-	driverPath     string
-	driverDirPath  string
-}
-
-func getChromePaths() (*BrowserPaths, error) {
-	os := fmt.Sprintf("%s-%s", runtime.GOOS, runtime.GOARCH)
-	fmt.Println("Detected OS: ", os)
-
-	browserFilesDir := "browser_files"
-	chromeVersion := "117.0.5846.0"
-	var osName string
-
-	switch os {
-	case "linux-amd64":
-		osName = "linux64"
-	case "darwin-arm64":
-		osName = "mac-arm64"
-	case "darwin-amd64":
-		osName = "mac-x64"
-	case "windows-386":
-		osName = "win32"
-	case "windows-amd64":
-		osName = "win64"
-	default:
-		return nil, fmt.Errorf("Unsupported architecture")
-	}
-
-	path := fmt.Sprintf("%s/%s/%s/", browserFilesDir, "chrome", chromeVersion)
-	chromePath := fmt.Sprintf("%s/chrome-%s/chrome", path, osName)
-	chromeDirPath := fmt.Sprintf("%s/chrome-%s", path, osName)
-	driverPath := fmt.Sprintf("%s/chromedriver-%s/chromedriver", path, osName)
-	driverDirPath := fmt.Sprintf("%s/chromedriver-%s", path, osName)
-
-	return &BrowserPaths{
-		browserVersion: chromeVersion,
-		osName:         osName,
-		dirPath:        path,
-		browserPath:    chromePath,
-		browserDirPath: chromeDirPath,
-		driverPath:     driverPath,
-		driverDirPath:  driverDirPath,
-	}, nil
-}
-
 func DownloadChromeAndDriver() error {
-	paths, err := getChromePaths()
+	paths, err := setup.GetChromePaths()
 	if err != nil {
 		return err
 	}
 
-	if doesFileOrDirExist(paths.browserPath) && doesFileOrDirExist(paths.driverPath) {
-		fmt.Println("browser already exists")
+	if doesFileOrDirExist(paths.BrowserPath) && doesFileOrDirExist(paths.DriverPath) {
+		// fmt.Println(utils.FG_BLUE + "Browser is ready" + utils.RESET)
 		return nil
 	}
 
-	fmt.Println("chrome or driver missing ")
+	// fmt.Println("chrome or driver missing ")
+	fmt.Println(utils.FG_BLUE + "Driver or/and Browser is/are missing..." + utils.RESET)
+	fmt.Println(utils.FG_BLUE + "Downloading Driver and Browser." + utils.RESET)
 
-	err = checkAndCreateDir(paths.dirPath)
+	err = checkAndCreateDir(paths.DirPath)
 	if err != nil {
 		return err
 	}
 	// checkAndCreateDir(browserFilesDir)
 
-	chromeUrl := fmt.Sprintf("https://storage.googleapis.com/chrome-for-testing-public/%s/%s/chrome-%s.zip", paths.browserVersion, paths.osName, paths.osName)
-	driverUrl := fmt.Sprintf("https://storage.googleapis.com/chrome-for-testing-public/%s/%s/chromedriver-%s.zip", paths.browserVersion, paths.osName, paths.osName)
+	chromeUrl := fmt.Sprintf("https://storage.googleapis.com/chrome-for-testing-public/%s/%s/chrome-%s.zip", paths.BrowserVersion, paths.OsName, paths.OsName)
+	driverUrl := fmt.Sprintf("https://storage.googleapis.com/chrome-for-testing-public/%s/%s/chromedriver-%s.zip", paths.BrowserVersion, paths.OsName, paths.OsName)
 
 	// downloadFile("chrome.zip", chromeUrl)
 	// fmt.Println("downloaded")
-	err = downloadFile(fmt.Sprintf("%s.zip", paths.browserDirPath), chromeUrl)
+	err = downloadFile(fmt.Sprintf("%s.zip", paths.BrowserDirPath), chromeUrl)
 	if err != nil {
 		return err
 	}
-	err = downloadFile(fmt.Sprintf("%s.zip", paths.driverDirPath), driverUrl)
-	if err != nil {
-		return err
-	}
-
-	err = unzip(fmt.Sprintf("%s.zip", paths.browserDirPath), fmt.Sprintf("%s/", paths.dirPath))
+	err = downloadFile(fmt.Sprintf("%s.zip", paths.DriverDirPath), driverUrl)
 	if err != nil {
 		return err
 	}
 
-	err = unzip(fmt.Sprintf("%s.zip", paths.driverDirPath), fmt.Sprintf("%s/", paths.dirPath))
+	err = unzip(fmt.Sprintf("%s.zip", paths.BrowserDirPath), fmt.Sprintf("%s/", paths.DirPath))
+	if err != nil {
+		return err
+	}
+
+	err = unzip(fmt.Sprintf("%s.zip", paths.DriverDirPath), fmt.Sprintf("%s/", paths.DirPath))
 	if err != nil {
 		return err
 	}
@@ -170,7 +152,6 @@ func unzip(src, dest string) error {
 
 		// If the file is a directory, create the directory
 		if file.FileInfo().IsDir() {
-			fmt.Println("Creating directory:", filePath)
 			os.MkdirAll(filePath, os.ModePerm)
 			continue
 		}
@@ -220,10 +201,8 @@ func checkAndCreateDir(dir string) error {
 		if err != nil {
 			return fmt.Errorf("could not create directory: %w", err)
 		}
-		fmt.Printf("Directory '%s' created.\n", dir)
-	} else {
-		fmt.Printf("Directory '%s' already exists.\n", dir)
 	}
+
 	return nil
 }
 

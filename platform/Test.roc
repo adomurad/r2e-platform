@@ -27,7 +27,8 @@ runTest = \@TestCase { name, testBody } ->
 
     Console.printLine! "Session id from inside roc: $(sessionId)"
 
-    browser = Internal.packBrowserData { sessionId: "test" }
+    browser = Internal.packBrowserData { sessionId }
     testResult = testBody browser |> Task.result!
+    Console.printLine! (testResult |> Inspect.toStr)
 
     Session.deleteSession! sessionId

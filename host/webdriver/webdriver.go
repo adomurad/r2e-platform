@@ -4,97 +4,135 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"host/setup"
+	"io"
 	"net/http"
 )
 
+const baseUrl = "http://localhost:9515"
+
+type CreateSession_ResponseValue struct {
+	SessionID string `json:"sessionId"`
+}
+
+type CreateSession_Response struct {
+	Value CreateSession_ResponseValue `json:"value"`
+}
+
 func CreateSession() (string, error) {
-	url := "http://localhost:9515/session"
-	jsonData := []byte(`{
+	url := fmt.Sprintf("%s/session", baseUrl)
+	paths, err := setup.GetChromePaths()
+	if err != nil {
+		return "", err
+	}
+
+	jsonData := []byte(fmt.Sprintf(`{
 		"capabilities": {
 			"firstMatch": [
 				{
 					"goog:chromeOptions": {
-						"binary": "/home/arturd/Work/Roc/roc-platform-template-go/browser_files/chrome/117.0.5846.0/chrome-linux64/chrome"
+						"binary": "%s"
 					}
 				}
 			]
 		}
-	}`)
+	}`, paths.BrowserPath))
 
-	// Create a new request using http.NewRequest
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	var response CreateSession_Response
+	err = makeHttpRequest("POST", url, bytes.NewBuffer(jsonData), &response)
 	if err != nil {
-		// fmt.Println("Error creating request:", err)
-		return "", fmt.Errorf("could not create session: %w", err)
+		return "", err
 	}
 
-	// Set the appropriate headers
-	req.Header.Set("Content-Type", "application/json")
-
-	// Make the request using http.Client
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println("Error making request:", err)
-		return "", fmt.Errorf("could not create session: %w", err)
-	}
-	defer resp.Body.Close()
-
-	// Output the response status
-	// Decode the response
-	var response CreateSessionResponse
-	err = json.NewDecoder(resp.Body).Decode(&response)
-	if err != nil {
-		fmt.Println("Error decoding response:", err)
-		return "", fmt.Errorf("could not create session: %w", err)
-	}
-
-	// Output the sessionId
-	// fmt.Println("Session ID:", response.Value.SessionID)
 	return response.Value.SessionID, nil
 }
 
-// Define structs for the response
-type CreateSessionResponseValue struct {
-	SessionID string `json:"sessionId"`
-}
-
-type CreateSessionResponse struct {
-	Value CreateSessionResponseValue `json:"value"`
-}
-
 func DeleteSession(sessionId string) error {
-	url := fmt.Sprintf("http://localhost:9515/session/%s", sessionId)
+	url := fmt.Sprintf("%s/session/%s", baseUrl, sessionId)
 
-	// Create a new request using http.NewRequest
-	req, err := http.NewRequest("DELETE", url, nil)
+	err := makeHttpRequest[any]("DELETE", url, nil, nil)
 	if err != nil {
-		// fmt.Println("Error creating request:", err)
-		return fmt.Errorf("could not create session: %w", err)
+		return err
 	}
 
-	// Set the appropriate headers
+	return nil
+}
+
+func NavigateTo(sessionId, url string) error {
+	requestUrl := fmt.Sprintf("%s/session/%s/url", baseUrl, sessionId)
+
+	reqBody := map[string]interface{}{
+		"url": url,
+	}
+
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		return err
+	}
+
+	err = makeHttpRequest[any]("POST", requestUrl, bytes.NewBuffer(jsonData), nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+type GetStatus_ResponseValue struct {
+	Ready bool `json:"ready"`
+}
+
+type GetStatus_Response struct {
+	Value GetStatus_ResponseValue `json:"value"`
+}
+
+func GetStatus() (bool, error) {
+	url := fmt.Sprintf("%s/status", baseUrl)
+
+	var response GetStatus_Response
+	err := makeHttpRequest("GET", url, nil, &response)
+	if err != nil {
+		return false, err
+	}
+
+	return response.Value.Ready, nil
+}
+
+func makeHttpRequest[T any](method, url string, body *bytes.Buffer, result *T) error {
+	var reqBody io.Reader
+	if body != nil {
+		reqBody = body
+	} else {
+		reqBody = nil
+	}
+
+	req, err := http.NewRequest(method, url, reqBody)
+	if err != nil {
+		return err
+	}
+
 	req.Header.Set("Content-Type", "application/json")
 
-	// Make the request using http.Client
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println("Error making request:", err)
-		return fmt.Errorf("could not create session: %w", err)
+		return err
 	}
 	defer resp.Body.Close()
 
-	// Output the response status
-	// Decode the response
-	// var response CreateSessionResponse
-	// err = json.NewDecoder(resp.Body).Decode(&response)
-	// if err != nil {
-	// 	fmt.Println("Error decoding response:", err)
-	// 	return "", fmt.Errorf("could not create session: %w", err)
-	// }
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		body, _ := io.ReadAll(io.Reader(resp.Body))
+		return fmt.Errorf("WebDriverRequest[%d]: %s", resp.StatusCode, body)
+	}
 
-	// Output the sessionId
-	// fmt.Println("Session ID:", response.Value.SessionID)
+	if result == nil {
+		return nil
+	}
+
+	err = json.NewDecoder(resp.Body).Decode(result)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

@@ -1,7 +1,7 @@
 platform ""
     requires {} { testCases : List _ }
     # requires {} { main : Task {} [Exit I32 Str]_ }
-    exposes [Console, Test]
+    exposes [Console, Test, Browser]
     packages {}
     imports [Console, Test]
     provides [mainForHost]

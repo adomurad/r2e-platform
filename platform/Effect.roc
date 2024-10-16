@@ -4,9 +4,9 @@ hosted Effect
         stdoutLine,
         stdinLine,
         wait,
-        # setup,
-        startsession,
-        deletesession,
+        startSession,
+        deleteSession,
+        browserNavigateTo,
     ]
     imports []
 
@@ -15,9 +15,11 @@ stdoutLine : Str -> Task {} Str
 
 stdinLine : {} -> Task Str Str
 
-# setup : {} -> Task {} Str
-
 wait : U64 -> Task {} Str
 
-startsession : {} -> Task Str Str
-deletesession : Str -> Task {} Str
+startSession : {} -> Task Str Str
+
+deleteSession : Str -> Task {} Str
+
+# browser effects
+browserNavigateTo : Str, Str -> Task {} Str
