@@ -98,6 +98,72 @@ func GetStatus() (bool, error) {
 	return response.Value.Ready, nil
 }
 
+type FindElement_Response struct {
+	Value FindElement_ResponseValue
+}
+
+type FindElement_ResponseValue struct {
+	ElementId string `json:"element-6066-11e4-a52e-4f735466cecf"`
+}
+
+func FindElement(sessionId, using, value string) (string, error) {
+	url := fmt.Sprintf("%s/session/%s/element", baseUrl, sessionId)
+
+	reqBody := map[string]interface{}{
+		"using": using,
+		"value": value,
+	}
+
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		return "", err
+	}
+
+	var response FindElement_Response
+	err = makeHttpRequest("POST", url, bytes.NewBuffer(jsonData), &response)
+	if err != nil {
+		return "", err
+	}
+
+	return response.Value.ElementId, nil
+}
+
+func ClickElement(sessionId, elementId string) error {
+	url := fmt.Sprintf("%s/session/%s/element/%s/click", baseUrl, sessionId, elementId)
+
+	reqBody := map[string]interface{}{}
+
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		return err
+	}
+
+	err = makeHttpRequest[any]("POST", url, bytes.NewBuffer(jsonData), nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+type WebDriverElementNotFoundError struct {
+	// ShortError string
+	Message string
+}
+
+func (e *WebDriverElementNotFoundError) Error() string {
+	return fmt.Sprintf("WebDriverElementNotFoundError::%s", e.Message)
+}
+
+type WebDriverNotFoundResponseBody struct {
+	Value WebDriverNotFoundResponseValue `json:"value"`
+}
+
+type WebDriverNotFoundResponseValue struct {
+	// Error   string `json:"error"`
+	Message string `json:"message"`
+}
+
 func makeHttpRequest[T any](method, url string, body *bytes.Buffer, result *T) error {
 	var reqBody io.Reader
 	if body != nil {
@@ -119,6 +185,16 @@ func makeHttpRequest[T any](method, url string, body *bytes.Buffer, result *T) e
 		return err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode == 404 {
+		var responseBody WebDriverNotFoundResponseBody
+		err = json.NewDecoder(resp.Body).Decode(&responseBody)
+		if err != nil {
+			return err
+		}
+
+		return &WebDriverElementNotFoundError{Message: responseBody.Value.Message}
+	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		body, _ := io.ReadAll(io.Reader(resp.Body))

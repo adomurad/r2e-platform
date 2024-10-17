@@ -8,6 +8,8 @@ import (
 	"host/driversetup"
 	"host/utils"
 	"host/webdriver"
+	"os"
+	"path/filepath"
 	"time"
 	"unsafe"
 )
@@ -122,6 +124,57 @@ func roc_fx_browserNavigateTo(sessionId, url *RocStr) C.struct_ResultVoidStr {
 	return createRocResultStr(RocOk, "")
 }
 
+//export roc_fx_browserFindElement
+func roc_fx_browserFindElement(sessionId, using, value *RocStr) C.struct_ResultVoidStr {
+	elementId, err := webdriver.FindElement(sessionId.String(), using.String(), value.String())
+	// if notFoundError, ok := err.(*webdriver.WebDriverElementNotFoundError); ok {
+	//    return createRocResultStr(RocErr, fmt.Sprintf("WebDriverElementNotFoundError::"))
+	// }
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	return createRocResultStr(RocOk, elementId)
+}
+
+//export roc_fx_elementClick
+func roc_fx_elementClick(sessionId, elementId *RocStr) C.struct_ResultVoidStr {
+	err := webdriver.ClickElement(sessionId.String(), elementId.String())
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	return createRocResultStr(RocOk, "")
+}
+
+//export roc_fx_getTimeMilis
+func roc_fx_getTimeMilis() C.struct_ResultI64Str {
+	now := time.Now().UnixMilli()
+
+	// return createRocResultI64(RocErr, 0, "upsi")
+	return createRocResultI64(RocOk, now, "")
+}
+
+//export roc_fx_createDirIfNotExist
+func roc_fx_createDirIfNotExist(path *RocStr) C.struct_ResultVoidStr {
+	err := os.MkdirAll(filepath.Dir(path.String()), os.ModePerm)
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	return createRocResultStr(RocOk, "")
+}
+
+//export roc_fx_fileWriteUtf8
+func roc_fx_fileWriteUtf8(path, content *RocStr) C.struct_ResultVoidStr {
+	err := os.WriteFile(path.String(), []byte(content.String()), os.ModePerm)
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	return createRocResultStr(RocOk, "")
+}
+
 type RocResultType int
 
 const (
@@ -134,11 +187,28 @@ func createRocResultStr(resultType RocResultType, str string) C.struct_ResultVoi
 
 	var result C.struct_ResultVoidStr
 
-	// result.disciminant = 1
 	result.disciminant = C.uchar(resultType)
 
 	payloadPtr := unsafe.Pointer(&result.payload)
 	*(*C.struct_RocStr)(payloadPtr) = rocStr.C()
 
+	return result
+}
+
+func createRocResultI64(resultType RocResultType, value int64, error string) C.struct_ResultI64Str {
+	var result C.struct_ResultI64Str
+
+	result.disciminant = C.uchar(resultType)
+
+	if resultType == RocOk {
+		payloadPtr := unsafe.Pointer(&result.payload)
+		*(*C.int64_t)(payloadPtr) = C.int64_t(value)
+
+	} else {
+
+		rocStr := NewRocStr(error)
+		payloadPtr := unsafe.Pointer(&result.payload)
+		*(*C.struct_RocStr)(payloadPtr) = rocStr.C()
+	}
 	return result
 }

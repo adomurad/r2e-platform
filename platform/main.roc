@@ -1,7 +1,17 @@
 platform ""
     requires {} { testCases : List _ }
     # requires {} { main : Task {} [Exit I32 Str]_ }
-    exposes [Console, Test, Browser]
+    exposes [
+        Console,
+        Test,
+        Browser,
+        Element,
+        Assert,
+        Error,
+        Reporting,
+        Reporting.BasicHtmlReporter,
+        Reporting.HtmlEncode,
+    ]
     packages {}
     imports [Console, Test]
     provides [mainForHost]

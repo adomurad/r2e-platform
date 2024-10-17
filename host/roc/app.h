@@ -5,6 +5,14 @@ struct ResultVoidI32 {
     unsigned char disciminant;
 };
 
+struct ResultI64Str {
+    union {
+      int64_t num;
+      struct RocStr str;
+    } payload;
+    unsigned char disciminant;
+};
+
 struct ResultVoidStr {
     union {struct RocStr str;} payload;
     unsigned char disciminant;

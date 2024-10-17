@@ -2,10 +2,10 @@ module [createSession, deleteSession]
 
 import Effect
 
-createSession : Task Str [WebDrvierError Str]
+createSession : Task Str [WebDriverError Str]
 createSession =
-    Effect.startSession {} |> Task.mapErr WebDrvierError
+    Effect.startSession {} |> Task.mapErr WebDriverError
 
-deleteSession : Str -> Task {} [WebDrvierError Str]
+deleteSession : Str -> Task {} [WebDriverError Str]
 deleteSession = \sessionId ->
-    Effect.deleteSession sessionId |> Task.mapErr WebDrvierError
+    Effect.deleteSession sessionId |> Task.mapErr WebDriverError
