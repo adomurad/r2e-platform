@@ -1,62 +1,30 @@
-# example of how to define an effect from the platform
-module [printLine, readLine, wait]
+module [printLine, wait]
 
 import Effect
 
-## **BrokenPipe** - This error can occur when writing to a stdout that is no longer connected
-## to a valid input. For example, if the process on the receiving end of a pipe closes its
-## end, any write to that pipe could lead to a BrokenPipe error.
-##
-## **WouldBlock** - This error might occur if stdout is set to non-blocking mode and the write
-## operation would block because the output buffer is full.
-##
-## **WriteZero** - This indicates an attempt to write "zero" bytes which is technically a no-operation
-## (no-op), but if detected, it could be raised as an error.
-##
-## **Unsupported** - If the stdout operation involves writing data in a manner or format that is not
-## supported, this error could be raised.
-##
-## **Interrupted** - This can happen if a signal interrupts the writing process before it completes.
-##
-## **OutOfMemory** - This could occur if there is not enough memory available to buffer the data being
-## written to stdout.
-##
-## **Other** - This is a catch-all for any error not specifically categorized by the other ErrorKind
-## variants.
-# Err : [
-#     BrokenPipe,
-#     WouldBlock,
-#     WriteZero,
-#     Unsupported,
-#     Interrupted,
-#     OutOfMemory,
-#     Other Str,
-# ]
-
-# handleErr = \err ->
-#     when err is
-#         e if e == "ErrorKind::BrokenPipe" -> StdoutErr BrokenPipe
-#         e if e == "ErrorKind::WouldBlock" -> StdoutErr WouldBlock
-#         e if e == "ErrorKind::WriteZero" -> StdoutErr WriteZero
-#         e if e == "ErrorKind::Unsupported" -> StdoutErr Unsupported
-#         e if e == "ErrorKind::Interrupted" -> StdoutErr Interrupted
-#         e if e == "ErrorKind::OutOfMemory" -> StdoutErr OutOfMemory
-#         str -> StdoutErr (Other str)
-
-## Write the given string to [standard output](https://en.wikipedia.org/wiki/Standard_streams#Standard_output_(stdout)),
+## Write `Str` to Stdout
 ## followed by a newline.
 ##
-## > To write to `stdout` without the newline, see [Stdout.write].
-##
+## ```
+## Console.printLine "Hello World"
+## ```
 printLine : Str -> Task {} []
 printLine = \str ->
     Effect.stdoutLine str
     |> Task.mapErr \_ -> crash "stdout should not fail"
 
-readLine : Task Str []
-readLine =
-    Effect.stdinLine {} |> Task.mapErr \_ -> crash "stdin should not fail"
+# readLine : Task Str []
+# readLine =
+#     Effect.stdinLine {} |> Task.mapErr \_ -> crash "stdin should not fail"
 
+## Stops the test execution for specified amount of time.
+##
+## `timeout` - time in [ms]
+##
+## ```
+## # wait for 3s
+## Console.wait 3000
+## ```
 wait : U64 -> Task {} []
 wait = \timeout ->
     Effect.wait timeout |> Task.mapErr \_ -> crash "sleep should not fail"

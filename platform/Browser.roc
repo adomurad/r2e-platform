@@ -1,8 +1,15 @@
-module [navigateTo, findElement, getScreenshotBase64]
+## `Browser` module contains function to interact with the `Browser`.
+module [navigateTo, findElement, getScreenshotBase64, Locator]
 
 import Effect
 import Internal exposing [Browser, Element]
 
+## Navigate the browser to the given URL.
+##
+## ```
+## # open google.com
+## browser |> Browser.navigateTo! "http://google.com"
+## ```
 navigateTo : Browser, Str -> Task {} [WebDriverError Str]
 navigateTo = \browser, url ->
     { sessionId } = Internal.unpackBrowserData browser

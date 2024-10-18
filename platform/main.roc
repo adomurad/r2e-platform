@@ -9,17 +9,16 @@ platform ""
         Assert,
         Error,
         Reporting,
-        Reporting.BasicHtmlReporter,
-        Reporting.HtmlEncode,
+        BasicHtmlReporter,
     ]
     packages {}
-    imports [Console, Test]
+    imports [Console, InternalTest]
     provides [mainForHost]
 
 mainForHost : Task {} I32
 mainForHost =
     testCases
-    |> Test.runTests
+    |> InternalTest.runTests
     |> Task.attempt \res ->
         when res is
             Ok {} -> Task.ok {}

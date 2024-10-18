@@ -1,14 +1,18 @@
-## `Report` module contains test reporters.
+## This module contains a reporter that can be used to save test results as files.
+##
+## This `Reporter` generates a single HTML file to represent the results.
+##
+## This is the default `Reporter`.
 module [reporter]
 
-import Reporting
-import Reporting.HtmlEncode as HtmlEncode
+import Reporting exposing [htmlEncode]
 import Error
 
-# reporter32 = Reporting.createReporter "wow" \result, meta ->
-#     htmlStr = ""
-#     [{ filePath: "index.html", content: htmlStr }]
-
+## Reporter.
+##
+## ```
+## reporters = [basicHtmlReporter.reporter]
+## ```
 reporter = Reporting.createReporter "basicHtmlReporter" \results, meta ->
     duration = ((Num.toFrac meta.duration) / 1000) |> secToMinAndSec
     successCount = results |> List.countIf (\{ result } -> result |> Result.isOk)
@@ -20,7 +24,7 @@ reporter = Reporting.createReporter "basicHtmlReporter" \results, meta ->
     [{ filePath: "index.html", content: htmlStr }]
 
 resultToHtml = \{ name, result, duration, screenshot } ->
-    safeName = name |> HtmlEncode.encode
+    safeName = name |> htmlEncode
     isOk = result |> Result.isOk
     class = if isOk then "ok" else "error"
     testDetails = getTestDetails result screenshot
@@ -40,7 +44,7 @@ getTestDetails = \result, screenshot ->
     when result is
         Ok {} -> ""
         Err err ->
-            safeMsg = err |> handleError |> HtmlEncode.encode
+            safeMsg = err |> handleError |> htmlEncode
             # optionalScreenshot = "wow"
             optionalScreenshot =
                 when screenshot is

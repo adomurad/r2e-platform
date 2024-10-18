@@ -1,7 +1,7 @@
 ## `Assert` module contains assertion functions to check properties of` Elements`
 ## and data extracted from the browser.
 ##
-## All assert function return a `Task` with the `[AssertionError Str]` error.
+## All assert functions return a `Task` with the `[AssertionError Str]` error.
 module [
     shouldBe,
     # urlShouldBe,

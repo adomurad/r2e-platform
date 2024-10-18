@@ -12,7 +12,7 @@ app
 
 host/libhost.h
 
-# generated files
+generated files
 # host/roc
 
 browser_files
