@@ -4,8 +4,10 @@ import Internal exposing [Browser]
 import Console
 import Session
 import Time
+import Browser
+import Reporting.BasicHtmlReporter as BasicHtmlReporter
 import InternalReporting
-import Reporting.BasicHtmlReporter
+import Fs # without this import the compiler crashes
 
 TestBody err : Browser -> Task {} [WebDriverError Str]err
 
@@ -41,7 +43,7 @@ runTests = \testCases ->
     endTime = Time.getTimeMilis!
     duration = endTime - startTime
 
-    reporters = [Reporting.BasicHtmlReporter.reporter]
+    reporters = [BasicHtmlReporter.reporter]
     outDir = "testResults"
     # TODO - fail gracefully
     InternalReporting.runReporters! reporters results outDir duration
@@ -58,16 +60,26 @@ runTest = \i, @TestCase { name, testBody } ->
     Console.printLine! "$(color.gray)Test $(indexStr):$(color.end) \"$(name)\": Running..."
 
     startTime = Time.getTimeMilis!
-    result = runTestSafe testBody |> Task.result!
+    # result = runTestSafe testBody |> Task.result!
+    resultWithMaybeScreenshot = (runTestSafe testBody) |> Task.result!
 
     endTime = Time.getTimeMilis!
     duration = endTime - startTime
+
+    { result, screenshot } =
+        when resultWithMaybeScreenshot is
+            Ok {} -> { result: Ok {}, screenshot: NoScreenshot }
+            Err (ResultWithoutScreenshot res) -> { result: Err res, screenshot: NoScreenshot }
+            Err (ResultWithScreenshot res screenBase64) -> { result: Err res, screenshot: Screenshot screenBase64 }
+    # result = Ok {}
+    # screenshot = NoScreenshot
 
     testCaseResult = {
         name,
         result,
         duration,
-        screenshot: NoScreenshot,
+        # screenshot: NoScreenshot,
+        screenshot,
     }
 
     resultLogMessage =
@@ -84,14 +96,39 @@ runTest = \i, @TestCase { name, testBody } ->
 
 # runTestSafe : TestBody err -> Task {} _
 runTestSafe = \testBody ->
-    sessionId = Session.createSession!
+    # sessionId = Session.createSession!
+    sessionId = Session.createSession |> Task.mapErr! ResultWithoutScreenshot
 
     browser = Internal.packBrowserData { sessionId }
     testResult = testBody browser |> Task.result!
+    #
+    shouldTakeScreenshot = testResult |> Result.isErr
+    screenshot = shouldTakeScreenshot |> takeConditionalScreenshot browser |> Task.mapErr! ResultWithoutScreenshot
+    #
+    # Session.deleteSession! sessionId
+    Session.deleteSession sessionId |> Task.mapErr! ResultWithoutScreenshot
 
-    Session.deleteSession! sessionId
+    # Task.ok {}
+    when testResult is
+        Ok {} -> Task.ok {}
+        Err res ->
+            when screenshot is
+                NoScreenshot -> Task.err (ResultWithoutScreenshot res)
+                ScreenshotBase64 str -> Task.err (ResultWithScreenshot res str)
 
-    Task.fromResult testResult
+# Task.fromResult testResult
+
+# takeConditionalScreenshot : Bool, Internal.Browser -> Task [ScreenshotBase64 Str, NoScreenshot] _
+takeConditionalScreenshot = \shouldTakeScreenshot, browser ->
+    if shouldTakeScreenshot then
+        screenshot =
+            browser
+                |> Browser.getScreenshotBase64!
+        # |> Task.result!
+        # |> Result.withDefault ""
+        Task.ok (ScreenshotBase64 screenshot)
+    else
+        Task.ok NoScreenshot
 
 printResultSummary : List (TestCaseResult _) -> Task.Task {} _
 printResultSummary = \results ->

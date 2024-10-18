@@ -19,11 +19,11 @@ reporter = Reporting.createReporter "basicHtmlReporter" \results, meta ->
 
     [{ filePath: "index.html", content: htmlStr }]
 
-resultToHtml = \{ name, result, duration } ->
+resultToHtml = \{ name, result, duration, screenshot } ->
     safeName = name |> HtmlEncode.encode
     isOk = result |> Result.isOk
     class = if isOk then "ok" else "error"
-    testDetails = result |> getTestDetails
+    testDetails = getTestDetails result screenshot
     testDuration = (Num.toFrac duration) / 1000 |> fracToStr
 
     """
@@ -36,11 +36,19 @@ resultToHtml = \{ name, result, duration } ->
     </li>
     """
 
-getTestDetails = \result ->
+getTestDetails = \result, screenshot ->
     when result is
         Ok {} -> ""
         Err err ->
             safeMsg = err |> handleError |> HtmlEncode.encode
+            # optionalScreenshot = "wow"
+            optionalScreenshot =
+                when screenshot is
+                    NoScreenshot -> ""
+                    Screenshot base64 ->
+                        """
+                        <img class="screenshot" src="data:image/png;base64, $(base64)" />
+                        """
             """
             <div class="test-details">
                 <div class="block">
@@ -48,21 +56,9 @@ getTestDetails = \result ->
                         $(safeMsg)
                     </div>
                 </div>
+                $(optionalScreenshot)
             </div>
             """
-
-# Err (ErrorMsgWithScreenshot msg screen) ->
-#     safeMsg = msg |> HtmlEncode.encode
-#     """
-#     <div class="test-details">
-#         <div class="block">
-#             <div class="output">
-#                 $(safeMsg)
-#             </div>
-#             <img class="screenshot" src="data:image/png;base64, $(screen)" />
-#         </div>
-#     </div>
-#     """
 
 handleError = \errorTag ->
     when Error.webDriverErrorToStr errorTag is

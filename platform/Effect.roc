@@ -12,6 +12,7 @@ hosted Effect
         getTimeMilis,
         createDirIfNotExist,
         fileWriteUtf8,
+        getScreenshot,
     ]
     imports []
 
@@ -38,6 +39,8 @@ deleteSession : Str -> Task {} Str
 browserNavigateTo : Str, Str -> Task {} Str
 
 browserFindElement : Str, Str, Str -> Task Str Str
+
+getScreenshot : Str -> Task Str Str
 
 # element effects
 elementClick : Str, Str -> Task {} Str

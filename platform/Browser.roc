@@ -1,4 +1,4 @@
-module [navigateTo, findElement]
+module [navigateTo, findElement, getScreenshotBase64]
 
 import Effect
 import Internal exposing [Browser, Element]
@@ -67,3 +67,16 @@ handleFindElementError = \err ->
     when err is
         e if e |> Str.startsWith "WebDriverElementNotFoundError" -> ElementNotFound (e |> Str.dropPrefix "WebDriverElementNotFoundError::")
         e -> WebDriverError e
+
+## Take a screenshot of the whole document.
+##
+## The result will be a **base64** encoded `Str` representation of a PNG file.
+##
+## ```
+## base64PngStr = browser |> Browser.getScreenshotBase64!
+## ```
+getScreenshotBase64 : Browser -> Task Str [WebDriverError Str]
+getScreenshotBase64 = \browser ->
+    { sessionId } = Internal.unpackBrowserData browser
+
+    Effect.getScreenshot sessionId |> Task.mapErr WebDriverError

@@ -51,7 +51,11 @@ func Main() int {
 	C.roc__mainForHost_0_caller(nil, capturePtr, &result)
 
 	// TODO - error handling
-	driversetup.HandleCleanup(cmd)
+	err = driversetup.HandleCleanup(cmd)
+	if err != nil {
+		fmt.Println("could not kill chromedriver: ", err)
+		return 1
+	}
 
 	switch result.disciminant {
 	case 1: // Ok
@@ -95,7 +99,7 @@ func setup() error {
 //export roc_fx_startSession
 func roc_fx_startSession() C.struct_ResultVoidStr {
 	sessionId, err := webdriver.CreateSession()
-	fmt.Println("session id from go: ", sessionId)
+
 	if err != nil {
 		fmt.Println("error value ")
 		return createRocResultStr(RocErr, err.Error())
@@ -111,6 +115,16 @@ func roc_fx_deleteSession(sessionId *RocStr) C.struct_ResultVoidStr {
 		return createRocResultStr(RocErr, err.Error())
 	} else {
 		return createRocResultStr(RocOk, "")
+	}
+}
+
+//export roc_fx_getScreenshot
+func roc_fx_getScreenshot(sessionId *RocStr) C.struct_ResultVoidStr {
+	screenshotBase64, err := webdriver.GetScreenshot(sessionId.String())
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	} else {
+		return createRocResultStr(RocOk, screenshotBase64)
 	}
 }
 

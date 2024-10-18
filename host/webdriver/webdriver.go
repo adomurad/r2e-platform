@@ -31,7 +31,8 @@ func CreateSession() (string, error) {
 			"firstMatch": [
 				{
 					"goog:chromeOptions": {
-						"binary": "%s"
+						"binary": "%s",
+            "args": ["--window-size=1920,1080"]
 					}
 				}
 			]
@@ -76,6 +77,23 @@ func NavigateTo(sessionId, url string) error {
 	}
 
 	return nil
+}
+
+type GetScreenshot_Response struct {
+	Value string `json:"value"`
+}
+
+func GetScreenshot(sessionId string) (string, error) {
+	requestUrl := fmt.Sprintf("%s/session/%s/screenshot", baseUrl, sessionId)
+
+	var response GetScreenshot_Response
+
+	err := makeHttpRequest("GET", requestUrl, nil, &response)
+	if err != nil {
+		return "", err
+	}
+
+	return response.Value, nil
 }
 
 type GetStatus_ResponseValue struct {
@@ -147,7 +165,6 @@ func ClickElement(sessionId, elementId string) error {
 }
 
 type WebDriverElementNotFoundError struct {
-	// ShortError string
 	Message string
 }
 
@@ -160,7 +177,6 @@ type WebDriverNotFoundResponseBody struct {
 }
 
 type WebDriverNotFoundResponseValue struct {
-	// Error   string `json:"error"`
 	Message string `json:"message"`
 }
 

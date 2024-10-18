@@ -77,15 +77,15 @@ func WaitForDriverReady(timeout time.Duration) error {
 }
 
 // handleCleanup ensures chromedriver is killed when the app exits
-func HandleCleanup(cmd *exec.Cmd) {
+func HandleCleanup(cmd *exec.Cmd) error {
 	if cmd != nil && cmd.Process != nil {
 		// Kill the process if it's running
 		if err := cmd.Process.Kill(); err != nil {
-			fmt.Println("Failed to kill chromedriver:", err)
-		} else {
-			fmt.Println("Chromedriver killed successfully")
+			return err
 		}
 	}
+
+	return nil
 }
 
 func DownloadChromeAndDriver() error {
