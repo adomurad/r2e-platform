@@ -1,6 +1,7 @@
 generated-docs/
 
 build
+build_ci
 app
 
 *.a
@@ -9,6 +10,8 @@ app
 *.ll
 *.so
 *.o
+*.h 
+*.obj
 
 host/libhost.h
 

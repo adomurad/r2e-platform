@@ -2,6 +2,7 @@
 #define ROC_STD
 
 #include <stdlib.h>
+#include <stdint.h>
 
 struct RocStr {
     char* bytes;
