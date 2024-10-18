@@ -6,6 +6,9 @@ on:
     types:
       - published
 
+  # Allow for manual trigger for now
+  workflow_dispatch:
+
 jobs:
   generate-docs:
     name: Generate docs
