@@ -8,6 +8,7 @@ app
 *.tar.gz
 *.ll
 *.so
+*.o
 
 host/libhost.h
 

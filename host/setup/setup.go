@@ -37,8 +37,9 @@ func GetChromePaths() (*BrowserPaths, error) {
 		return nil, fmt.Errorf("Unsupported architecture")
 	}
 
+	chromeExecPath := getChromeExecutablePath()
 	path := fmt.Sprintf("%s/%s/%s", browserFilesDir, "chrome", chromeVersion)
-	chromePath := fmt.Sprintf("%s/chrome-%s/chrome", path, osName)
+	chromePath := fmt.Sprintf("%s/chrome-%s/%s", path, osName, chromeExecPath)
 	chromeDirPath := fmt.Sprintf("%s/chrome-%s", path, osName)
 	driverPath := fmt.Sprintf("%s/chromedriver-%s/chromedriver", path, osName)
 	driverDirPath := fmt.Sprintf("%s/chromedriver-%s", path, osName)
@@ -52,4 +53,15 @@ func GetChromePaths() (*BrowserPaths, error) {
 		DriverPath:     driverPath,
 		DriverDirPath:  driverDirPath,
 	}, nil
+}
+
+func getChromeExecutablePath() string {
+	switch runtime.GOOS {
+	case "darwin":
+		return "Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
+	case "linux":
+		return "chrome"
+	}
+
+	return "chrome"
 }
