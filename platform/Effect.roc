@@ -17,6 +17,7 @@ hosted Effect
         elementIsSelected,
         elementGetAttribute,
         elementGetProperty,
+        elementSendKeys,
     ]
     imports []
 
@@ -48,6 +49,8 @@ getScreenshot : Str -> Task Str Str
 
 # element effects
 elementClick : Str, Str -> Task {} Str
+
+elementSendKeys : Str, Str, Str -> Task {} Str
 
 elementGetText : Str, Str -> Task Str Str
 

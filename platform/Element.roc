@@ -3,6 +3,8 @@
 module [
     click,
     getText,
+    getValue,
+    inputText,
     isSelected,
     getProperty,
     getAttribute,
@@ -43,6 +45,32 @@ getText = \element ->
     { sessionId, elementId } = Internal.unpackElementData element
 
     Effect.elementGetText sessionId elementId |> Task.mapErr handleElementError
+
+## Get **value** of the `Element`.
+##
+## When there is no **value** in this element then returns the default value for used type:
+## - `Str` - ""
+## - `Bool` - Bool.false
+## - `Num` - 0
+##
+## ```
+## # find input element
+## input = browser |> Browser.findElement! (Css "#email-input")
+## # get input value
+## inputValue = input |> Element.getValue!
+## inputValue |> Assert.shouldBe "my-email@fake-email.com"
+## ```
+##
+## ```
+## # find input element
+## input = browser |> Browser.findElement! (Css "#age-input")
+## # get input value
+## inputValue = input |> Element.getValue!
+## inputValue |> Assert.shouldBe 18
+## ```
+getValue : Element -> Task.Task a [ElementNotFound Str, PropertyTypeError Str, WebDriverError Str] where a implements Decoding
+getValue = \element ->
+    getProperty element "value"
 
 ## Check if `Element` is selected.
 ##
@@ -201,6 +229,31 @@ getPropertyOrEmpty = \element, propertyName ->
         when decoded is
             Ok val -> Task.ok (Ok val)
             Err _ -> Task.err (PropertyTypeError "could not cast property \"$(propertyName)\" with value \"$(resultStr)\" to expected type")
+
+## Send a `Str` to a `Element` (e.g. put text into an input).
+##
+## ```
+## # find email input element
+## emailInput = browser |> Browser.findElement! (Css "#email")
+## # input an email into the email input
+## emailInput |> Element.sendKeys! "my.fake.email@fake-email.com"
+## ```
+##
+## Special key sequences:
+##
+## `{enter}` - simulates an "enter" key press
+##
+## ```
+## # find search input element
+## searchInput = browser |> Browser.findElement! (Css "#search")
+## # input text and submit
+## searchInput |> Element.sendKeys! "roc lang{enter}"
+## ```
+inputText : Element, Str -> Task.Task {} [WebDriverError Str, ElementNotFound Str]
+inputText = \element, str ->
+    { sessionId, elementId } = Internal.unpackElementData element
+    Effect.elementSendKeys sessionId elementId str
+    |> Task.mapErr handleElementError
 
 handleElementError = \err ->
     when err is

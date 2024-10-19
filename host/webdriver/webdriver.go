@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 const baseUrl = "http://localhost:9515"
@@ -151,6 +152,39 @@ func ClickElement(sessionId, elementId string) error {
 	url := fmt.Sprintf("%s/session/%s/element/%s/click", baseUrl, sessionId, elementId)
 
 	reqBody := map[string]interface{}{}
+
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		return err
+	}
+
+	err = makeHttpRequest[any]("POST", url, bytes.NewBuffer(jsonData), nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+var keyMappings = map[string]string{
+	"{enter}": "\uE007",
+}
+
+func replaceSpecialKeys(text string) string {
+	for key, code := range keyMappings {
+		text = strings.ReplaceAll(text, key, code)
+	}
+	return text
+}
+
+func ElementSendKeys(sessionId, elementId, text string) error {
+	url := fmt.Sprintf("%s/session/%s/element/%s/value", baseUrl, sessionId, elementId)
+
+	processedText := replaceSpecialKeys(text)
+
+	reqBody := map[string]interface{}{
+		"text": processedText,
+	}
 
 	jsonData, err := json.Marshal(reqBody)
 	if err != nil {

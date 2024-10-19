@@ -4,6 +4,7 @@ import r2e.Test exposing [test]
 import r2e.Browser
 import r2e.Element
 import r2e.Assert
+import r2e.Console
 
 testCases = [
     test1,
@@ -26,6 +27,10 @@ testCases = [
     test18,
     test19,
     test20,
+    test21,
+    test22,
+    test23,
+    test24,
 ]
 
 test1 = test "findElement and getText" \browser ->
@@ -198,3 +203,49 @@ test20 = test "getPropertyOrEmpty empty to Str" \browser ->
     when value is
         Ok _ -> Assert.failWith "should not be ok"
         Err Empty -> Task.ok {}
+
+test21 = test "inputText and getValue Str" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+    input = browser |> Browser.findElement! (TestId "name-input")
+
+    value = input |> Element.getValue!
+    value |> Assert.shouldBe! ""
+
+    input |> Element.inputText! "roc"
+
+    value2 = input |> Element.getValue!
+    value2 |> Assert.shouldBe "roc"
+
+test22 = test "inputText and getValue F64" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+    input = browser |> Browser.findElement! (TestId "name-input")
+
+    value = input |> Element.getValue!
+    value |> Assert.shouldBe! ""
+
+    input |> Element.inputText! "15.18"
+
+    value2 = input |> Element.getValue!
+    value2 |> Assert.shouldBeEqualTo 15.18f64
+
+test23 = test "inputText and getValue Bool" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+    input = browser |> Browser.findElement! (TestId "name-input")
+
+    value = input |> Element.getValue!
+    value |> Assert.shouldBe! ""
+
+    input |> Element.inputText! "true"
+
+    value2 = input |> Element.getValue!
+    value2 |> Assert.shouldBe Bool.true
+
+test24 = test "inputText {enter}" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+    input = browser |> Browser.findElement! (TestId "name-input")
+
+    input |> Element.inputText! "test{enter}"
+
+    thankYouHeader = browser |> Browser.findElement! (TestId "thank-you-header")
+    text = thankYouHeader |> Element.getText!
+    text |> Assert.shouldBe "Thank you, test!"
