@@ -7,7 +7,7 @@ import Time
 import Browser
 import BasicHtmlReporter
 import InternalReporting
-import Fs # without this import the compiler crashes
+# import Fs # without this import the compiler crashes
 import Error
 
 TestBody err : Browser -> Task {} [WebDriverError Str]err
@@ -103,6 +103,8 @@ runTest = \i, @TestCase { name, testBody } ->
 # runTestSafe : TestBody err -> Task {} _
 runTestSafe = \testBody ->
     sessionId = Session.createSession |> Task.mapErr! ResultWithoutScreenshot
+    # TODO - this hack might help with test flickers
+    Console.wait! 20
 
     browser = Internal.packBrowserData { sessionId }
     testResult = testBody browser |> Task.result!

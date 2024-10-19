@@ -1,9 +1,7 @@
 app [testCases] { r2e: platform "../platform/main.roc" }
 
-import r2e.Console
 import r2e.Test exposing [test]
 import r2e.Browser
-import r2e.Assert
 
 testCases = [
     test1,

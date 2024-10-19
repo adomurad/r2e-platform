@@ -4,7 +4,6 @@ import r2e.Test exposing [test]
 import r2e.Browser
 import r2e.Element
 import r2e.Assert
-import r2e.Console
 
 testCases = [
     test1,

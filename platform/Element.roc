@@ -15,7 +15,6 @@ module [
 
 import Internal exposing [Element]
 import PropertyDecoder
-import Console
 import Effect
 # import json.Json
 
