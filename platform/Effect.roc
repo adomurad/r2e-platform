@@ -18,6 +18,7 @@ hosted Effect
         elementGetAttribute,
         elementGetProperty,
         elementSendKeys,
+        elementClear,
     ]
     imports []
 
@@ -51,6 +52,8 @@ getScreenshot : Str -> Task Str Str
 elementClick : Str, Str -> Task {} Str
 
 elementSendKeys : Str, Str, Str -> Task {} Str
+
+elementClear : Str, Str -> Task {} Str
 
 elementGetText : Str, Str -> Task Str Str
 

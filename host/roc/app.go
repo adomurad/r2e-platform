@@ -172,6 +172,16 @@ func roc_fx_elementSendKeys(sessionId, elementId, text *RocStr) C.struct_ResultV
 	return createRocResultStr(RocOk, "")
 }
 
+//export roc_fx_elementClear
+func roc_fx_elementClear(sessionId, elementId *RocStr) C.struct_ResultVoidStr {
+	err := webdriver.ClearElement(sessionId.String(), elementId.String())
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	return createRocResultStr(RocOk, "")
+}
+
 //export roc_fx_elementGetText
 func roc_fx_elementGetText(sessionId, elementId *RocStr) C.struct_ResultVoidStr {
 	text, err := webdriver.GetElementText(sessionId.String(), elementId.String())

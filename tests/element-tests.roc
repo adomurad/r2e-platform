@@ -31,6 +31,7 @@ testCases = [
     test22,
     test23,
     test24,
+    test25,
 ]
 
 test1 = test "findElement and getText" \browser ->
@@ -249,3 +250,21 @@ test24 = test "inputText {enter}" \browser ->
     thankYouHeader = browser |> Browser.findElement! (TestId "thank-you-header")
     text = thankYouHeader |> Element.getText!
     text |> Assert.shouldBe "Thank you, test!"
+
+test25 = test "clearElement" \browser ->
+    # TODO test form clearing
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+    input = browser |> Browser.findElement! (TestId "name-input")
+
+    value = input |> Element.getValue!
+    value |> Assert.shouldBe! ""
+
+    input |> Element.inputText! "test"
+
+    value2 = input |> Element.getValue!
+    value2 |> Assert.shouldBe! "test"
+
+    input |> Element.clear!
+
+    value3 = input |> Element.getValue!
+    value3 |> Assert.shouldBe ""

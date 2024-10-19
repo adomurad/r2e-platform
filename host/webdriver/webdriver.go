@@ -199,6 +199,24 @@ func ElementSendKeys(sessionId, elementId, text string) error {
 	return nil
 }
 
+func ClearElement(sessionId, elementId string) error {
+	url := fmt.Sprintf("%s/session/%s/element/%s/clear", baseUrl, sessionId, elementId)
+
+	reqBody := map[string]interface{}{}
+
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		return err
+	}
+
+	err = makeHttpRequest[any]("POST", url, bytes.NewBuffer(jsonData), nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 type GetElementText_Response struct {
 	Value string `json:"value"`
 }

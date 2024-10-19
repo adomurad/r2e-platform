@@ -5,6 +5,7 @@ module [
     getText,
     getValue,
     inputText,
+    clear,
     isSelected,
     getProperty,
     getAttribute,
@@ -254,6 +255,19 @@ inputText = \element, str ->
     { sessionId, elementId } = Internal.unpackElementData element
     Effect.elementSendKeys sessionId elementId str
     |> Task.mapErr handleElementError
+
+## Clear an editable or resetable `Element`.
+##
+## ```
+## # find button element
+## input = browser |> Browser.findElement! (Css "#email-input")
+## # click the button
+## input |> Element.clear!
+## ```
+clear : Internal.Element -> Task.Task {} [WebDriverError Str, ElementNotFound Str]
+clear = \element ->
+    { sessionId, elementId } = Internal.unpackElementData element
+    Effect.elementClear sessionId elementId |> Task.mapErr handleElementError
 
 handleElementError = \err ->
     when err is
