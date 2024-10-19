@@ -1,6 +1,14 @@
 ## `Element` module contains function to interact with `Elements`
 ## found in the `Browser`.
-module [click, getText, isSelected, getProperty, getAttribute]
+module [
+    click,
+    getText,
+    isSelected,
+    getProperty,
+    getAttribute,
+    getAttributeOrEmpty,
+    getPropertyOrEmpty,
+]
 
 import Internal exposing [Element]
 import PropertyDecoder
@@ -63,14 +71,33 @@ isSelected = \element ->
 ##
 ## **Attributes** are values you can see in the HTML DOM, like *<input class"test" type="password" />*
 ##
+## When the **attribute** is not present on the `Element`, this function will return empty `Str`.
+##
 ## ```
 ## # find input element
 ## input = browser |> Browser.findElement! (Css "#email-input")
 ## # get input type
 ## inputType = input |> Element.getAttribute! "type"
 ## ```
-getAttribute : Element, Str -> Task (Result Str [Empty]) [WebDriverError Str, ElementNotFound Str]
+getAttribute : Element, Str -> Task Str [WebDriverError Str, ElementNotFound Str]
 getAttribute = \element, attributeName ->
+    { sessionId, elementId } = Internal.unpackElementData element
+
+    result = Effect.elementGetAttribute sessionId elementId attributeName |> Task.mapErr! handleElementError
+    result
+
+## Get **attribute** of an `Element`.
+##
+## **Attributes** are values you can see in the HTML DOM, like *<input class"test" type="password" />*
+##
+## ```
+## checkboxType = checkbox |> Element.getAttributeOrEmpty! "type"
+## when checkboxType is
+##     Ok type -> type |> Assert.shouldBe "checkbox"
+##     Err Empty -> Assert.failWith "should not be empty"
+## ```
+getAttributeOrEmpty : Element, Str -> Task (Result Str [Empty]) [WebDriverError Str, ElementNotFound Str]
+getAttributeOrEmpty = \element, attributeName ->
     { sessionId, elementId } = Internal.unpackElementData element
 
     result = Effect.elementGetAttribute sessionId elementId attributeName |> Task.mapErr! handleElementError
@@ -84,12 +111,64 @@ getAttribute = \element, attributeName ->
 ##
 ## **Properties** are the keys that you get when using `GetOwnProperty` on a element in the browser.
 ##
-## This function can be used with types like: `Bool`, `I64`, `Str`, and `F64`.
-## Depending of what property is being used.
+## This function can be used with types like: `Bool`, `Str`, `I64`, `F64`, etc.
+## R2E will try to cast the browser response to the choosen type.
+##
+## When the response is empty e.g. property does not exist, then the default value of the choosen type will be used:
+## - `Str` - ""
+## - `Bool` - Bool.false
+## - `Num` - 0
 ##
 ## ```
 ## # get input value
-## inputValue = input |> Element.getAttribute! "value"
+## inputValue = input |> Element.getProperty! "value"
+## # expect to have value "email@emails.com"
+## inputValue |> Assert.shouldBe "email@emails.com"
+## ```
+##
+## Bool:
+## ```
+## isChecked = nameInput |> Element.getProperty! "checked"
+## isChecked |> Assert.shouldBe Bool.false
+## ```
+##
+## Bool as Str:
+## ```
+## isChecked = nameInput |> Element.getProperty! "checked"
+## isChecked |> Assert.shouldBe "false"
+## ```
+##
+## Num:
+## ```
+## clientHeight = nameInput |> Element.getProperty! "clientHeight"
+## clientHeight |> Assert.shouldBe 17
+## ```
+getProperty : Internal.Element, Str -> Task a [ElementNotFound Str, PropertyTypeError Str, WebDriverError Str] where a implements Decoding
+getProperty = \element, propertyName ->
+    { sessionId, elementId } = Internal.unpackElementData element
+
+    resultStr = Effect.elementGetProperty sessionId elementId propertyName |> Task.mapErr! handleElementError
+    resultUtf8 = resultStr |> Str.toUtf8
+
+    decoded : Result a _
+    decoded = Decode.fromBytes resultUtf8 PropertyDecoder.utf8
+
+    when decoded is
+        Ok val -> Task.ok val
+        Err _ -> Task.err (PropertyTypeError "could not cast property \"$(propertyName)\" with value \"$(resultStr)\" to expected type")
+
+## Get **property** of an `Element`.
+##
+## **Properties** are the keys that you get when using `GetOwnProperty` on a element in the browser.
+##
+## This function can be used with types like: `Bool`, `Str`, `I64`, `F64`, etc.
+## R2E will try to cast the browser response to the choosen type.
+##
+## When the response is empty e.g. property does not exist, then `Err Empty` will be returned.
+##
+## ```
+## # get input value
+## inputValue = input |> Element.getPropertyOrEmpty! "value"
 ## # expect to have value "email@emails.com"
 ## inputType |> Assert.shouldBe (Ok "email@emails.com")
 ## ```
@@ -105,53 +184,23 @@ getAttribute = \element, attributeName ->
 ## clientHeight = nameInput |> Element.getProperty! "clientHeight"
 ## clientHeight |> Assert.shouldBe (Ok 17)
 ## ```
-getProperty : Element, Str -> Task (Result a [Empty]) [WebDriverError Str, ElementNotFound Str, PropertyTypeError Str] where a implements Decoding
-getProperty = \element, propertyName ->
+getPropertyOrEmpty : Element, Str -> Task (Result a [Empty]) [WebDriverError Str, ElementNotFound Str, PropertyTypeError Str] where a implements Decoding
+getPropertyOrEmpty = \element, propertyName ->
     { sessionId, elementId } = Internal.unpackElementData element
 
     resultStr = Effect.elementGetProperty sessionId elementId propertyName |> Task.mapErr! handleElementError
 
-    resTypeTask =
-        when resultStr |> Str.toUtf8 is
-            [] -> Task.ok Empty
-            ['b', 'o', 'o', 'l', ':', .. as rest] -> Task.ok (BoolType rest)
-            ['s', 't', 'r', 'i', 'n', 'g', ':', .. as rest] -> Task.ok (StringType rest)
-            ['f', 'l', 'o', 'a', 't', '6', '4', ':', .. as rest] -> Task.ok (FloatType rest)
-            ['i', 'n', 't', '6', '4', ':', .. as rest] -> Task.ok (IntType rest)
-            _ -> Task.err (WebDriverError "received unsupported type for property \"$(propertyName)\" with value: $(resultStr)")
+    if resultStr == "" then
+        Task.ok (Err Empty)
+    else
+        resultUtf8 = resultStr |> Str.toUtf8
 
-    resType = resTypeTask!
+        decoded : Result a _
+        decoded = Decode.fromBytes resultUtf8 PropertyDecoder.utf8
 
-    when resType is
-        Empty -> Task.ok (Err Empty)
-        BoolType bytes ->
-            decodeJsonProp bytes propertyName "Bool"
-
-        StringType bytes ->
-            decodeJsonProp bytes propertyName "Str"
-
-        FloatType bytes ->
-            decodeJsonProp bytes propertyName "F64"
-
-        IntType bytes ->
-            decodeJsonProp bytes propertyName "I64"
-
-decodeJsonProp : List U8, Str, Str -> Task (Result a []) [PropertyTypeError Str] where a implements Decoding
-decodeJsonProp = \bytes, propName, typeStr ->
-
-    # decoder = Json.utf8With {}
-    decoder = PropertyDecoder.utf8
-
-    decoded : Decode.DecodeResult a
-    decoded = Decode.fromBytesPartial bytes decoder
-    # decoded = Decode.fromBytesPartial bytes PropertyDecoder.utf8With {}
-
-    when decoded.result is
-        Ok val -> Task.ok (Ok val)
-        Err _ ->
-            # cannot fail
-            valueStr = bytes |> Str.fromUtf8 |> Result.withDefault ""
-            Task.err (PropertyTypeError "property \"$(propName)\" returned \"$(valueStr)\" of type $(typeStr) instead of expected type")
+        when decoded is
+            Ok val -> Task.ok (Ok val)
+            Err _ -> Task.err (PropertyTypeError "could not cast property \"$(propertyName)\" with value \"$(resultStr)\" to expected type")
 
 handleElementError = \err ->
     when err is

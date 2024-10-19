@@ -4,6 +4,7 @@
 ## All assert functions return a `Task` with the `[AssertionError Str]` error.
 module [
     shouldBe,
+    shouldBeEqualTo,
     # urlShouldBe,
     # titleShouldBe,
     shouldBeGreaterOrEqualTo,
@@ -33,6 +34,27 @@ shouldBe = \actual, expected ->
     else
         actualStr = Inspect.toStr actual
         expectedStr = Inspect.toStr expected
+        Task.err (AssertionError "Expected $(actualStr) to be $(expectedStr)")
+
+## Checks if the value of __actual__ is equal to the __expected__.
+##
+## Used to compare `Frac` numbers.
+##
+## ```
+## # find button element
+## button = browser |> Browser.findElement! (Css "#submit-button")
+## # get button text
+## buttonSize = button |> Element.getProperty! "size"
+## # assert value
+## buttonSize |> Assert.shouldBeEqualTo! 20f64
+## ```
+shouldBeEqualTo : Frac a, Frac a -> Task.Task {} [AssertionError Str]
+shouldBeEqualTo = \actual, expected ->
+    if expected |> Num.isApproxEq actual {} then
+        Task.ok {}
+    else
+        actualStr = Num.toStr actual
+        expectedStr = Num.toStr expected
         Task.err (AssertionError "Expected $(actualStr) to be $(expectedStr)")
 
 ## Checks if the __actual__ `Num` is grater than the __expected__.

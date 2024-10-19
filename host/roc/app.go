@@ -184,12 +184,12 @@ func roc_fx_elementGetAttribute(sessionId, elementId, attributeName *RocStr) C.s
 
 //export roc_fx_elementGetProperty
 func roc_fx_elementGetProperty(sessionId, elementId, propertyName *RocStr) C.struct_ResultVoidStr {
-	encodedJsonStr, err := webdriver.GetElementProperty(sessionId.String(), elementId.String(), propertyName.String())
+	encodedStr, err := webdriver.GetElementProperty(sessionId.String(), elementId.String(), propertyName.String())
 	if err != nil {
 		return createRocResultStr(RocErr, err.Error())
 	}
 
-	return createRocResultStr(RocOk, encodedJsonStr)
+	return createRocResultStr(RocOk, encodedStr)
 }
 
 //export roc_fx_elementIsSelected

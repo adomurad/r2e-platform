@@ -16,6 +16,7 @@ test1 = test "test1" \browser ->
     checkbox = browser |> Browser.findElement! (TestId "remote-testing-checkbox")
 
     checkboxType = checkbox |> Element.getProperty! "size"
-    when checkboxType is
-        Ok type -> type |> Assert.shouldBe "wow"
-        Err Empty -> Assert.failWith "should not ge empty"
+    checkboxType |> Assert.shouldBe 50
+# when checkboxType is
+#     Ok type -> type |> Assert.shouldBe "wow"
+#     Err Empty -> Assert.failWith "should not ge empty"

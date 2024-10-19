@@ -7,6 +7,7 @@ import (
 	"host/setup"
 	"io"
 	"net/http"
+	"strconv"
 )
 
 const baseUrl = "http://localhost:9515"
@@ -213,37 +214,23 @@ func GetElementProperty(sessionId, elementId, propName string) (string, error) {
 		return "", err
 	}
 
-	if response.Value == nil {
+	switch v := response.Value.(type) {
+
+	case nil:
 		return "", nil
+
+	case string:
+		return v, nil
+
+	case bool:
+		return strconv.FormatBool(v), nil
+
+	case float64:
+		return strconv.FormatFloat(v, 'f', -1, 64), nil
+
+	default:
+		return "", fmt.Errorf("unsuported element property type: %s", v)
 	}
-
-	var prefix string
-
-	if _, ok := response.Value.(bool); ok {
-		prefix = "bool:"
-	}
-
-	if floatValue, ok := response.Value.(float64); ok {
-		if floatValue == float64(int(floatValue)) {
-			prefix = "int64:"
-		} else {
-			// not sure if floats are possible results
-			prefix = "float64:"
-		}
-	}
-
-	if _, ok := response.Value.(string); ok {
-		prefix = "string:"
-	}
-
-	// sending response as json - taking advantage of Roc decode ability
-	jsonStr, err := json.Marshal(response.Value)
-	if err != nil {
-		return "", err
-	}
-
-	prefixedJsonStr := prefix + string(jsonStr)
-	return prefixedJsonStr, nil
 }
 
 type IsElementSelected_Response struct {
