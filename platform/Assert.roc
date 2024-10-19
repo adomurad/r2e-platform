@@ -33,7 +33,7 @@ shouldBe = \actual, expected ->
     else
         actualStr = Inspect.toStr actual
         expectedStr = Inspect.toStr expected
-        Task.err (AssertionError "Expected \"$(actualStr)\" to be \"$(expectedStr)\"")
+        Task.err (AssertionError "Expected $(actualStr) to be $(expectedStr)")
 
 ## Checks if the __actual__ `Num` is grater than the __expected__.
 ##
@@ -47,7 +47,7 @@ shouldBeGreaterThan = \actual, expected ->
     else
         actualStr = actual |> Num.toStr
         expectedStr = expected |> Num.toStr
-        Task.err (AssertionError "Expected \"$(actualStr)\" to be greater than \"$(expectedStr)\"")
+        Task.err (AssertionError "Expected $(actualStr) to be greater than $(expectedStr)")
 
 ## Checks if the __actual__ `Num` is grater or equal than the __expected__.
 ##
@@ -61,7 +61,7 @@ shouldBeGreaterOrEqualTo = \actual, expected ->
     else
         actualStr = actual |> Num.toStr
         expectedStr = expected |> Num.toStr
-        Task.err (AssertionError "Expected \"$(actualStr)\" to be equal to or greater than \"$(expectedStr)\"")
+        Task.err (AssertionError "Expected $(actualStr) to be equal to or greater than $(expectedStr)")
 
 ## Checks if the __actual__ `Num` is grater than the __expected__.
 ##
@@ -75,7 +75,7 @@ shouldBeLesserThan = \actual, expected ->
     else
         actualStr = actual |> Num.toStr
         expectedStr = expected |> Num.toStr
-        Task.err (AssertionError "Expected \"$(actualStr)\" to be lesser than \"$(expectedStr)\"")
+        Task.err (AssertionError "Expected $(actualStr) to be lesser than $(expectedStr)")
 
 ## Checks if the __actual__ `Num` is grater or equal than the __expected__.
 ##
@@ -89,7 +89,7 @@ shouldBeLesserOrEqualTo = \actual, expected ->
     else
         actualStr = actual |> Num.toStr
         expectedStr = expected |> Num.toStr
-        Task.err (AssertionError "Expected \"$(actualStr)\" to be equal to or lesser than \"$(expectedStr)\"")
+        Task.err (AssertionError "Expected $(actualStr) to be equal to or lesser than $(expectedStr)")
 
 ## Checks if the __URL__ is equal to the __expected__.
 ##
@@ -104,7 +104,7 @@ shouldBeLesserOrEqualTo = \actual, expected ->
 #     if expected == actual then
 #         Task.ok {}
 #     else
-#         Task.err (AssertionError "Expected URL \"$(actual)\" to be \"$(expected)\"")
+#         Task.err (AssertionError "Expected URL $(actual) to be $(expected)")
 
 ## Checks if the __title__ of the page is equal to the __expected__.
 ##
@@ -119,13 +119,13 @@ shouldBeLesserOrEqualTo = \actual, expected ->
 #     if expected == actual then
 #         Task.ok {}
 #     else
-#         Task.err (AssertionError "Expected page title \"$(actual)\" to be \"$(expected)\"")
+#         Task.err (AssertionError "Expected page title $(actual) to be $(expected)")
 
 ## Fails with given error message.
 ##
 ## ```
 ## # fail the test
-## Assert.fail! "this should not happen"
+## Assert.failWith! "this should not happen"
 ## ```
 failWith : Str -> Task.Task _ [AssertionError Str]
 failWith = \msg ->

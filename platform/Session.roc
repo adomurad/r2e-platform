@@ -2,7 +2,7 @@ module [createSession, deleteSession]
 
 import Effect
 
-createSession : Task Str [WebDriverError Str]
+createSession : Task Str [WebDriverError Str, Fuck Str]
 createSession =
     Effect.startSession {} |> Task.mapErr WebDriverError
 

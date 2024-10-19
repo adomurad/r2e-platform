@@ -35,7 +35,7 @@ func RunChromedriver() (*exec.Cmd, error) {
 	}
 
 	// Log that the process has started
-	fmt.Println("Chromedriver started with PID:", cmd.Process.Pid)
+	// fmt.Println("Chromedriver started with PID:", cmd.Process.Pid)
 
 	// Create a goroutine to wait for the process to exit or crash
 	go func() {

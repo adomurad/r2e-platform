@@ -164,6 +164,104 @@ func ClickElement(sessionId, elementId string) error {
 	return nil
 }
 
+type GetElementText_Response struct {
+	Value string `json:"value"`
+}
+
+func GetElementText(sessionId, elementId string) (string, error) {
+	url := fmt.Sprintf("%s/session/%s/element/%s/text", baseUrl, sessionId, elementId)
+
+	var response GetElementText_Response
+	err := makeHttpRequest("GET", url, nil, &response)
+	if err != nil {
+		return "", err
+	}
+
+	return response.Value, nil
+}
+
+type GetElementAttribute_Response struct {
+	Value *string `json:"value"`
+}
+
+func GetElementAttribute(sessionId, elementId, attrName string) (string, error) {
+	url := fmt.Sprintf("%s/session/%s/element/%s/attribute/%s", baseUrl, sessionId, elementId, attrName)
+
+	var response GetElementAttribute_Response
+	err := makeHttpRequest("GET", url, nil, &response)
+	if err != nil {
+		return "", err
+	}
+
+	if response.Value == nil {
+		return "", nil
+	}
+
+	return *response.Value, nil
+}
+
+type GetElementProperty_Response struct {
+	Value interface{} `json:"value"`
+}
+
+func GetElementProperty(sessionId, elementId, propName string) (string, error) {
+	url := fmt.Sprintf("%s/session/%s/element/%s/property/%s", baseUrl, sessionId, elementId, propName)
+
+	var response GetElementProperty_Response
+	err := makeHttpRequest("GET", url, nil, &response)
+	if err != nil {
+		return "", err
+	}
+
+	if response.Value == nil {
+		return "", nil
+	}
+
+	var prefix string
+
+	if _, ok := response.Value.(bool); ok {
+		prefix = "bool:"
+	}
+
+	if floatValue, ok := response.Value.(float64); ok {
+		if floatValue == float64(int(floatValue)) {
+			prefix = "int64:"
+		} else {
+			// not sure if floats are possible results
+			prefix = "float64:"
+		}
+	}
+
+	if _, ok := response.Value.(string); ok {
+		prefix = "string:"
+	}
+
+	// sending response as json - taking advantage of Roc decode ability
+	jsonStr, err := json.Marshal(response.Value)
+	if err != nil {
+		return "", err
+	}
+
+	prefixedJsonStr := prefix + string(jsonStr)
+	return prefixedJsonStr, nil
+}
+
+type IsElementSelected_Response struct {
+	Value bool `json:"value"`
+}
+
+func IsElementSelected(sessionId, elementId string) (bool, error) {
+	url := fmt.Sprintf("%s/session/%s/element/%s/selected", baseUrl, sessionId, elementId)
+
+	var response IsElementSelected_Response
+	err := makeHttpRequest("GET", url, nil, &response)
+	if err != nil {
+		return false, err
+	}
+
+	return response.Value, nil
+}
+
 type WebDriverElementNotFoundError struct {
 	Message string
 }

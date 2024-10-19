@@ -15,8 +15,8 @@ import (
 )
 
 func Main() int {
-	fmt.Println(utils.FG_BLUE + "=============================" + utils.RESET)
-	fmt.Println(utils.FG_BLUE + "============SETUP============" + utils.RESET)
+	// fmt.Println(utils.FG_BLUE + "=============================" + utils.RESET)
+	// fmt.Println(utils.FG_BLUE + "============SETUP============" + utils.RESET)
 	err := setup()
 	if err != nil {
 		fmt.Println(utils.FG_RED+"Setup failed with: "+utils.RESET, err)
@@ -37,9 +37,9 @@ func Main() int {
 		return 1
 	}
 
-	fmt.Println(utils.FG_BLUE + "Driver and Browser are ready." + utils.RESET)
-	fmt.Println(utils.FG_BLUE + "=============================" + utils.RESET)
-	fmt.Print("\n\n")
+	// fmt.Println(utils.FG_BLUE + "Driver and Browser are ready." + utils.RESET)
+	// fmt.Println(utils.FG_BLUE + "=============================" + utils.RESET)
+	// fmt.Print("\n\n")
 
 	size := C.roc__mainForHost_1_exposed_size()
 	capturePtr := roc_alloc(size, 0)
@@ -57,6 +57,7 @@ func Main() int {
 		return 1
 	}
 
+	// TODO - this seems to be broken
 	switch result.disciminant {
 	case 1: // Ok
 		return 0
@@ -159,6 +160,52 @@ func roc_fx_elementClick(sessionId, elementId *RocStr) C.struct_ResultVoidStr {
 	}
 
 	return createRocResultStr(RocOk, "")
+}
+
+//export roc_fx_elementGetText
+func roc_fx_elementGetText(sessionId, elementId *RocStr) C.struct_ResultVoidStr {
+	text, err := webdriver.GetElementText(sessionId.String(), elementId.String())
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	return createRocResultStr(RocOk, text)
+}
+
+//export roc_fx_elementGetAttribute
+func roc_fx_elementGetAttribute(sessionId, elementId, attributeName *RocStr) C.struct_ResultVoidStr {
+	text, err := webdriver.GetElementAttribute(sessionId.String(), elementId.String(), attributeName.String())
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	return createRocResultStr(RocOk, text)
+}
+
+//export roc_fx_elementGetProperty
+func roc_fx_elementGetProperty(sessionId, elementId, propertyName *RocStr) C.struct_ResultVoidStr {
+	encodedJsonStr, err := webdriver.GetElementProperty(sessionId.String(), elementId.String(), propertyName.String())
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	return createRocResultStr(RocOk, encodedJsonStr)
+}
+
+//export roc_fx_elementIsSelected
+func roc_fx_elementIsSelected(sessionId, elementId *RocStr) C.struct_ResultVoidStr {
+	isSelected, err := webdriver.IsElementSelected(sessionId.String(), elementId.String())
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	// TODO - not sure how to send booleans to Roc
+	// will fix this when I have more time
+	if isSelected {
+		return createRocResultStr(RocOk, "true")
+	} else {
+		return createRocResultStr(RocOk, "false")
+	}
 }
 
 //export roc_fx_getTimeMilis
