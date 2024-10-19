@@ -7,6 +7,7 @@ import (
 	"host/setup"
 	"io"
 	"net/http"
+	"strconv"
 )
 
 const baseUrl = "http://localhost:9515"
@@ -162,6 +163,90 @@ func ClickElement(sessionId, elementId string) error {
 	}
 
 	return nil
+}
+
+type GetElementText_Response struct {
+	Value string `json:"value"`
+}
+
+func GetElementText(sessionId, elementId string) (string, error) {
+	url := fmt.Sprintf("%s/session/%s/element/%s/text", baseUrl, sessionId, elementId)
+
+	var response GetElementText_Response
+	err := makeHttpRequest("GET", url, nil, &response)
+	if err != nil {
+		return "", err
+	}
+
+	return response.Value, nil
+}
+
+type GetElementAttribute_Response struct {
+	Value *string `json:"value"`
+}
+
+func GetElementAttribute(sessionId, elementId, attrName string) (string, error) {
+	url := fmt.Sprintf("%s/session/%s/element/%s/attribute/%s", baseUrl, sessionId, elementId, attrName)
+
+	var response GetElementAttribute_Response
+	err := makeHttpRequest("GET", url, nil, &response)
+	if err != nil {
+		return "", err
+	}
+
+	if response.Value == nil {
+		return "", nil
+	}
+
+	return *response.Value, nil
+}
+
+type GetElementProperty_Response struct {
+	Value interface{} `json:"value"`
+}
+
+func GetElementProperty(sessionId, elementId, propName string) (string, error) {
+	url := fmt.Sprintf("%s/session/%s/element/%s/property/%s", baseUrl, sessionId, elementId, propName)
+
+	var response GetElementProperty_Response
+	err := makeHttpRequest("GET", url, nil, &response)
+	if err != nil {
+		return "", err
+	}
+
+	switch v := response.Value.(type) {
+
+	case nil:
+		return "", nil
+
+	case string:
+		return v, nil
+
+	case bool:
+		return strconv.FormatBool(v), nil
+
+	case float64:
+		return strconv.FormatFloat(v, 'f', -1, 64), nil
+
+	default:
+		return "", fmt.Errorf("unsuported element property type: %s", v)
+	}
+}
+
+type IsElementSelected_Response struct {
+	Value bool `json:"value"`
+}
+
+func IsElementSelected(sessionId, elementId string) (bool, error) {
+	url := fmt.Sprintf("%s/session/%s/element/%s/selected", baseUrl, sessionId, elementId)
+
+	var response IsElementSelected_Response
+	err := makeHttpRequest("GET", url, nil, &response)
+	if err != nil {
+		return false, err
+	}
+
+	return response.Value, nil
 }
 
 type WebDriverElementNotFoundError struct {

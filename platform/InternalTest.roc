@@ -8,6 +8,7 @@ import Browser
 import BasicHtmlReporter
 import InternalReporting
 import Fs # without this import the compiler crashes
+import Error
 
 TestBody err : Browser -> Task {} [WebDriverError Str]err
 
@@ -52,7 +53,7 @@ runTests = \testCases ->
 
     Task.ok {}
 
-runTest : U64, TestCase err -> Task (TestCaseResult [WebDriverError Str]err) [] where err implements Inspect
+runTest : U64, TestCase _ -> Task (TestCaseResult [WebDriverError Str, AssertionError Str]_) []
 runTest = \i, @TestCase { name, testBody } ->
     indexStr = (i + 1) |> Num.toStr
 
@@ -88,7 +89,12 @@ runTest = \i, @TestCase { name, testBody } ->
                 "$(color.gray)Test $(indexStr):$(color.end) \"$(name)\": $(color.green)OK$(color.end)"
 
             Err err ->
-                "$(color.gray)Test $(indexStr):$(color.end) \"$(name)\": $(color.red)$(err |> Inspect.toStr)$(color.end)"
+                when Error.webDriverErrorToStr err is
+                    StringError strErr ->
+                        "$(color.gray)Test $(indexStr):$(color.end) \"$(name)\": $(color.red)$(strErr)$(color.end)"
+
+                    unhandledError ->
+                        "$(color.gray)Test $(indexStr):$(color.end) \"$(name)\": $(color.red)$(unhandledError |> Inspect.toStr)$(color.end)"
 
     Console.printLine! resultLogMessage
 
@@ -96,19 +102,16 @@ runTest = \i, @TestCase { name, testBody } ->
 
 # runTestSafe : TestBody err -> Task {} _
 runTestSafe = \testBody ->
-    # sessionId = Session.createSession!
     sessionId = Session.createSession |> Task.mapErr! ResultWithoutScreenshot
 
     browser = Internal.packBrowserData { sessionId }
     testResult = testBody browser |> Task.result!
-    #
+
     shouldTakeScreenshot = testResult |> Result.isErr
     screenshot = shouldTakeScreenshot |> takeConditionalScreenshot browser |> Task.mapErr! ResultWithoutScreenshot
-    #
-    # Session.deleteSession! sessionId
+
     Session.deleteSession sessionId |> Task.mapErr! ResultWithoutScreenshot
 
-    # Task.ok {}
     when testResult is
         Ok {} -> Task.ok {}
         Err res ->
@@ -116,16 +119,12 @@ runTestSafe = \testBody ->
                 NoScreenshot -> Task.err (ResultWithoutScreenshot res)
                 ScreenshotBase64 str -> Task.err (ResultWithScreenshot res str)
 
-# Task.fromResult testResult
-
 # takeConditionalScreenshot : Bool, Internal.Browser -> Task [ScreenshotBase64 Str, NoScreenshot] _
 takeConditionalScreenshot = \shouldTakeScreenshot, browser ->
     if shouldTakeScreenshot then
         screenshot =
             browser
                 |> Browser.getScreenshotBase64!
-        # |> Task.result!
-        # |> Result.withDefault ""
         Task.ok (ScreenshotBase64 screenshot)
     else
         Task.ok NoScreenshot

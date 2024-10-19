@@ -7,4 +7,5 @@ webDriverErrorToStr = \errorTag ->
         WebDriverError msg -> StringError "WebDriverError: $(msg)"
         ElementNotFound msg -> StringError "ElementNotFound: $(msg)"
         AssertionError msg -> StringError "AssertionError: $(msg)"
+        PropertyTypeError msg -> StringError "PropertyTypeError: $(msg)"
         err -> err

@@ -12,7 +12,7 @@ platform ""
         BasicHtmlReporter,
     ]
     packages {}
-    imports [Console, InternalTest]
+    imports [InternalTest]
     provides [mainForHost]
 
 mainForHost : Task {} I32
@@ -21,8 +21,10 @@ mainForHost =
     |> InternalTest.runTests
     |> Task.attempt \res ->
         when res is
-            Ok {} -> Task.ok {}
-            Err err ->
-                Console.printLine "Program exited early with error: $(Inspect.toStr err)"
-                |> Task.onErr \_ -> Task.err 1
-                |> Task.await \_ -> Task.err 1
+            Ok {} ->
+                # TODO - right now I'm unable to make Task.ok {} to be interpreted by Go as discriminant 1
+                # will fix when I have more time
+                Task.err 0
+
+            Err _ ->
+                Task.err 1

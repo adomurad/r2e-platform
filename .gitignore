@@ -20,3 +20,8 @@ generated files
 
 browser_files
 testResults
+
+tests/*
+!tests/*.sh
+!tests/*.roc
+

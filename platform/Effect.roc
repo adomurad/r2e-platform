@@ -13,6 +13,10 @@ hosted Effect
         createDirIfNotExist,
         fileWriteUtf8,
         getScreenshot,
+        elementGetText,
+        elementIsSelected,
+        elementGetAttribute,
+        elementGetProperty,
     ]
     imports []
 
@@ -44,3 +48,11 @@ getScreenshot : Str -> Task Str Str
 
 # element effects
 elementClick : Str, Str -> Task {} Str
+
+elementGetText : Str, Str -> Task Str Str
+
+elementIsSelected : Str, Str -> Task Str Str
+
+elementGetAttribute : Str, Str, Str -> Task Str Str
+
+elementGetProperty : Str, Str, Str -> Task Str Str
