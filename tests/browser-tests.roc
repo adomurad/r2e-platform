@@ -12,12 +12,20 @@ testCases = [
     test5,
     test6,
     test7,
+    test8,
+    test9,
+    test10,
 ]
 
 test1 = test "navigation" \browser ->
     browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+    browser |> Assert.urlShouldBe! "https://devexpress.github.io/testcafe/example/"
+
     browser |> Browser.navigateTo! "https://www.roc-lang.org/"
+    browser |> Assert.urlShouldBe! "https://www.roc-lang.org/"
+
     browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+    browser |> Assert.urlShouldBe! "https://devexpress.github.io/testcafe/example/"
 
 test2 = test "open and close browser windows" \_browser ->
     browser2 = Browser.openNewWindow!
@@ -59,3 +67,20 @@ test7 = test "getWindowRect" \browser ->
 
     rect.x |> Assert.shouldBe! 16
     rect.width |> Assert.shouldBe 1919
+
+test8 = test "getTitle" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+    title = browser |> Browser.getTitle!
+
+    title |> Assert.shouldBe "TestCafe Example Page"
+
+test9 = test "getTitle assert" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+
+    browser |> Assert.titleShouldBe "TestCafe Example Page"
+
+test10 = test "getUrl" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+    url = browser |> Browser.getUrl!
+
+    url |> Assert.shouldBe "https://devexpress.github.io/testcafe/example/"

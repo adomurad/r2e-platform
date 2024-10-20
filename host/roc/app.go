@@ -213,6 +213,26 @@ func roc_fx_browserFindElements(sessionId, using, value *RocStr) C.struct_Result
 	return createRocResult_ListStr_Str(RocOk, elementIds, "")
 }
 
+//export roc_fx_browserGetTitle
+func roc_fx_browserGetTitle(sessionId *RocStr) C.struct_ResultVoidStr {
+	title, err := webdriver.GetBrowserTitle(sessionId.String())
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	return createRocResultStr(RocOk, title)
+}
+
+//export roc_fx_browserGetUrl
+func roc_fx_browserGetUrl(sessionId *RocStr) C.struct_ResultVoidStr {
+	title, err := webdriver.GetBrowserUrl(sessionId.String())
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	return createRocResultStr(RocOk, title)
+}
+
 //export roc_fx_elementClick
 func roc_fx_elementClick(sessionId, elementId *RocStr) C.struct_ResultVoidStr {
 	err := webdriver.ClickElement(sessionId.String(), elementId.String())

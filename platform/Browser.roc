@@ -1,4 +1,4 @@
-## `Browser` module contains function to interact with the `Browser`.
+## `Browser` module contains functions to interact with the `Browser`.
 module [
     openNewWindow,
     openNewWindowWithCleanup,
@@ -6,6 +6,8 @@ module [
     navigateTo,
     setWindowRect,
     getWindowRect,
+    getTitle,
+    getUrl,
     findElement,
     tryFindElement,
     findSingleElement,
@@ -73,6 +75,33 @@ navigateTo : Browser, Str -> Task {} [WebDriverError Str]
 navigateTo = \browser, url ->
     { sessionId } = Internal.unpackBrowserData browser
     Effect.browserNavigateTo sessionId url |> Task.mapErr WebDriverError
+
+## Get browser title.
+##
+## ```
+## browser |> Browser.navigateTo! "http://google.com"
+## # get title
+## title = browser |> Browser.getTitle!
+## # title = "Google"
+## ```
+getTitle : Browser -> Task.Task Str [WebDriverError Str]
+getTitle = \browser ->
+    { sessionId } = Internal.unpackBrowserData browser
+    Effect.browserGetTitle sessionId |> Task.mapErr WebDriverError
+
+## Get current URL.
+##
+## ```
+## browser |> Browser.navigateTo! "http://google.com"
+## # get url
+## url = browser |> Browser.getUrl!
+## # url = "https://google.com/"
+## ```
+getUrl : Browser -> Task Str [WebDriverError Str]
+getUrl = \browser ->
+    { sessionId } = Internal.unpackBrowserData browser
+    Effect.browserGetUrl sessionId
+    |> Task.mapErr WebDriverError
 
 ## Supported locator strategies
 ##

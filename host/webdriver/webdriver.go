@@ -177,7 +177,7 @@ func GetWindowRect(sessionId string) (*WindowRect, error) {
 }
 
 type FindElement_Response struct {
-	Value FindElement_ResponseValue
+	Value FindElement_ResponseValue `json:"value"`
 }
 
 type FindElement_ResponseValue struct {
@@ -204,6 +204,38 @@ func FindElement(sessionId, using, value string) (string, error) {
 	}
 
 	return response.Value.ElementId, nil
+}
+
+type GetBrowserTitle_Response struct {
+	Value string `json:"value"`
+}
+
+func GetBrowserTitle(sessionId string) (string, error) {
+	url := fmt.Sprintf("%s/session/%s/title", baseUrl, sessionId)
+
+	var response GetBrowserTitle_Response
+	err := makeHttpRequest("GET", url, nil, &response)
+	if err != nil {
+		return "", err
+	}
+
+	return response.Value, nil
+}
+
+type GetBrowserUrl_Response struct {
+	Value string `json:"value"`
+}
+
+func GetBrowserUrl(sessionId string) (string, error) {
+	url := fmt.Sprintf("%s/session/%s/url", baseUrl, sessionId)
+
+	var response GetBrowserUrl_Response
+	err := makeHttpRequest("GET", url, nil, &response)
+	if err != nil {
+		return "", err
+	}
+
+	return response.Value, nil
 }
 
 type FindElements_Response struct {

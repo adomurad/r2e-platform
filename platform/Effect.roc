@@ -22,6 +22,8 @@ hosted Effect
         elementClear,
         browserSetWindowRect,
         browserGetWindowRect,
+        browserGetTitle,
+        browserGetUrl,
     ]
     imports []
 
@@ -46,6 +48,10 @@ deleteSession : Str -> Task {} Str
 
 # browser effects
 browserNavigateTo : Str, Str -> Task {} Str
+
+browserGetTitle : Str -> Task Str Str
+
+browserGetUrl : Str -> Task Str Str
 
 browserFindElement : Str, Str, Str -> Task Str Str
 

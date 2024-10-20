@@ -5,8 +5,8 @@
 module [
     shouldBe,
     shouldBeEqualTo,
-    # urlShouldBe,
-    # titleShouldBe,
+    urlShouldBe,
+    titleShouldBe,
     shouldBeGreaterOrEqualTo,
     shouldBeGreaterThan,
     shouldBeLesserOrEqualTo,
@@ -18,8 +18,8 @@ module [
     elementShouldHaveValue,
 ]
 
-import Internal exposing [Element]
-# import Browser
+import Internal exposing [Element, Browser]
+import Browser
 import Element
 
 ## Checks if the value of __actual__ is equal to the __expected__.
@@ -124,29 +124,29 @@ shouldBeLesserOrEqualTo = \actual, expected ->
 ## # assert text
 ## browser |> Assert.urlShouldBe! "https://roc-lang.org/"
 ## ```
-# urlShouldBe : Browser, Str -> Task.Task {} [AssertionError Str, WebDriverError Str]
-# urlShouldBe = \browser, expected ->
-#     actual = browser |> Browser.getUrl!
-#
-#     if expected == actual then
-#         Task.ok {}
-#     else
-#         Task.err (AssertionError "Expected URL to be $(expected), but got $(actual)")
+urlShouldBe : Browser, Str -> Task.Task {} [AssertionError Str, WebDriverError Str]
+urlShouldBe = \browser, expected ->
+    actual = browser |> Browser.getUrl!
+
+    if expected == actual then
+        Task.ok {}
+    else
+        Task.err (AssertionError "Expected the URL to be \"$(expected)\", but got \"$(actual)\"")
 
 ## Checks if the __title__ of the page is equal to the __expected__.
 ##
 ## ```
 ## # assert text
-## browser |> Assert.urlShouldBe! "https://roc-lang.org/"
+## browser |> Assert.titleShouldBe! "The Roc Programming Language"
 ## ```
-# titleShouldBe : Browser, Str -> Task.Task {} [AssertionError Str, WebDriverError Str]
-# titleShouldBe = \browser, expected ->
-#     actual = browser |> Browser.getTitle!
-#
-#     if expected == actual then
-#         Task.ok {}
-#     else
-#         Task.err (AssertionError "Expected page title to be $(expected), but got $(actual)")
+titleShouldBe : Browser, Str -> Task {} [AssertionError Str, WebDriverError Str]
+titleShouldBe = \browser, expected ->
+    actual = browser |> Browser.getTitle!
+
+    if expected == actual then
+        Task.ok {}
+    else
+        Task.err (AssertionError "Expected the page title to be \"$(expected)\", but got \"$(actual)\"")
 
 ## Fails with given error message.
 ##
