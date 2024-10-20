@@ -41,6 +41,13 @@ func CreateSession(options SessionOptions) (string, error) {
 	// TODO parametrize this when passing more data from Roc app is possible
 	jsonData := []byte(fmt.Sprintf(`{
 		"capabilities": {
+      "alwaysMatch": {
+        "timeouts": {
+          "implicit": 5000,
+          "pageLoad": 10000,
+          "script": 10000
+        }
+      },
 			"firstMatch": [
 				{
 					"goog:chromeOptions": {

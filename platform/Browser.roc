@@ -1,5 +1,8 @@
 ## `Browser` module contains function to interact with the `Browser`.
 module [
+    openNewWindow,
+    openNewWindowWithCleanup,
+    closeWindow,
     navigateTo,
     findElement,
     tryFindElement,
@@ -11,6 +14,52 @@ module [
 
 import Effect
 import Internal exposing [Browser, Element]
+
+## Open a new `Browser` window.
+##
+## Only the browser provided by the test will be closed automatically,
+## please remember to close the browser windows you open manually.
+##
+## ```
+## newBrowser = Browser.openNewWindow!
+## ...
+## browser |> Browser.closeWindow!
+## ```
+openNewWindow : Task Browser [WebDriverError Str]
+openNewWindow =
+    Effect.startSession {}
+    |> Task.mapErr WebDriverError
+    |> Task.map \sessionId ->
+        Internal.packBrowserData { sessionId }
+
+## Open a new `Browser` window and run a callback.
+## Will close the browser after the callback is finished.
+##
+## ```
+## Browser.openNewWindowWithCleanup! \browser2 ->
+##     browser2 |> Browser.navigateTo! "https://www.roc-lang.org/"
+## ```
+openNewWindowWithCleanup : (Browser -> Task val [WebDriverError Str]err) -> Task val [WebDriverError Str]err
+openNewWindowWithCleanup = \callback ->
+    browser = openNewWindow!
+    result = callback browser |> Task.result!
+    browser |> closeWindow!
+    result |> Task.fromResult
+
+## Close a `Browser` window.
+##
+## Do not close the browser provided by the test,
+## the automatic cleanup will fail trying to close this browser.
+##
+## ```
+## newBrowser = Browser.openNewWindow!
+## ...
+## browser |> Browser.closeWindow!
+## ```
+closeWindow : Browser -> Task {} [WebDriverError Str]
+closeWindow = \browser ->
+    { sessionId } = Internal.unpackBrowserData browser
+    Effect.deleteSession sessionId |> Task.mapErr WebDriverError
 
 ## Navigate the browser to the given URL.
 ##

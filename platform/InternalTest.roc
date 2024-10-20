@@ -2,13 +2,13 @@ module [test, runTests]
 
 import Internal exposing [Browser]
 import Console
-import Session
 import Time
 import Browser
 import BasicHtmlReporter
 import InternalReporting
-# import Fs # without this import the compiler crashes
 import Error
+
+import Assert # wihtout an even number of imports in this module, Roc compiler fails
 
 TestBody err : Browser -> Task {} [WebDriverError Str]err
 
@@ -31,6 +31,8 @@ test = \name, testBody ->
     }
 
 runTests = \testCases ->
+    Assert.shouldBe! 1 1 # supressing the warning
+
     Console.printLine! "Starting test run..."
 
     startTime = Time.getTimeMilis!
@@ -108,17 +110,16 @@ runTest = \i, @TestCase { name, testBody } ->
 
 # runTestSafe : TestBody err -> Task {} _
 runTestSafe = \testBody ->
-    sessionId = Session.createSession |> Task.mapErr! ResultWithoutScreenshot
+    browser = Browser.openNewWindow |> Task.mapErr! ResultWithoutScreenshot
     # TODO - this hack might help with test flickers
     Console.wait! 20
 
-    browser = Internal.packBrowserData { sessionId }
     testResult = testBody browser |> Task.result!
 
     shouldTakeScreenshot = testResult |> Result.isErr
     screenshot = shouldTakeScreenshot |> takeConditionalScreenshot browser |> Task.mapErr! ResultWithoutScreenshot
 
-    Session.deleteSession sessionId |> Task.mapErr! ResultWithoutScreenshot
+    Browser.closeWindow browser |> Task.mapErr! ResultWithoutScreenshot
 
     when testResult is
         Ok {} -> Task.ok {}
