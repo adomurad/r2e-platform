@@ -12,7 +12,30 @@ import (
 
 //export main
 func main() {
-	exitCode := roc.Main()
+	options := roc.Options{
+		SetupOnly:               false,
+		PrintBrowserVersionOnly: false,
+	}
+
+	// os.Args is a slice of strings
+	// os.Args[0] is the name of the program
+	// os.Args[1:] contains the command-line arguments
+	args := os.Args[1:]
+
+	for _, arg := range args {
+		// fmt.Printf("arg: %s", arg)
+		switch arg {
+		case "--setup":
+			options.SetupOnly = true
+		case "--print-browser-version-only":
+			options.PrintBrowserVersionOnly = true
+		case "--headless":
+			// TODO - this will be provided by the Roc app
+			options.Headless = true
+		}
+	}
+
+	exitCode := roc.Main(options)
 
 	os.Exit(exitCode)
 }

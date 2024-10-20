@@ -6,6 +6,7 @@ import "C"
 import (
 	"fmt"
 	"host/driversetup"
+	"host/setup"
 	"host/utils"
 	"host/webdriver"
 	"os"
@@ -14,13 +15,34 @@ import (
 	"unsafe"
 )
 
-func Main() int {
-	// fmt.Println(utils.FG_BLUE + "=============================" + utils.RESET)
-	// fmt.Println(utils.FG_BLUE + "============SETUP============" + utils.RESET)
-	err := setup()
+type Options struct {
+	SetupOnly               bool
+	PrintBrowserVersionOnly bool
+	Headless                bool
+}
+
+// TODO change when passing more than 1 value from Roc app is possible
+var headless = false
+
+func Main(options Options) int {
+	if options.PrintBrowserVersionOnly {
+		fmt.Printf("%s", setup.BrowserVersion)
+		return 0
+	}
+
+	if options.Headless {
+		headless = true
+	}
+
+	err := driversetup.DownloadChromeAndDriver()
 	if err != nil {
 		fmt.Println(utils.FG_RED+"Setup failed with: "+utils.RESET, err)
 		return 1
+	}
+
+	if options.SetupOnly {
+		fmt.Println("Browser and driver ready.")
+		return 0
 	}
 
 	cmd, err := driversetup.RunChromedriver()
@@ -36,10 +58,6 @@ func Main() int {
 		fmt.Println("could not run chrome: ", err)
 		return 1
 	}
-
-	// fmt.Println(utils.FG_BLUE + "Driver and Browser are ready." + utils.RESET)
-	// fmt.Println(utils.FG_BLUE + "=============================" + utils.RESET)
-	// fmt.Print("\n\n")
 
 	size := C.roc__mainForHost_1_exposed_size()
 	capturePtr := roc_alloc(size, 0)
@@ -88,18 +106,13 @@ func roc_fx_wait(timeout int64) C.struct_ResultVoidStr {
 	return createRocResultStr(RocOk, "")
 }
 
-func setup() error {
-	err := driversetup.DownloadChromeAndDriver()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 //export roc_fx_startSession
 func roc_fx_startSession() C.struct_ResultVoidStr {
-	sessionId, err := webdriver.CreateSession()
+	serverOptions := webdriver.SessionOptions{
+		Headless: headless,
+	}
+
+	sessionId, err := webdriver.CreateSession(serverOptions)
 
 	if err != nil {
 		fmt.Println("error value ")

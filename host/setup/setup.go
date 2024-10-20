@@ -15,11 +15,17 @@ type BrowserPaths struct {
 	DriverDirPath  string
 }
 
+var (
+	// TODO - this will be passed from the roc program
+	BrowserVersion = fmt.Sprintf("Chrome-%s", ChromeVersion)
+	ChromeVersion  = "117.0.5846.0"
+)
+
 func GetChromePaths() (*BrowserPaths, error) {
 	os := fmt.Sprintf("%s-%s", runtime.GOOS, runtime.GOARCH)
 
 	browserFilesDir := "browser_files"
-	chromeVersion := "117.0.5846.0"
+	chromeVersion := ChromeVersion
 	var osName string
 
 	switch os {

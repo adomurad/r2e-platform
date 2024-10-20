@@ -21,25 +21,36 @@ type CreateSession_Response struct {
 	Value CreateSession_ResponseValue `json:"value"`
 }
 
-func CreateSession() (string, error) {
+type SessionOptions struct {
+	// TODO - props like window-size, timeouts, etc passed down from the  Roc app
+	Headless bool
+}
+
+func CreateSession(options SessionOptions) (string, error) {
 	url := fmt.Sprintf("%s/session", baseUrl)
 	paths, err := setup.GetChromePaths()
 	if err != nil {
 		return "", err
 	}
 
+	headlessSwtich := ""
+	if options.Headless {
+		headlessSwtich = ", \"--headless\""
+	}
+
+	// TODO parametrize this when passing more data from Roc app is possible
 	jsonData := []byte(fmt.Sprintf(`{
 		"capabilities": {
 			"firstMatch": [
 				{
 					"goog:chromeOptions": {
 						"binary": "%s",
-            "args": ["--window-size=1920,1080"]
+            "args": ["--window-size=1920,1080"%s]
 					}
 				}
 			]
 		}
-	}`, paths.BrowserPath))
+	}`, paths.BrowserPath, headlessSwtich))
 
 	var response CreateSession_Response
 	err = makeHttpRequest("POST", url, bytes.NewBuffer(jsonData), &response)
