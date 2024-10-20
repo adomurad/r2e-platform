@@ -114,7 +114,6 @@ func roc_fx_startSession() C.struct_ResultVoidStr {
 	sessionId, err := webdriver.CreateSession(serverOptions)
 
 	if err != nil {
-		fmt.Println("error value ")
 		return createRocResultStr(RocErr, err.Error())
 	} else {
 		return createRocResultStr(RocOk, sessionId)
@@ -138,6 +137,46 @@ func roc_fx_getScreenshot(sessionId *RocStr) C.struct_ResultVoidStr {
 		return createRocResultStr(RocErr, err.Error())
 	} else {
 		return createRocResultStr(RocOk, screenshotBase64)
+	}
+}
+
+//export roc_fx_browserSetWindowRect
+func roc_fx_browserSetWindowRect(sessionId *RocStr, disciminant, x, y, width, height int64) C.struct_ResultListStr {
+	rect := webdriver.WindowRect{}
+
+	switch disciminant {
+	case 1: // Move
+		rect.X = x
+		rect.Y = y
+
+	case 2: // Resize
+		rect.Width = width
+		rect.Height = height
+
+	case 3: // MoveAndResize
+		rect.X = x
+		rect.Y = y
+		rect.Width = width
+		rect.Height = height
+	}
+
+	newRect, err := webdriver.SetWindowRect(sessionId.String(), rect)
+	if err != nil {
+		return createRocResult_ListI64_Str(RocErr, nil, err.Error())
+	} else {
+		rectList := []int64{newRect.X, newRect.Y, newRect.Width, newRect.Height}
+		return createRocResult_ListI64_Str(RocOk, rectList, "")
+	}
+}
+
+//export roc_fx_browserGetWindowRect
+func roc_fx_browserGetWindowRect(sessionId *RocStr) C.struct_ResultListStr {
+	newRect, err := webdriver.GetWindowRect(sessionId.String())
+	if err != nil {
+		return createRocResult_ListI64_Str(RocErr, nil, err.Error())
+	} else {
+		rectList := []int64{newRect.X, newRect.Y, newRect.Width, newRect.Height}
+		return createRocResult_ListI64_Str(RocOk, rectList, "")
 	}
 }
 
@@ -165,7 +204,7 @@ func roc_fx_browserFindElement(sessionId, using, value *RocStr) C.struct_ResultV
 }
 
 //export roc_fx_browserFindElements
-func roc_fx_browserFindElements(sessionId, using, value *RocStr) C.struct_Result_ListStr_Str {
+func roc_fx_browserFindElements(sessionId, using, value *RocStr) C.struct_ResultListStr {
 	elementIds, err := webdriver.FindElements(sessionId.String(), using.String(), value.String())
 	if err != nil {
 		return createRocResult_ListStr_Str(RocErr, nil, err.Error())
@@ -298,8 +337,8 @@ func createRocResultStr(resultType RocResultType, str string) C.struct_ResultVoi
 	return result
 }
 
-func createRocResult_ListStr_Str(resultType RocResultType, strList []string, error string) C.struct_Result_ListStr_Str {
-	var result C.struct_Result_ListStr_Str
+func createRocResult_ListStr_Str(resultType RocResultType, strList []string, error string) C.struct_ResultListStr {
+	var result C.struct_ResultListStr
 
 	result.disciminant = C.uchar(resultType)
 
@@ -309,6 +348,24 @@ func createRocResult_ListStr_Str(resultType RocResultType, strList []string, err
 			listOfRocStr[i] = NewRocStr(str)
 		}
 		rocList := NewRocList(listOfRocStr)
+		payloadPtr := unsafe.Pointer(&result.payload)
+		*(*C.struct_RocList)(payloadPtr) = rocList.C()
+	} else {
+		rocStr := NewRocStr(error)
+		payloadPtr := unsafe.Pointer(&result.payload)
+		*(*C.struct_RocStr)(payloadPtr) = rocStr.C()
+	}
+
+	return result
+}
+
+func createRocResult_ListI64_Str(resultType RocResultType, intList []int64, error string) C.struct_ResultListStr {
+	var result C.struct_ResultListStr
+
+	result.disciminant = C.uchar(resultType)
+
+	if resultType == RocOk {
+		rocList := NewRocList(intList)
 		payloadPtr := unsafe.Pointer(&result.payload)
 		*(*C.struct_RocList)(payloadPtr) = rocList.C()
 	} else {

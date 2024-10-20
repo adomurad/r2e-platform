@@ -20,6 +20,8 @@ hosted Effect
         elementGetProperty,
         elementSendKeys,
         elementClear,
+        browserSetWindowRect,
+        browserGetWindowRect,
     ]
     imports []
 
@@ -48,6 +50,10 @@ browserNavigateTo : Str, Str -> Task {} Str
 browserFindElement : Str, Str, Str -> Task Str Str
 
 browserFindElements : Str, Str, Str -> Task (List Str) Str
+
+browserSetWindowRect : Str, I64, I64, I64, I64, I64 -> Task (List I64) Str
+
+browserGetWindowRect : Str -> Task (List I64) Str
 
 getScreenshot : Str -> Task Str Str
 

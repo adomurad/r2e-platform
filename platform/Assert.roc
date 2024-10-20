@@ -39,7 +39,7 @@ shouldBe = \actual, expected ->
     else
         actualStr = Inspect.toStr actual
         expectedStr = Inspect.toStr expected
-        Task.err (AssertionError "Expected $(actualStr) to be $(expectedStr)")
+        Task.err (AssertionError "Expected $(expectedStr), but got $(actualStr)")
 
 ## Checks if the value of __actual__ is equal to the __expected__.
 ##
@@ -60,7 +60,7 @@ shouldBeEqualTo = \actual, expected ->
     else
         actualStr = Num.toStr actual
         expectedStr = Num.toStr expected
-        Task.err (AssertionError "Expected $(actualStr) to be $(expectedStr)")
+        Task.err (AssertionError "Expected $(expectedStr), but got $(actualStr)")
 
 ## Checks if the __actual__ `Num` is grater than the __expected__.
 ##
@@ -74,7 +74,7 @@ shouldBeGreaterThan = \actual, expected ->
     else
         actualStr = actual |> Num.toStr
         expectedStr = expected |> Num.toStr
-        Task.err (AssertionError "Expected $(actualStr) to be greater than $(expectedStr)")
+        Task.err (AssertionError "Expected (value > $(expectedStr)), but got $(actualStr)")
 
 ## Checks if the __actual__ `Num` is grater or equal than the __expected__.
 ##
@@ -88,7 +88,7 @@ shouldBeGreaterOrEqualTo = \actual, expected ->
     else
         actualStr = actual |> Num.toStr
         expectedStr = expected |> Num.toStr
-        Task.err (AssertionError "Expected $(actualStr) to be equal to or greater than $(expectedStr)")
+        Task.err (AssertionError "Expected (value >= $(expectedStr)), but got $(actualStr)")
 
 ## Checks if the __actual__ `Num` is grater than the __expected__.
 ##
@@ -102,7 +102,7 @@ shouldBeLesserThan = \actual, expected ->
     else
         actualStr = actual |> Num.toStr
         expectedStr = expected |> Num.toStr
-        Task.err (AssertionError "Expected $(actualStr) to be lesser than $(expectedStr)")
+        Task.err (AssertionError "Expected (value < $(expectedStr)), but got $(actualStr)")
 
 ## Checks if the __actual__ `Num` is grater or equal than the __expected__.
 ##
@@ -116,7 +116,7 @@ shouldBeLesserOrEqualTo = \actual, expected ->
     else
         actualStr = actual |> Num.toStr
         expectedStr = expected |> Num.toStr
-        Task.err (AssertionError "Expected $(actualStr) to be equal to or lesser than $(expectedStr)")
+        Task.err (AssertionError "Expected (value <= $(expectedStr)), but got $(actualStr)")
 
 ## Checks if the __URL__ is equal to the __expected__.
 ##
@@ -131,7 +131,7 @@ shouldBeLesserOrEqualTo = \actual, expected ->
 #     if expected == actual then
 #         Task.ok {}
 #     else
-#         Task.err (AssertionError "Expected URL $(actual) to be $(expected)")
+#         Task.err (AssertionError "Expected URL to be $(expected), but got $(actual)")
 
 ## Checks if the __title__ of the page is equal to the __expected__.
 ##
@@ -146,7 +146,7 @@ shouldBeLesserOrEqualTo = \actual, expected ->
 #     if expected == actual then
 #         Task.ok {}
 #     else
-#         Task.err (AssertionError "Expected page title $(actual) to be $(expected)")
+#         Task.err (AssertionError "Expected page title to be $(expected), but got $(actual)")
 
 ## Fails with given error message.
 ##
@@ -158,7 +158,7 @@ failWith : Str -> Task.Task _ [AssertionError Str]
 failWith = \msg ->
     Task.err (AssertionError msg)
 
-## Checks if the lenght of __list__ is equal to the __expected__ length.
+## Checks if the length of __list__ is equal to the __expected__ length.
 ##
 ## ```
 ## # find all buttons element
@@ -199,8 +199,14 @@ pluralize = \count, singular, plural ->
 ## ```
 elementShouldHaveText : Element, Str -> Task {} [AssertionError Str, ElementNotFound Str, WebDriverError Str]
 elementShouldHaveText = \element, expectedText ->
+    { selectorText } = Internal.unpackElementData element
+
     elementText = element |> Element.getText!
-    elementText |> shouldBe expectedText
+
+    if expectedText == elementText then
+        Task.ok {}
+    else
+        Task.err (AssertionError "Expected element $(selectorText) to have text \"$(expectedText)\", but got \"$(elementText)\"")
 
 ## Checks if the `Element` has __expected__ value.
 ##
@@ -212,5 +218,11 @@ elementShouldHaveText = \element, expectedText ->
 ## ```
 elementShouldHaveValue : Element, Str -> Task {} [AssertionError Str, ElementNotFound Str, WebDriverError Str, PropertyTypeError Str]
 elementShouldHaveValue = \element, expectedValue ->
-    elementValue = element |> Element.getValue!
-    elementValue |> shouldBe expectedValue
+    { selectorText } = Internal.unpackElementData element
+
+    elementText = element |> Element.getValue!
+
+    if expectedValue == elementText then
+        Task.ok {}
+    else
+        Task.err (AssertionError "Expected element $(selectorText) to have value \"$(expectedValue)\", but got \"$(elementText)\"")

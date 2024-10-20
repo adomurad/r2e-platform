@@ -18,7 +18,7 @@ struct ResultVoidStr {
     unsigned char disciminant;
 };
 
-struct Result_ListStr_Str {
+struct ResultListStr {
     union {
       struct RocList list;
       struct RocStr str;

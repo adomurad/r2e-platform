@@ -4,6 +4,8 @@ module [
     openNewWindowWithCleanup,
     closeWindow,
     navigateTo,
+    setWindowRect,
+    getWindowRect,
     findElement,
     tryFindElement,
     findSingleElement,
@@ -131,7 +133,9 @@ findElement = \browser, locator ->
 
     elementId = Effect.browserFindElement sessionId using value |> Task.mapErr! handleFindElementError
 
-    Internal.packElementData { sessionId, elementId } |> Task.ok
+    selectorText = "$(locator |> Inspect.toStr)"
+
+    Internal.packElementData { sessionId, elementId, selectorText } |> Task.ok
 
 ## Find a `Element` in the `Browser`.
 ##
@@ -209,11 +213,13 @@ findElements = \browser, locator ->
 
     result = Effect.browserFindElements sessionId using value |> Task.mapErr handleFindElementError |> Task.result!
 
+    selectorText = "$(locator |> Inspect.toStr)"
+
     when result is
         Ok elementIds ->
             elementIds
             |> List.map \elementId ->
-                Internal.packElementData { sessionId, elementId }
+                Internal.packElementData { sessionId, elementId, selectorText }
             |> Task.ok
 
         Err (ElementNotFound _) -> Task.ok []
@@ -236,3 +242,93 @@ getScreenshotBase64 = \browser ->
     { sessionId } = Internal.unpackBrowserData browser
 
     Effect.getScreenshot sessionId |> Task.mapErr WebDriverError
+
+WindowRect : {
+    x : I64,
+    y : I64,
+    width : U32,
+    height : U32,
+}
+
+SetWindowRectOptions : [
+    MoveAndResize
+        {
+            x : I64,
+            y : I64,
+            width : U32,
+            height : U32,
+        },
+    Move { x : I64, y : I64 },
+    Resize
+        {
+            width : U32,
+            height : U32,
+        },
+]
+
+## Set browser window position and/or size.
+##
+## `x` - x position
+## `y` - y position
+## `width` - width
+## `height` - height
+##
+## The result will contain new dimensions.
+##
+## **warning** - when setting new position,
+## the input dimensions (x, y) are the outer bound dimensions (with the frame).
+## But the result contain the dimension of the browser viewport!
+##
+## ```
+## newRect = browser |> Browser.setWindowRect! (Move { x: 400, y: 600 })
+## # newRect is { x: 406, y: 627, width: 400, height: 600 }
+## ```
+## ```
+## newRect = browser |> Browser.setWindowRect! (Resize { width: 800, height: 750 })
+## # newRect is { x: 300, y: 500, width: 800, height: 750 }
+## ```
+## ```
+## newRect = browser |> Browser.setWindowRect! (MoveAndResize { x: 400, y: 600, width: 800, height: 750 })
+## # newRect is { x: 406, y: 627, width: 800, height: 750 }
+## ```
+setWindowRect : Browser, SetWindowRectOptions -> Task.Task WindowRect [WebDriverError Str]
+setWindowRect = \browser, setRectOptions ->
+    { sessionId } = Internal.unpackBrowserData browser
+
+    { disciminant, newX, newY, newWidth, newHeight } =
+        when setRectOptions is
+            Move { x, y } -> { disciminant: 1, newX: x, newY: y, newWidth: 0, newHeight: 0 }
+            Resize { width, height } -> { disciminant: 2, newX: 0, newY: 0, newWidth: width |> Num.toI64, newHeight: height |> Num.toI64 }
+            MoveAndResize { x, y, width, height } -> { disciminant: 3, newX: x, newY: y, newWidth: width |> Num.toI64, newHeight: height |> Num.toI64 }
+
+    Effect.browserSetWindowRect sessionId disciminant newX newY newWidth newHeight
+    |> Task.map \list ->
+        when list is
+            [xVal, yVal, widthVal, heightVal] -> { x: xVal, y: yVal, width: widthVal |> Num.toU32, height: heightVal |> Num.toU32 }
+            _ -> crash "the contract with host should not fail"
+    |> Task.mapErr WebDriverError
+
+## Get browser window position and size.
+##
+## `x` - x position
+## `y` - y position
+## `width` - width
+## `height` - height
+##
+## **warning** - the result contains the x and y of the browser's viewport,
+## without the frame.
+##
+## ```
+## rect = browser |> Browser.getWindowRect!
+## # rect is { x: 406, y: 627, width: 400, height: 600 }
+## ```
+getWindowRect : Browser -> Task.Task WindowRect [WebDriverError Str]
+getWindowRect = \browser ->
+    { sessionId } = Internal.unpackBrowserData browser
+
+    Effect.browserGetWindowRect sessionId
+    |> Task.map \list ->
+        when list is
+            [xVal, yVal, widthVal, heightVal] -> { x: xVal, y: yVal, width: widthVal |> Num.toU32, height: heightVal |> Num.toU32 }
+            _ -> crash "the contract with host should not fail"
+    |> Task.mapErr WebDriverError

@@ -12,28 +12,16 @@ module [
 
 # ----------------------------------------------------------------
 
-# Driver := {
-#     serverUrl : Str,
-#     # headless : Bool,
-#     # acceptInsecureCerts : Bool,
-# }
-
 Browser := {
     sessionId : Str,
-    # serverUrl : Str,
 }
 
 Element := {
     sessionId : Str,
-    # serverUrl : Str,
     elementId : Str,
+    # used to provide better context in Asserts
+    selectorText : Str,
 }
-
-# packDriverData = \data ->
-#     @Driver data
-#
-# unpackDriverData = \@Driver data ->
-#     data
 
 packBrowserData = \data ->
     @Browser data

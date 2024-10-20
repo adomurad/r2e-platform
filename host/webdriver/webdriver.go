@@ -136,6 +136,46 @@ func GetStatus() (bool, error) {
 	return response.Value.Ready, nil
 }
 
+type WindowRect struct {
+	X      int64 `json:"x"`
+	Y      int64 `json:"y"`
+	Width  int64 `json:"width"`
+	Height int64 `json:"height"`
+}
+
+type WindowRect_Response struct {
+	Value WindowRect `json:"value"`
+}
+
+func SetWindowRect(sessionId string, rect WindowRect) (*WindowRect, error) {
+	url := fmt.Sprintf("%s/session/%s/window/rect", baseUrl, sessionId)
+
+	jsonData, err := json.Marshal(rect)
+	if err != nil {
+		return nil, err
+	}
+
+	var response WindowRect_Response
+	err = makeHttpRequest("POST", url, bytes.NewBuffer(jsonData), &response)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response.Value, nil
+}
+
+func GetWindowRect(sessionId string) (*WindowRect, error) {
+	url := fmt.Sprintf("%s/session/%s/window/rect", baseUrl, sessionId)
+
+	var response WindowRect_Response
+	err := makeHttpRequest("GET", url, nil, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response.Value, nil
+}
+
 type FindElement_Response struct {
 	Value FindElement_ResponseValue
 }
