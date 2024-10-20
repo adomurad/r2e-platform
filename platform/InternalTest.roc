@@ -51,7 +51,13 @@ runTests = \testCases ->
 
     printResultSummary! results
 
-    Task.ok {}
+    anyFailures = results |> List.any (\{ result } -> result |> Result.isErr)
+    if
+        anyFailures
+    then
+        Task.err TestRunFailed
+    else
+        Task.ok {}
 
 runTest : U64, TestCase _ -> Task (TestCaseResult [WebDriverError Str, AssertionError Str]_) []
 runTest = \i, @TestCase { name, testBody } ->

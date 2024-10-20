@@ -15,16 +15,14 @@ platform ""
     imports [InternalTest]
     provides [mainForHost]
 
-mainForHost : Task {} I32
+mainForHost : Task {} I64
 mainForHost =
     testCases
     |> InternalTest.runTests
     |> Task.attempt \res ->
         when res is
             Ok {} ->
-                # TODO - right now I'm unable to make Task.ok {} to be interpreted by Go as discriminant 1
-                # will fix when I have more time
-                Task.err 0
+                Task.ok {}
 
             Err _ ->
                 Task.err 1

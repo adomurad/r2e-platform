@@ -75,7 +75,6 @@ func Main(options Options) int {
 		return 1
 	}
 
-	// TODO - this seems to be broken
 	switch result.disciminant {
 	case 1: // Ok
 		return 0

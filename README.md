@@ -9,6 +9,8 @@ Tutorial: https://adomurad.github.io/r2e-platform/Tutorial
 
 Releases: https://github.com/adomurad/r2e-platform/releases
 
+Example Repo: https://github.com/adomurad/r2e-platform-example
+
 ## Warning
 
 This platform downloads ~150MB at the first start - "chrome for testing" and
