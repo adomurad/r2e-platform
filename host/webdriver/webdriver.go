@@ -159,6 +159,41 @@ func FindElement(sessionId, using, value string) (string, error) {
 	return response.Value.ElementId, nil
 }
 
+type FindElements_Response struct {
+	Value []FindElements_ResponseValue `json:"value"`
+}
+
+type FindElements_ResponseValue struct {
+	ElementId string `json:"element-6066-11e4-a52e-4f735466cecf"`
+}
+
+func FindElements(sessionId, using, value string) ([]string, error) {
+	url := fmt.Sprintf("%s/session/%s/elements", baseUrl, sessionId)
+
+	reqBody := map[string]interface{}{
+		"using": using,
+		"value": value,
+	}
+
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, err
+	}
+
+	var response FindElements_Response
+	err = makeHttpRequest("POST", url, bytes.NewBuffer(jsonData), &response)
+	if err != nil {
+		return nil, err
+	}
+
+	elementIds := make([]string, len(response.Value))
+	for i, element := range response.Value {
+		elementIds[i] = element.ElementId
+	}
+
+	return elementIds, nil
+}
+
 func ClickElement(sessionId, elementId string) error {
 	url := fmt.Sprintf("%s/session/%s/element/%s/click", baseUrl, sessionId, elementId)
 

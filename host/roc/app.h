@@ -18,6 +18,14 @@ struct ResultVoidStr {
     unsigned char disciminant;
 };
 
+struct Result_ListStr_Str {
+    union {
+      struct RocList list;
+      struct RocStr str;
+    } payload;
+    unsigned char disciminant;
+};
+
 void roc__mainForHost_1_exposed_generic(void* captures);
 size_t roc__mainForHost_1_exposed_size();
 void roc__mainForHost_0_caller(char* flags, void* closure_data, struct ResultVoidI64 *result);

@@ -11,11 +11,16 @@ module [
     shouldBeGreaterThan,
     shouldBeLesserOrEqualTo,
     shouldBeLesserThan,
+    shouldHaveLength,
     failWith,
+    # element
+    elementShouldHaveText,
+    elementShouldHaveValue,
 ]
 
-# import Internal exposing [Browser]
+import Internal exposing [Element]
 # import Browser
+import Element
 
 ## Checks if the value of __actual__ is equal to the __expected__.
 ##
@@ -152,3 +157,60 @@ shouldBeLesserOrEqualTo = \actual, expected ->
 failWith : Str -> Task.Task _ [AssertionError Str]
 failWith = \msg ->
     Task.err (AssertionError msg)
+
+## Checks if the lenght of __list__ is equal to the __expected__ length.
+##
+## ```
+## # find all buttons element
+## buttons = browser |> Browser.findElements! (Css "button")
+## # assert that there are 3 buttons
+## buttons |> Assert.shouldHaveLength! 3
+## ```
+shouldHaveLength : List a, U64 -> Task.Task {} [AssertionError Str]
+shouldHaveLength = \list, expected ->
+    actualLen = list |> List.len
+
+    if actualLen == expected then
+        Task.ok {}
+    else
+        actualLenStr = actualLen |> Num.toStr
+        expectedLenStr = expected |> Num.toStr
+        actualElementsWord = pluralize actualLen "element" "elements"
+        expectedElementsWord = pluralize actualLen "element" "elements"
+
+        Task.err (AssertionError "Expected a list with $(actualLenStr) $(actualElementsWord), but got $(expectedLenStr) $(expectedElementsWord)")
+
+pluralize : U64, a, a -> a
+pluralize = \count, singular, plural ->
+    if
+        count == 1
+    then
+        singular
+    else
+        plural
+
+## Checks if the `Element` has __expected__ text.
+##
+## ```
+## # find button element
+## button = browser |> Browser.findElement! (Css "#submit-button")
+## # check if button has text "Submit"
+## button |> Assert.elementShouldHaveText! "Submit"
+## ```
+elementShouldHaveText : Element, Str -> Task {} [AssertionError Str, ElementNotFound Str, WebDriverError Str]
+elementShouldHaveText = \element, expectedText ->
+    elementText = element |> Element.getText!
+    elementText |> shouldBe expectedText
+
+## Checks if the `Element` has __expected__ value.
+##
+## ```
+## # find input element
+## input = browser |> Browser.findElement! (Css "#username-input")
+## # check if input has value "fake-username"
+## input |> Assert.elementShouldHaveValue! "fake-username"
+## ```
+elementShouldHaveValue : Element, Str -> Task {} [AssertionError Str, ElementNotFound Str, WebDriverError Str, PropertyTypeError Str]
+elementShouldHaveValue = \element, expectedValue ->
+    elementValue = element |> Element.getValue!
+    elementValue |> shouldBe expectedValue

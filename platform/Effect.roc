@@ -8,6 +8,7 @@ hosted Effect
         deleteSession,
         browserNavigateTo,
         browserFindElement,
+        browserFindElements,
         elementClick,
         getTimeMilis,
         createDirIfNotExist,
@@ -45,6 +46,8 @@ deleteSession : Str -> Task {} Str
 browserNavigateTo : Str, Str -> Task {} Str
 
 browserFindElement : Str, Str, Str -> Task Str Str
+
+browserFindElements : Str, Str, Str -> Task (List Str) Str
 
 getScreenshot : Str -> Task Str Str
 

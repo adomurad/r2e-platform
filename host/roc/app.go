@@ -164,6 +164,16 @@ func roc_fx_browserFindElement(sessionId, using, value *RocStr) C.struct_ResultV
 	return createRocResultStr(RocOk, elementId)
 }
 
+//export roc_fx_browserFindElements
+func roc_fx_browserFindElements(sessionId, using, value *RocStr) C.struct_Result_ListStr_Str {
+	elementIds, err := webdriver.FindElements(sessionId.String(), using.String(), value.String())
+	if err != nil {
+		return createRocResult_ListStr_Str(RocErr, nil, err.Error())
+	}
+
+	return createRocResult_ListStr_Str(RocOk, elementIds, "")
+}
+
 //export roc_fx_elementClick
 func roc_fx_elementClick(sessionId, elementId *RocStr) C.struct_ResultVoidStr {
 	err := webdriver.ClickElement(sessionId.String(), elementId.String())
@@ -284,6 +294,28 @@ func createRocResultStr(resultType RocResultType, str string) C.struct_ResultVoi
 
 	payloadPtr := unsafe.Pointer(&result.payload)
 	*(*C.struct_RocStr)(payloadPtr) = rocStr.C()
+
+	return result
+}
+
+func createRocResult_ListStr_Str(resultType RocResultType, strList []string, error string) C.struct_Result_ListStr_Str {
+	var result C.struct_Result_ListStr_Str
+
+	result.disciminant = C.uchar(resultType)
+
+	if resultType == RocOk {
+		listOfRocStr := make([]RocStr, len(strList))
+		for i, str := range strList {
+			listOfRocStr[i] = NewRocStr(str)
+		}
+		rocList := NewRocList(listOfRocStr)
+		payloadPtr := unsafe.Pointer(&result.payload)
+		*(*C.struct_RocList)(payloadPtr) = rocList.C()
+	} else {
+		rocStr := NewRocStr(error)
+		payloadPtr := unsafe.Pointer(&result.payload)
+		*(*C.struct_RocStr)(payloadPtr) = rocStr.C()
+	}
 
 	return result
 }

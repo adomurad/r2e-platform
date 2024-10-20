@@ -31,6 +31,13 @@ testCases = [
     test23,
     test24,
     test25,
+    test26,
+    test27,
+    test28,
+    test29,
+    test30,
+    test31,
+    test32,
 ]
 
 test1 = test "findElement and getText" \browser ->
@@ -267,3 +274,73 @@ test25 = test "clearElement" \browser ->
 
     value3 = input |> Element.getValue!
     value3 |> Assert.shouldBe ""
+
+test26 = test "findElements" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+
+    options = browser |> Browser.findElements! (Css "option")
+
+    options |> Assert.shouldHaveLength! 3
+
+    element1 = options |> List.get 0 |> Task.fromResult!
+    element1 |> Assert.elementShouldHaveText! "Command Line"
+
+    element2 = options |> List.get 1 |> Task.fromResult!
+    element2 |> Assert.elementShouldHaveText! "JavaScript API"
+
+    element3 = options |> List.get 2 |> Task.fromResult!
+    element3 |> Assert.elementShouldHaveText! "Both"
+
+test27 = test "findElements empty" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+
+    emptyList = browser |> Browser.findElements! (Css "#fake-id")
+
+    emptyList |> Assert.shouldHaveLength! 0
+
+test28 = test "tryFindElement" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+    maybeElement = browser |> Browser.tryFindElement! (Css "h1")
+
+    when maybeElement is
+        Found el ->
+            el |> Assert.elementShouldHaveText "Example"
+
+        NotFound ->
+            Assert.failWith "element should have been found"
+
+test29 = test "tryFindElement empty" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+    maybeElement = browser |> Browser.tryFindElement! (Css "#fake-id")
+
+    when maybeElement is
+        Found _ -> Assert.failWith "element should not have beed found"
+        NotFound ->
+            Task.ok {}
+
+test30 = test "findSingleElement empty" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+
+    result = browser |> Browser.findSingleElement (Css "#fake-id") |> Task.result!
+
+    when result is
+        Ok _ -> Assert.failWith "should not find any elements"
+        Err (ElementNotFound err) -> err |> Assert.shouldBe "element with selector #fake-id was not found"
+        Err _ -> Assert.failWith "wrong error type"
+
+test31 = test "findSingleElement to many" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+
+    result = browser |> Browser.findSingleElement (Css "option") |> Task.result!
+
+    when result is
+        Ok _ -> Assert.failWith "should find more than 1 element"
+        Err (AssertionError err) -> err |> Assert.shouldBe "expected to find only 1 element with selector \"option\", but found 3"
+        Err _ -> Assert.failWith "wrong error type"
+
+test32 = test "findSingleElement" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+
+    button = browser |> Browser.findSingleElement! (Css "#populate")
+
+    button |> Assert.elementShouldHaveValue! "Populate"
