@@ -65,7 +65,7 @@ func Main(options Options) int {
 
 	C.roc__mainForHost_1_exposed_generic(capturePtr)
 
-	var result C.struct_ResultVoidI32
+	var result C.struct_ResultVoidI64
 	C.roc__mainForHost_0_caller(nil, capturePtr, &result)
 
 	// TODO - error handling
