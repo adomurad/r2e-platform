@@ -17,7 +17,7 @@ module [
 import Effect
 import Internal exposing [Browser, Element]
 
-## Open a new `Browser` window.
+## Opens a new `Browser` window.
 ##
 ## Only the browser provided by the test will be closed automatically,
 ## please remember to close the browser windows you open manually.
@@ -34,7 +34,7 @@ openNewWindow =
     |> Task.map \sessionId ->
         Internal.packBrowserData { sessionId }
 
-## Open a new `Browser` window and run a callback.
+## Opens a new `Browser` window and runs a callback.
 ## Will close the browser after the callback is finished.
 ##
 ## ```
@@ -48,7 +48,7 @@ openNewWindowWithCleanup = \callback ->
     browser |> closeWindow!
     result |> Task.fromResult
 
-## Close a `Browser` window.
+## Closes a `Browser` window.
 ##
 ## Do not close the browser provided by the test,
 ## the automatic cleanup will fail trying to close this browser.
@@ -105,7 +105,7 @@ getLocator = \locator ->
         # Tag tag -> ("tag name", tag)
         XPath path -> ("xpath", path)
 
-## Find a `Element` in the `Browser`.
+## Find an `Element` in the `Browser`.
 ##
 ## When there are more than 1 elements, then the first will
 ## be returned.
@@ -137,7 +137,7 @@ findElement = \browser, locator ->
 
     Internal.packElementData { sessionId, elementId, selectorText } |> Task.ok
 
-## Find a `Element` in the `Browser`.
+## Find an `Element` in the `Browser`.
 ##
 ## This function returns a `[Found Element, NotFound]` instead of an error
 ## when element is not found.
@@ -165,7 +165,7 @@ tryFindElement = \browser, locator ->
             ElementNotFound _ -> Task.ok NotFound
             other -> Task.err other
 
-## Find a `Element` in the `Browser`.
+## Find an `Element` in the `Browser`.
 ##
 ## This function will fail if the element is not found - `ElementNotFound Str`
 ##
