@@ -1,8 +1,8 @@
 module [test, runTests]
 
 import Internal exposing [Browser]
-import Console
-import Time
+import Debug
+import Utils
 import Browser
 import BasicHtmlReporter
 import InternalReporting
@@ -33,9 +33,9 @@ test = \name, testBody ->
 runTests = \testCases ->
     Assert.shouldBe! 1 1 # supressing the warning
 
-    Console.printLine! "Starting test run..."
+    Debug.printLine! "Starting test run..."
 
-    startTime = Time.getTimeMilis!
+    startTime = Utils.getTimeMilis!
 
     results =
         testCases
@@ -43,7 +43,7 @@ runTests = \testCases ->
                 runTest i testCase
             |> Task.sequence!
 
-    endTime = Time.getTimeMilis!
+    endTime = Utils.getTimeMilis!
     duration = endTime - startTime
 
     reporters = [BasicHtmlReporter.reporter]
@@ -65,14 +65,13 @@ runTest : U64, TestCase _ -> Task (TestCaseResult [WebDriverError Str, Assertion
 runTest = \i, @TestCase { name, testBody } ->
     indexStr = (i + 1) |> Num.toStr
 
-    Console.printLine! "" # empty line for readability
-    Console.printLine! "$(color.gray)Test $(indexStr):$(color.end) \"$(name)\": Running..."
+    Debug.printLine! "" # empty line for readability
+    Debug.printLine! "$(color.gray)Test $(indexStr):$(color.end) \"$(name)\": Running..."
 
-    startTime = Time.getTimeMilis!
-    # result = runTestSafe testBody |> Task.result!
+    startTime = Utils.getTimeMilis!
     resultWithMaybeScreenshot = (runTestSafe testBody) |> Task.result!
 
-    endTime = Time.getTimeMilis!
+    endTime = Utils.getTimeMilis!
     duration = endTime - startTime
 
     { result, screenshot } =
@@ -80,14 +79,11 @@ runTest = \i, @TestCase { name, testBody } ->
             Ok {} -> { result: Ok {}, screenshot: NoScreenshot }
             Err (ResultWithoutScreenshot res) -> { result: Err res, screenshot: NoScreenshot }
             Err (ResultWithScreenshot res screenBase64) -> { result: Err res, screenshot: Screenshot screenBase64 }
-    # result = Ok {}
-    # screenshot = NoScreenshot
 
     testCaseResult = {
         name,
         result,
         duration,
-        # screenshot: NoScreenshot,
         screenshot,
     }
 
@@ -104,7 +100,7 @@ runTest = \i, @TestCase { name, testBody } ->
                     unhandledError ->
                         "$(color.gray)Test $(indexStr):$(color.end) \"$(name)\": $(color.red)$(unhandledError |> Inspect.toStr)$(color.end)"
 
-    Console.printLine! resultLogMessage
+    Debug.printLine! resultLogMessage
 
     Task.ok testCaseResult
 
@@ -136,8 +132,8 @@ takeConditionalScreenshot = \shouldTakeScreenshot, browser ->
 
 printResultSummary : List (TestCaseResult _) -> Task.Task {} _
 printResultSummary = \results ->
-    Console.printLine! "" # empty line
-    Console.printLine! "Summary:"
+    Debug.printLine! "" # empty line
+    Debug.printLine! "Summary:"
 
     totalCount = results |> List.len
     errorCount = results |> List.countIf \{ result } -> result |> Result.isErr
@@ -153,7 +149,7 @@ printResultSummary = \results ->
         else
             "$(color.green)$(msg)$(color.end)"
 
-    Console.printLine "$(msgWithColor)\n"
+    Debug.printLine "$(msgWithColor)\n"
 
 color = {
     gray: "\u(001b)[4;90m",

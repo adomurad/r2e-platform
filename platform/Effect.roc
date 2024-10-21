@@ -33,6 +33,7 @@ hosted Effect
         browserMaximize,
         browserMinimize,
         browserFullScreen,
+        executeJs,
     ]
     imports []
 
@@ -85,6 +86,8 @@ browserMaximize : Str -> Task (List I64) Str
 browserMinimize : Str -> Task (List I64) Str
 
 browserFullScreen : Str -> Task (List I64) Str
+
+executeJs : Str, Str, Str -> Task Str Str
 
 # element effects
 elementClick : Str, Str -> Task {} Str

@@ -21,9 +21,14 @@ module [
     maximizeWindow,
     minimizeWindow,
     fullScreenWindow,
+    executeJs,
+    executeJsWithOutput,
+    executeJsWithArgs,
+
 ]
 
 import Effect
+import CommonBrowser
 import Internal exposing [Browser, Element]
 
 ## Opens a new `Browser` window.
@@ -524,3 +529,83 @@ fullScreenWindow = \browser ->
             [xVal, yVal, widthVal, heightVal] -> { x: xVal, y: yVal, width: widthVal |> Num.toU32, height: heightVal |> Num.toU32 }
             _ -> crash "the contract with host should not fail"
     |> Task.mapErr WebDriverError
+
+## Execute JavaScript in the `Browser`.
+##
+## ```
+## browser |> Browser.executeJs! "console.log('wow')"
+## ```
+executeJs : Browser, Str -> Task {} [WebDriverError Str, JsReturnTypeError Str] where a implements Decoding
+executeJs = \browser, script ->
+    _output : Str
+    _output = CommonBrowser.executeJs! browser script
+    Task.ok {}
+
+## Execute JavaScript in the `Browser` and get the response.
+##
+## This function can be used with types like: `Bool`, `Str`, `I64`, `F64`, etc.
+## R2E will try to cast the browser response to the choosen type.
+##
+## When the response is empty e.g. property does not exist, then the default value of the choosen type will be used:
+## - `Str` - ""
+## - `Bool` - Bool.false
+## - `Num` - 0
+##
+## The output will be casted to expected Roc type:
+##
+## ```
+##  response = browser |> Browser.executeJsWithOutput! "return 50 + 5;"
+##  response |> Assert.shouldBe! 55
+##
+##  response = browser |> Browser.executeJsWithOutput! "return 50.5 + 5;"
+##  response |> Assert.shouldBe! 55.5
+##
+##  response = browser |> Browser.executeJsWithOutput! "return 50.5 + 5;"
+##  response |> Assert.shouldBe! "55.5"
+##
+##  response = browser |> Browser.executeJsWithOutput! "return true"
+##  response |> Assert.shouldBe! "true"
+##
+##  response = browser |> Browser.executeJsWithOutput! "return true"
+##  response |> Assert.shouldBe! Bool.true
+## ```
+##
+## The function can return a `Promise`.
+executeJsWithOutput : Browser, Str -> Task a [WebDriverError Str, JsReturnTypeError Str] where a implements Decoding
+executeJsWithOutput = \browser, script ->
+    CommonBrowser.executeJs browser script
+
+JsValue : [String Str, Number F64, Boolean Bool, Null]
+
+## Execute JavaScript in the `Browser` with arguments and get the response.
+##
+## This function can be used with types like: `Bool`, `Str`, `I64`, `F64`, etc.
+## R2E will try to cast the browser response to the choosen type.
+##
+## The arguments is a list of:
+##
+## ```
+## JsValue : [String Str, Number F64, Boolean Bool, Null]
+## ```
+##
+## When the response is empty e.g. property does not exist, then the default value of the choosen type will be used:
+## - `Str` - ""
+## - `Bool` - Bool.false
+## - `Num` - 0
+##
+## Args can only be used using the `arguments` array in js.
+##
+## The output will be casted to expected Roc type:
+##
+## ```
+##  response = browser |> Browser.executeJsWithArgs! "return 50 + 5;" []
+##  response |> Assert.shouldBe! 55
+##
+##  response = browser |> Browser.executeJsWithArgs! "return 50.5 + 5;" [Number 55.5, String "5"]
+##  response |> Assert.shouldBe! 55.5
+## ```
+##
+## The function can return a `Promise`.
+executeJsWithArgs : Browser, Str, List JsValue -> Task a [WebDriverError Str, JsReturnTypeError Str] where a implements Decoding
+executeJsWithArgs = \browser, script, arguments ->
+    CommonBrowser.executeJsWithArgs browser script arguments

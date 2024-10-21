@@ -140,6 +140,16 @@ func roc_fx_browserGetScreenshot(sessionId *RocStr) C.struct_ResultVoidStr {
 	}
 }
 
+//export roc_fx_executeJs
+func roc_fx_executeJs(sessionId, jsString, argsStr *RocStr) C.struct_ResultVoidStr {
+	result, err := webdriver.ExecuteJs(sessionId.String(), jsString.String(), argsStr.String())
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	} else {
+		return createRocResultStr(RocOk, result)
+	}
+}
+
 // //export roc_fx_browserGetPdf
 // func roc_fx_browserGetPdf(sessionId *RocStr, width, height, top, bottom, left, right, scale float64, orientationStr *RocStr, shrinkToFit, background int64, pageRanges *RocList[RocStr]) C.struct_ResultVoidStr {
 // 	shrinkToFitBool := false

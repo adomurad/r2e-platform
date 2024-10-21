@@ -170,6 +170,48 @@ func BrowserGetScreenshot(sessionId string) (string, error) {
 	return response.Value, nil
 }
 
+type ExecuteJs_Response struct {
+	Value interface{} `json:"value"`
+}
+
+func ExecuteJs(sessionId, jsString, argsString string) (string, error) {
+	requestUrl := fmt.Sprintf("%s/session/%s/execute/sync", baseUrl, sessionId)
+
+	jsEscaped, err := json.Marshal(jsString)
+	if err != nil {
+		return "", err
+	}
+
+	jsonData := []byte(fmt.Sprintf(`{
+		"script": %s,
+    "args": %s
+	}`, jsEscaped, argsString))
+
+	var response ExecuteJs_Response
+	err = makeHttpRequest("POST", requestUrl, bytes.NewBuffer(jsonData), &response)
+	if err != nil {
+		return "", err
+	}
+
+	switch v := response.Value.(type) {
+
+	case nil:
+		return "", nil
+
+	case string:
+		return v, nil
+
+	case bool:
+		return strconv.FormatBool(v), nil
+
+	case float64:
+		return strconv.FormatFloat(v, 'f', -1, 64), nil
+
+	default:
+		return "", fmt.Errorf("unsupported type: %s", v)
+	}
+}
+
 // type PdfOptions struct {
 // 	Page        PdfPageOptions
 // 	Margin      PdfMarginOptions

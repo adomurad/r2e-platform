@@ -39,7 +39,7 @@ app [testCases] { r2e: platform "https://github.com/adomurad/r2e-platform/releas
 import r2e.Test exposing [test]
 import r2e.Browser
 import r2e.Element
-import r2e.Console
+import r2e.Debug
 
 testCases = [
     test1,
@@ -50,7 +50,7 @@ test1 = test "test1" \browser ->
     input = browser |> Browser.findElement! (Css "#developer-name")
     input |> Element.click!
 
-    Console.printLine "I have clicked on a Element..."
+    Debug.printLine "I have clicked on a Element..."
 ```
 
 ## Local Development

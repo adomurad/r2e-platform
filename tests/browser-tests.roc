@@ -17,6 +17,13 @@ testCases = [
     test10,
     test11,
     test12,
+    test13,
+    test14,
+    test15,
+    test16,
+    test17,
+    test18,
+    test19,
 ]
 
 test1 = test "navigation" \browser ->
@@ -111,3 +118,44 @@ test12 = test "window max, min, full" \browser ->
     rect1 = browser |> Browser.maximizeWindow!
     # rect1.x |> Assert.shouldBe! 6
     rect1.width |> Assert.shouldBe! 3828
+
+test13 = test "executeJs return int" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+
+    response = browser |> Browser.executeJsWithOutput! "return 50 + 5;"
+    response |> Assert.shouldBe! 55
+
+test14 = test "executeJs return float" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+
+    response = browser |> Browser.executeJsWithOutput! "return 50.5 + 5;"
+    response |> Assert.shouldBe! 55.5
+
+test15 = test "executeJs return string" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+
+    response = browser |> Browser.executeJsWithOutput! "return 50.5 + 5;"
+    response |> Assert.shouldBe! "55.5"
+
+test16 = test "executeJs return bool to str" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+
+    response = browser |> Browser.executeJsWithOutput! "return true"
+    response |> Assert.shouldBe! "true"
+
+test17 = test "executeJs return bool" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+
+    response = browser |> Browser.executeJsWithOutput! "return true"
+    response |> Assert.shouldBe! Bool.true
+
+test18 = test "executeJs" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+
+    browser |> Browser.executeJs! "console.log(\"test\");"
+
+test19 = test "executeJsWithArgs" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+
+    response = browser |> Browser.executeJsWithArgs! "return 50.5 + 5;" [Number 55.5, String "5"]
+    response |> Assert.shouldBe! 55.5

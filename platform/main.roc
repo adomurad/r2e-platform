@@ -6,7 +6,7 @@ platform ""
         Browser,
         Element,
         Assert,
-        Console,
+        Debug,
         Error,
         Reporting,
         BasicHtmlReporter,

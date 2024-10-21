@@ -7,9 +7,6 @@
 - pdf from elements/pages
 - write to files (to save screenshots and pdfs)
 - Env and Args
-- js execution
-- rename Console to Debug ? Debug.wait Debug.writeLine Debug.printLine Debug.log
-  ?
 - create json / xml / junit reporters
 - send parameters from Roc app to host, e.g. headless, browser type, version,
   timeouts, default window size, etc,

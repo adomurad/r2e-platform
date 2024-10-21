@@ -6,7 +6,7 @@ import Effect
 ## followed by a newline.
 ##
 ## ```
-## Console.printLine "Hello World"
+## Debug.printLine "Hello World"
 ## ```
 printLine : Str -> Task {} []
 printLine = \str ->
@@ -23,7 +23,7 @@ printLine = \str ->
 ##
 ## ```
 ## # wait for 3s
-## Console.wait 3000
+## Debug.wait 3000
 ## ```
 wait : U64 -> Task {} []
 wait = \timeout ->
