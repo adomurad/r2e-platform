@@ -99,6 +99,60 @@ func NavigateTo(sessionId, url string) error {
 	return nil
 }
 
+func Reload(sessionId string) error {
+	requestUrl := fmt.Sprintf("%s/session/%s/refresh", baseUrl, sessionId)
+
+	reqBody := map[string]interface{}{}
+
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		return err
+	}
+
+	err = makeHttpRequest[any]("POST", requestUrl, bytes.NewBuffer(jsonData), nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func NavigateBack(sessionId string) error {
+	requestUrl := fmt.Sprintf("%s/session/%s/back", baseUrl, sessionId)
+
+	reqBody := map[string]interface{}{}
+
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		return err
+	}
+
+	err = makeHttpRequest[any]("POST", requestUrl, bytes.NewBuffer(jsonData), nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func NavigateForward(sessionId string) error {
+	requestUrl := fmt.Sprintf("%s/session/%s/forward", baseUrl, sessionId)
+
+	reqBody := map[string]interface{}{}
+
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		return err
+	}
+
+	err = makeHttpRequest[any]("POST", requestUrl, bytes.NewBuffer(jsonData), nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 type GetScreenshot_Response struct {
 	Value string `json:"value"`
 }
@@ -169,6 +223,63 @@ func GetWindowRect(sessionId string) (*WindowRect, error) {
 
 	var response WindowRect_Response
 	err := makeHttpRequest("GET", url, nil, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response.Value, nil
+}
+
+func FullScreen(sessionId string) (*WindowRect, error) {
+	requestUrl := fmt.Sprintf("%s/session/%s/window/fullscreen", baseUrl, sessionId)
+
+	reqBody := map[string]interface{}{}
+
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, err
+	}
+
+	var response WindowRect_Response
+	err = makeHttpRequest("POST", requestUrl, bytes.NewBuffer(jsonData), &response)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response.Value, nil
+}
+
+func Maximize(sessionId string) (*WindowRect, error) {
+	requestUrl := fmt.Sprintf("%s/session/%s/window/maximize", baseUrl, sessionId)
+
+	reqBody := map[string]interface{}{}
+
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, err
+	}
+
+	var response WindowRect_Response
+	err = makeHttpRequest("POST", requestUrl, bytes.NewBuffer(jsonData), &response)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response.Value, nil
+}
+
+func Minimize(sessionId string) (*WindowRect, error) {
+	requestUrl := fmt.Sprintf("%s/session/%s/window/minimize", baseUrl, sessionId)
+
+	reqBody := map[string]interface{}{}
+
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, err
+	}
+
+	var response WindowRect_Response
+	err = makeHttpRequest("POST", requestUrl, bytes.NewBuffer(jsonData), &response)
 	if err != nil {
 		return nil, err
 	}

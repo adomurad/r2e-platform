@@ -24,6 +24,12 @@ hosted Effect
         browserGetWindowRect,
         browserGetTitle,
         browserGetUrl,
+        browserReload,
+        browserNavigateBack,
+        browserNavigateForward,
+        browserMaximize,
+        browserMinimize,
+        browserFullScreen,
     ]
     imports []
 
@@ -62,6 +68,18 @@ browserSetWindowRect : Str, I64, I64, I64, I64, I64 -> Task (List I64) Str
 browserGetWindowRect : Str -> Task (List I64) Str
 
 getScreenshot : Str -> Task Str Str
+
+browserNavigateBack : Str -> Task {} Str
+
+browserNavigateForward : Str -> Task {} Str
+
+browserReload : Str -> Task {} Str
+
+browserMaximize : Str -> Task (List I64) Str
+
+browserMinimize : Str -> Task (List I64) Str
+
+browserFullScreen : Str -> Task (List I64) Str
 
 # element effects
 elementClick : Str, Str -> Task {} Str

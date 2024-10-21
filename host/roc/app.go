@@ -180,6 +180,69 @@ func roc_fx_browserGetWindowRect(sessionId *RocStr) C.struct_ResultListStr {
 	}
 }
 
+//export roc_fx_browserMaximize
+func roc_fx_browserMaximize(sessionId *RocStr) C.struct_ResultListStr {
+	newRect, err := webdriver.Maximize(sessionId.String())
+	if err != nil {
+		return createRocResult_ListI64_Str(RocErr, nil, err.Error())
+	} else {
+		rectList := []int64{newRect.X, newRect.Y, newRect.Width, newRect.Height}
+		return createRocResult_ListI64_Str(RocOk, rectList, "")
+	}
+}
+
+//export roc_fx_browserMinimize
+func roc_fx_browserMinimize(sessionId *RocStr) C.struct_ResultListStr {
+	newRect, err := webdriver.Minimize(sessionId.String())
+	if err != nil {
+		return createRocResult_ListI64_Str(RocErr, nil, err.Error())
+	} else {
+		rectList := []int64{newRect.X, newRect.Y, newRect.Width, newRect.Height}
+		return createRocResult_ListI64_Str(RocOk, rectList, "")
+	}
+}
+
+//export roc_fx_browserFullScreen
+func roc_fx_browserFullScreen(sessionId *RocStr) C.struct_ResultListStr {
+	newRect, err := webdriver.FullScreen(sessionId.String())
+	if err != nil {
+		return createRocResult_ListI64_Str(RocErr, nil, err.Error())
+	} else {
+		rectList := []int64{newRect.X, newRect.Y, newRect.Width, newRect.Height}
+		return createRocResult_ListI64_Str(RocOk, rectList, "")
+	}
+}
+
+//export roc_fx_browserNavigateBack
+func roc_fx_browserNavigateBack(sessionId *RocStr) C.struct_ResultVoidStr {
+	err := webdriver.NavigateBack(sessionId.String())
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	return createRocResultStr(RocOk, "")
+}
+
+//export roc_fx_browserNavigateForward
+func roc_fx_browserNavigateForward(sessionId *RocStr) C.struct_ResultVoidStr {
+	err := webdriver.NavigateForward(sessionId.String())
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	return createRocResultStr(RocOk, "")
+}
+
+//export roc_fx_browserReload
+func roc_fx_browserReload(sessionId *RocStr) C.struct_ResultVoidStr {
+	err := webdriver.Reload(sessionId.String())
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	return createRocResultStr(RocOk, "")
+}
+
 //export roc_fx_browserNavigateTo
 func roc_fx_browserNavigateTo(sessionId, url *RocStr) C.struct_ResultVoidStr {
 	err := webdriver.NavigateTo(sessionId.String(), url.String())

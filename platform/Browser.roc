@@ -14,6 +14,12 @@ module [
     findElements,
     getScreenshotBase64,
     Locator,
+    navigateBack,
+    navigateForward,
+    reloadPage,
+    maximizeWindow,
+    minimizeWindow,
+    fullScreenWindow,
 ]
 
 import Effect
@@ -304,7 +310,7 @@ SetWindowRectOptions : [
 ##
 ## The result will contain new dimensions.
 ##
-## **warning** - when setting new position,
+## **warning** - when running not headless,
 ## the input dimensions (x, y) are the outer bound dimensions (with the frame).
 ## But the result contain the dimension of the browser viewport!
 ##
@@ -344,18 +350,105 @@ setWindowRect = \browser, setRectOptions ->
 ## `width` - width
 ## `height` - height
 ##
-## **warning** - the result contains the x and y of the browser's viewport,
+## **warning** - when running not headless, the result contains the x and y of the browser's viewport,
 ## without the frame.
 ##
 ## ```
 ## rect = browser |> Browser.getWindowRect!
 ## # rect is { x: 406, y: 627, width: 400, height: 600 }
 ## ```
-getWindowRect : Browser -> Task.Task WindowRect [WebDriverError Str]
+getWindowRect : Browser -> Task WindowRect [WebDriverError Str]
 getWindowRect = \browser ->
     { sessionId } = Internal.unpackBrowserData browser
 
     Effect.browserGetWindowRect sessionId
+    |> Task.map \list ->
+        when list is
+            [xVal, yVal, widthVal, heightVal] -> { x: xVal, y: yVal, width: widthVal |> Num.toU32, height: heightVal |> Num.toU32 }
+            _ -> crash "the contract with host should not fail"
+    |> Task.mapErr WebDriverError
+
+## Navigate back in the browser history.
+##
+## ```
+## browser |> Browser.navigateBack!
+## ```
+navigateBack : Browser -> Task {} [WebDriverError Str]
+navigateBack = \browser ->
+    { sessionId } = Internal.unpackBrowserData browser
+
+    Effect.browserNavigateBack sessionId |> Task.mapErr WebDriverError
+
+## Navigate forward in the browser history.
+##
+## ```
+## browser |> Browser.navigateForward!
+## ```
+navigateForward : Browser -> Task {} [WebDriverError Str]
+navigateForward = \browser ->
+    { sessionId } = Internal.unpackBrowserData browser
+
+    Effect.browserNavigateForward sessionId |> Task.mapErr WebDriverError
+
+## Reload the current page.
+##
+## ```
+## browser |> Browser.reloadPage!
+## ```
+reloadPage : Browser -> Task {} [WebDriverError Str]
+reloadPage = \browser ->
+    { sessionId } = Internal.unpackBrowserData browser
+
+    Effect.browserReload sessionId |> Task.mapErr WebDriverError
+
+## Maximize the `Browser` window.
+##
+## Can fail when the system does not support this operation.
+##
+## ```
+## newRect = browser |> Browser.maximizeWindow!
+## ```
+maximizeWindow : Browser -> Task WindowRect [WebDriverError Str]
+maximizeWindow = \browser ->
+    { sessionId } = Internal.unpackBrowserData browser
+
+    Effect.browserMaximize sessionId
+    |> Task.map \list ->
+        when list is
+            [xVal, yVal, widthVal, heightVal] -> { x: xVal, y: yVal, width: widthVal |> Num.toU32, height: heightVal |> Num.toU32 }
+            _ -> crash "the contract with host should not fail"
+    |> Task.mapErr WebDriverError
+
+## Minimize the `Browser` window.
+##
+## Can fail when the system does not support this operation.
+##
+## ```
+## newRect = browser |> Browser.minimizeWindow!
+## ```
+minimizeWindow : Browser -> Task WindowRect [WebDriverError Str]
+minimizeWindow = \browser ->
+    { sessionId } = Internal.unpackBrowserData browser
+
+    Effect.browserMinimize sessionId
+    |> Task.map \list ->
+        when list is
+            [xVal, yVal, widthVal, heightVal] -> { x: xVal, y: yVal, width: widthVal |> Num.toU32, height: heightVal |> Num.toU32 }
+            _ -> crash "the contract with host should not fail"
+    |> Task.mapErr WebDriverError
+
+## Make the `Browser` window full screen.
+##
+## Can fail when the system does not support this operation.
+##
+## ```
+## newRect = browser |> Browser.fullScreenWindow!
+## ```
+fullScreenWindow : Browser -> Task.Task WindowRect [WebDriverError Str]
+fullScreenWindow = \browser ->
+    { sessionId } = Internal.unpackBrowserData browser
+
+    Effect.browserFullScreen sessionId
     |> Task.map \list ->
         when list is
             [xVal, yVal, widthVal, heightVal] -> { x: xVal, y: yVal, width: widthVal |> Num.toU32, height: heightVal |> Num.toU32 }

@@ -111,8 +111,6 @@ runTest = \i, @TestCase { name, testBody } ->
 # runTestSafe : TestBody err -> Task {} _
 runTestSafe = \testBody ->
     browser = Browser.openNewWindow |> Task.mapErr! ResultWithoutScreenshot
-    # TODO - this hack might help with test flickers
-    Console.wait! 20
 
     testResult = testBody browser |> Task.result!
 

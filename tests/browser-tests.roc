@@ -15,6 +15,8 @@ testCases = [
     test8,
     test9,
     test10,
+    test11,
+    test12,
 ]
 
 test1 = test "navigation" \browser ->
@@ -84,3 +86,28 @@ test10 = test "getUrl" \browser ->
     url = browser |> Browser.getUrl!
 
     url |> Assert.shouldBe "https://devexpress.github.io/testcafe/example/"
+
+test11 = test "browser navigation operations" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+    browser |> Browser.navigateTo! "https://google.com"
+    browser |> Browser.navigateTo! "https://roc-lang.org"
+    browser |> Browser.reloadPage!
+    browser |> Browser.navigateBack!
+    browser |> Browser.navigateBack!
+    browser |> Browser.navigateForward!
+    browser |> Browser.navigateForward!
+
+test12 = test "window max, min, full" \browser ->
+
+    # cannot run this on my machine
+    # rect2 = browser |> Browser.minimizeWindow!
+    # rect2.x |> Assert.shouldBe! 16
+    # rect2.width |> Assert.shouldBe! 1919
+
+    rect3 = browser |> Browser.fullScreenWindow!
+    rect3.x |> Assert.shouldBe! 0
+    rect3.width |> Assert.shouldBe! 3840
+
+    rect1 = browser |> Browser.maximizeWindow!
+    rect1.x |> Assert.shouldBe! 6
+    rect1.width |> Assert.shouldBe! 3828
