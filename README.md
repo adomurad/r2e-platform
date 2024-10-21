@@ -1,6 +1,6 @@
 # Go Roc
 
-Just wondering what I can do different when implementing my
+Just wondering what I can do differently when implementing my
 [R2E](https://github.com/adomurad/r2e) lib as a platform.
 
 Docs: https://adomurad.github.io/r2e-platform/
