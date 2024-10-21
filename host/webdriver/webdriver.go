@@ -358,6 +358,28 @@ func FindElement(sessionId, using, value string) (string, error) {
 	return response.Value.ElementId, nil
 }
 
+func FindElementInElement(sessionId, elementId, using, value string) (string, error) {
+	url := fmt.Sprintf("%s/session/%s/element/%s/element", baseUrl, sessionId, elementId)
+
+	reqBody := map[string]interface{}{
+		"using": using,
+		"value": value,
+	}
+
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		return "", err
+	}
+
+	var response FindElement_Response
+	err = makeHttpRequest("POST", url, bytes.NewBuffer(jsonData), &response)
+	if err != nil {
+		return "", err
+	}
+
+	return response.Value.ElementId, nil
+}
+
 type GetBrowserTitle_Response struct {
 	Value string `json:"value"`
 }
@@ -400,6 +422,33 @@ type FindElements_ResponseValue struct {
 
 func FindElements(sessionId, using, value string) ([]string, error) {
 	url := fmt.Sprintf("%s/session/%s/elements", baseUrl, sessionId)
+
+	reqBody := map[string]interface{}{
+		"using": using,
+		"value": value,
+	}
+
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, err
+	}
+
+	var response FindElements_Response
+	err = makeHttpRequest("POST", url, bytes.NewBuffer(jsonData), &response)
+	if err != nil {
+		return nil, err
+	}
+
+	elementIds := make([]string, len(response.Value))
+	for i, element := range response.Value {
+		elementIds[i] = element.ElementId
+	}
+
+	return elementIds, nil
+}
+
+func FindElementsInElement(sessionId, elementId, using, value string) ([]string, error) {
+	url := fmt.Sprintf("%s/session/%s/element/%s/elements", baseUrl, sessionId, elementId)
 
 	reqBody := map[string]interface{}{
 		"using": using,

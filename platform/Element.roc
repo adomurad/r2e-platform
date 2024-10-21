@@ -11,6 +11,10 @@ module [
     getAttribute,
     getAttributeOrEmpty,
     getPropertyOrEmpty,
+    findElement,
+    findElements,
+    findSingleElement,
+    tryFindElement,
 ]
 
 import Internal exposing [Element]
@@ -272,3 +276,157 @@ handleElementError = \err ->
     when err is
         e if e |> Str.startsWith "WebDriverElementNotFoundError" -> ElementNotFound (e |> Str.dropPrefix "WebDriverElementNotFoundError::")
         e -> WebDriverError e
+
+## Supported locator strategies
+##
+## `Css Str` - e.g. Css ".my-button-class"
+##
+## `TestId Str` - e.g. TestId "button" => Css "[data-testid=\"button\"]"
+##
+## `XPath Str` - e.g. XPath "/bookstore/book[price>35]/price"
+##
+## `LinkText Str` - e.g. LinkText "Examples" in <a href="/examples-page">Examples</a>
+##
+## `PartialLinkText Str` - e.g. PartialLinkText "Exam" in <a href="/examples-page">Examples</a>
+##
+Locator : [
+    # !WARNING this code is duplicated in `Browser` module
+    Css Str,
+    TestId Str,
+    XPath Str,
+    LinkText Str,
+    PartialLinkText Str,
+]
+
+# !WARNING this code is duplicated in `Browser` module
+getLocator : Locator -> (Str, Str)
+getLocator = \locator ->
+    when locator is
+        Css cssSelector -> ("css selector", cssSelector)
+        # TODO - script injection
+        TestId id -> ("css selector", "[data-testid=\"$(id)\"]")
+        LinkText text -> ("link text", text)
+        PartialLinkText text -> ("partial link text", text)
+        # Tag tag -> ("tag name", tag)
+        XPath path -> ("xpath", path)
+
+## Find an `Element` inside the tree of another `Element` in the `Browser`.
+##
+## When there are more than 1 elements, then the first will
+## be returned.
+##
+## See supported locators at `Locator`.
+##
+## ```
+## # find the html element with a css selector "#my-id"
+## button = element |> Element.findElement! (Css "#my-id")
+## ```
+##
+## ```
+## # find the html element with a css selector ".my-class"
+## button = element |> Element.findElement! (Css ".my-class")
+## ```
+##
+## ```
+## # find the html element with an attribute [data-testid="my-element"]
+## button = element |> Element.findElement! (TestId "my-element")
+## ```
+findElement : Element, Locator -> Task Element [WebDriverError Str, ElementNotFound Str]
+findElement = \element, locator ->
+    { sessionId, elementId } = Internal.unpackElementData element
+    (using, value) = getLocator locator
+
+    newElementId = Effect.elementFindElement sessionId elementId using value |> Task.mapErr! handleElementError
+
+    selectorText = "$(locator |> Inspect.toStr)"
+
+    Internal.packElementData { sessionId, elementId: newElementId, selectorText } |> Task.ok
+
+## Find an `Element` inside the tree of another `Element` in the `Browser`.
+##
+## This function returns a `[Found Element, NotFound]` instead of an error
+## when element is not found.
+##
+## When there are more than 1 elements, then the first will
+## be returned.
+##
+## See supported locators at `Locator`.
+##
+## ```
+## maybeButton = element |> Element.tryFindElement! (Css "#submit-button")
+##
+## when maybeButton is
+##     NotFound -> Stdout.line! "Button not found"
+##     Found el ->
+##         buttonText = el |> Element.getText!
+##         Stdout.line! "Button found with text: $(buttonText)"
+## ```
+tryFindElement : Element, Locator -> Task [Found Element, NotFound] [WebDriverError Str, ElementNotFound Str]
+tryFindElement = \element, locator ->
+    findElement element locator
+    |> Task.map Found
+    |> Task.onErr \err ->
+        when err is
+            ElementNotFound _ -> Task.ok NotFound
+            other -> Task.err other
+
+## Find an `Element` inside the tree of another `Element` in the `Browser`.
+##
+## This function will fail if the element is not found - `ElementNotFound Str`
+##
+## This function will fail if there are more than 1 element - `AssertionError Str`
+##
+##
+## See supported locators at `Locator`.
+##
+## ```
+## button = element |> Element.findSingleElement! (Css "#submit-button")
+## ```
+findSingleElement : Element, Locator -> Task Element [AssertionError Str, ElementNotFound Str, WebDriverError Str]
+findSingleElement = \element, locator ->
+    { selectorText: parentElementSelectorText } = Internal.unpackElementData element
+    elements = findElements! element locator
+    when elements |> List.len is
+        0 ->
+            (_, value) = getLocator locator
+            Task.err (ElementNotFound "element with selector $(value) was not found in element $(parentElementSelectorText)")
+
+        1 ->
+            elements
+            |> List.first
+            |> Result.onErr \_ -> crash "just checked - there is 1 element in the list"
+            |> Task.fromResult
+
+        n ->
+            (_, value) = getLocator locator
+            Task.err (AssertionError "expected to find only 1 element with selector \"$(value)\", but found $(n |> Num.toStr)")
+
+## Find all `Elements` inside the tree of another `Element` in the `Browser`.
+##
+## When there are no elements found, then the list will be empty.
+##
+## See supported locators at `Locator`.
+##
+## ```
+## # find all <li> elements in #my-list in the DOM tree of **element**
+## listItems = element |> Element.findElements! (Css "#my-list li")
+## ```
+##
+findElements : Element, Locator -> Task (List Element) [WebDriverError Str, ElementNotFound Str]
+findElements = \element, locator ->
+    { sessionId, elementId: parentElementId } = Internal.unpackElementData element
+    (using, value) = getLocator locator
+
+    result = Effect.elementFindElements sessionId parentElementId using value |> Task.mapErr handleElementError |> Task.result!
+
+    selectorText = "$(locator |> Inspect.toStr)"
+
+    when result is
+        Ok elementIds ->
+            elementIds
+            |> List.map \elementId ->
+                Internal.packElementData { sessionId, elementId, selectorText }
+            |> Task.ok
+
+        Err (ElementNotFound _) -> Task.ok []
+        Err err -> Task.err err

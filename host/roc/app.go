@@ -320,6 +320,26 @@ func roc_fx_browserFindElements(sessionId, using, value *RocStr) C.struct_Result
 	return createRocResult_ListStr_Str(RocOk, elementIds, "")
 }
 
+//export roc_fx_elementFindElement
+func roc_fx_elementFindElement(sessionId, parentElementId, using, value *RocStr) C.struct_ResultVoidStr {
+	elementId, err := webdriver.FindElementInElement(sessionId.String(), parentElementId.String(), using.String(), value.String())
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	return createRocResultStr(RocOk, elementId)
+}
+
+//export roc_fx_elementFindElements
+func roc_fx_elementFindElements(sessionId, parentElementId, using, value *RocStr) C.struct_ResultListStr {
+	elementIds, err := webdriver.FindElementsInElement(sessionId.String(), parentElementId.String(), using.String(), value.String())
+	if err != nil {
+		return createRocResult_ListStr_Str(RocErr, nil, err.Error())
+	}
+
+	return createRocResult_ListStr_Str(RocOk, elementIds, "")
+}
+
 //export roc_fx_browserGetTitle
 func roc_fx_browserGetTitle(sessionId *RocStr) C.struct_ResultVoidStr {
 	title, err := webdriver.GetBrowserTitle(sessionId.String())

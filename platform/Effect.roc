@@ -21,6 +21,8 @@ hosted Effect
         elementGetProperty,
         elementSendKeys,
         elementClear,
+        elementFindElement,
+        elementFindElements,
         browserSetWindowRect,
         browserGetWindowRect,
         browserGetTitle,
@@ -98,3 +100,7 @@ elementIsSelected : Str, Str -> Task Str Str
 elementGetAttribute : Str, Str, Str -> Task Str Str
 
 elementGetProperty : Str, Str, Str -> Task Str Str
+
+elementFindElement : Str, Str, Str, Str -> Task Str Str
+
+elementFindElements : Str, Str, Str, Str -> Task (List Str) Str

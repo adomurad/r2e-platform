@@ -123,6 +123,7 @@ getUrl = \browser ->
 ## `PartialLinkText Str` - e.g. PartialLinkText "Exam" in <a href="/examples-page">Examples</a>
 ##
 Locator : [
+    # !WARNING this code is duplicated in `Element` module
     Css Str,
     TestId Str,
     XPath Str,
@@ -130,6 +131,7 @@ Locator : [
     PartialLinkText Str,
 ]
 
+# !WARNING this code is duplicated in `Element` module
 getLocator : Locator -> (Str, Str)
 getLocator = \locator ->
     when locator is

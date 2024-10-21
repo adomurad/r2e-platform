@@ -38,6 +38,14 @@ testCases = [
     test30,
     test31,
     test32,
+    test33,
+    test34,
+    test35,
+    test36,
+    test37,
+    test38,
+    test39,
+    test40,
 ]
 
 test1 = test "findElement and getText" \browser ->
@@ -342,5 +350,102 @@ test32 = test "findSingleElement" \browser ->
     browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
 
     button = browser |> Browser.findSingleElement! (Css "#populate")
+
+    button |> Assert.elementShouldHaveValue! "Populate"
+
+test33 = test "findElement in element" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+
+    header = browser |> Browser.findElement! (Css "header")
+
+    h1 = header |> Element.findElement! (Css "h1")
+
+    text = h1 |> Element.getText!
+
+    text |> Assert.shouldBe "Example"
+
+test34 = test "findElements in element" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+
+    selectElement = browser |> Browser.findElement! (Css "select")
+
+    options = selectElement |> Element.findElements! (Css "option")
+
+    options |> Assert.shouldHaveLength! 3
+
+    element1 = options |> List.get 0 |> Task.fromResult!
+    element1 |> Assert.elementShouldHaveText! "Command Line"
+
+    element2 = options |> List.get 1 |> Task.fromResult!
+    element2 |> Assert.elementShouldHaveText! "JavaScript API"
+
+    element3 = options |> List.get 2 |> Task.fromResult!
+    element3 |> Assert.elementShouldHaveText! "Both"
+
+test35 = test "findElements empty in element" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+
+    header = browser |> Browser.findElement! (Css "header")
+
+    emptyList = header |> Element.findElements! (Css "#fake-id")
+
+    emptyList |> Assert.shouldHaveLength! 0
+
+test36 = test "tryFindElement in element" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+
+    header = browser |> Browser.findElement! (Css "header")
+
+    maybeElement = header |> Element.tryFindElement! (Css "h1")
+
+    when maybeElement is
+        Found el ->
+            el |> Assert.elementShouldHaveText "Example"
+
+        NotFound ->
+            Assert.failWith "element should have been found"
+
+test37 = test "tryFindElement empty in element" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+
+    header = browser |> Browser.findElement! (Css "header")
+
+    maybeElement = header |> Element.tryFindElement! (Css "#fake-id")
+
+    when maybeElement is
+        Found _ -> Assert.failWith "element should not have beed found"
+        NotFound ->
+            Task.ok {}
+
+test38 = test "findSingleElement empty in element" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+
+    header = browser |> Browser.findElement! (Css "header")
+
+    result = header |> Element.findSingleElement (Css "#fake-id") |> Task.result!
+
+    when result is
+        Ok _ -> Assert.failWith "should not find any elements"
+        Err (ElementNotFound err) -> err |> Assert.shouldBe "element with selector #fake-id was not found in element (Css \"header\")"
+        Err _ -> Assert.failWith "wrong error type"
+
+test39 = test "findSingleElement to many in element" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+
+    selectElement = browser |> Browser.findElement! (Css "select")
+
+    result = selectElement |> Element.findSingleElement (Css "option") |> Task.result!
+
+    when result is
+        Ok _ -> Assert.failWith "should find more than 1 element"
+        Err (AssertionError err) -> err |> Assert.shouldBe "expected to find only 1 element with selector \"option\", but found 3"
+        Err _ -> Assert.failWith "wrong error type"
+
+test40 = test "findSingleElement in element" \browser ->
+    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+
+    rocBox = browser |> Browser.findElement! (Css ".row")
+
+    button = rocBox |> Element.findSingleElement! (Css "#populate")
 
     button |> Assert.elementShouldHaveValue! "Populate"
