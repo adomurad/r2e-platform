@@ -57,7 +57,7 @@ openNewWindowWithCleanup = \callback ->
     browser |> closeWindow!
     result |> Task.fromResult
 
-## Closes a `Browser` window.
+## Close a `Browser` window.
 ##
 ## Do not close the browser provided by the test,
 ## the automatic cleanup will fail trying to close this browser.
