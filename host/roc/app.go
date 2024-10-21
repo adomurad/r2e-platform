@@ -130,15 +130,59 @@ func roc_fx_deleteSession(sessionId *RocStr) C.struct_ResultVoidStr {
 	}
 }
 
-//export roc_fx_getScreenshot
-func roc_fx_getScreenshot(sessionId *RocStr) C.struct_ResultVoidStr {
-	screenshotBase64, err := webdriver.GetScreenshot(sessionId.String())
+//export roc_fx_browserGetScreenshot
+func roc_fx_browserGetScreenshot(sessionId *RocStr) C.struct_ResultVoidStr {
+	screenshotBase64, err := webdriver.BrowserGetScreenshot(sessionId.String())
 	if err != nil {
 		return createRocResultStr(RocErr, err.Error())
 	} else {
 		return createRocResultStr(RocOk, screenshotBase64)
 	}
 }
+
+// //export roc_fx_browserGetPdf
+// func roc_fx_browserGetPdf(sessionId *RocStr, width, height, top, bottom, left, right, scale float64, orientationStr *RocStr, shrinkToFit, background int64, pageRanges *RocList[RocStr]) C.struct_ResultVoidStr {
+// 	shrinkToFitBool := false
+// 	if shrinkToFit == 1 {
+// 		shrinkToFitBool = true
+// 	}
+//
+// 	backgroundBool := false
+// 	if background == 1 {
+// 		backgroundBool = true
+// 	}
+//
+// 	goSlice := pageRanges.List()
+// 	pageRangesArr := make([]string, len(goSlice))
+// 	for i, rocStr := range goSlice {
+// 		pageRangesArr[i] = rocStr.String()
+// 	}
+//
+// 	pdfOptions := webdriver.PdfOptions{
+// 		Page: webdriver.PdfPageOptions{
+// 			Width:  width,
+// 			Height: height,
+// 		},
+// 		Margin: webdriver.PdfMarginOptions{
+// 			Top:    top,
+// 			Bottom: bottom,
+// 			Left:   left,
+// 			Right:  right,
+// 		},
+// 		Scale:       scale,
+// 		Orientation: orientationStr.String(),
+// 		ShrinkToFit: shrinkToFitBool,
+// 		Background:  backgroundBool,
+// 		PageRages:   pageRangesArr,
+// 	}
+//
+// 	screenshotBase64, err := webdriver.BrowserGetPdf(sessionId.String(), pdfOptions)
+// 	if err != nil {
+// 		return createRocResultStr(RocErr, err.Error())
+// 	} else {
+// 		return createRocResultStr(RocOk, screenshotBase64)
+// 	}
+// }
 
 //export roc_fx_browserSetWindowRect
 func roc_fx_browserSetWindowRect(sessionId *RocStr, disciminant, x, y, width, height int64) C.struct_ResultListStr {

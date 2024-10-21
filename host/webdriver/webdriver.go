@@ -157,7 +157,7 @@ type GetScreenshot_Response struct {
 	Value string `json:"value"`
 }
 
-func GetScreenshot(sessionId string) (string, error) {
+func BrowserGetScreenshot(sessionId string) (string, error) {
 	requestUrl := fmt.Sprintf("%s/session/%s/screenshot", baseUrl, sessionId)
 
 	var response GetScreenshot_Response
@@ -169,6 +169,47 @@ func GetScreenshot(sessionId string) (string, error) {
 
 	return response.Value, nil
 }
+
+// type PdfOptions struct {
+// 	Page        PdfPageOptions
+// 	Margin      PdfMarginOptions
+// 	Scale       float64
+// 	Orientation string
+// 	ShrinkToFit bool
+// 	Background  bool
+// 	PageRages   []string
+// }
+// type PdfPageOptions struct {
+// 	Width  float64
+// 	Height float64
+// }
+// type PdfMarginOptions struct {
+// 	Top    float64
+// 	Bottom float64
+// 	Left   float64
+// 	Right  float64
+// }
+//
+// type BrowserGetPdf_Response struct {
+// 	Value string `json:"value"`
+// }
+//
+// func BrowserGetPdf(sessionId string, pdfOptions PdfOptions) (string, error) {
+// 	requestUrl := fmt.Sprintf("%s/session/%s/print", baseUrl, sessionId)
+//
+// 	jsonData, err := json.Marshal(pdfOptions)
+// 	if err != nil {
+// 		return "", err
+// 	}
+//
+// 	var response BrowserGetPdf_Response
+// 	err = makeHttpRequest("GET", requestUrl, bytes.NewBuffer(jsonData), &response)
+// 	if err != nil {
+// 		return "", err
+// 	}
+//
+// 	return response.Value, nil
+// }
 
 type GetStatus_ResponseValue struct {
 	Ready bool `json:"ready"`

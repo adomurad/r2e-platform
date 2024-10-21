@@ -12,7 +12,8 @@ module [
     tryFindElement,
     findSingleElement,
     findElements,
-    getScreenshotBase64,
+    takeScreenshotBase64,
+    # printPdfBase64,
     Locator,
     navigateBack,
     navigateForward,
@@ -270,13 +271,80 @@ handleFindElementError = \err ->
 ## The result will be a **base64** encoded `Str` representation of a PNG file.
 ##
 ## ```
-## base64PngStr = browser |> Browser.getScreenshotBase64!
+## base64PngStr = browser |> Browser.takeScreenshotBase64!
 ## ```
-getScreenshotBase64 : Browser -> Task Str [WebDriverError Str]
-getScreenshotBase64 = \browser ->
+takeScreenshotBase64 : Browser -> Task Str [WebDriverError Str]
+takeScreenshotBase64 = \browser ->
     { sessionId } = Internal.unpackBrowserData browser
 
-    Effect.getScreenshot sessionId |> Task.mapErr WebDriverError
+    Effect.browserGetScreenshot sessionId |> Task.mapErr WebDriverError
+
+# PageOrientation : [Landscape, Portrait]
+#
+# PrintPdfPayload : {
+#     page ? PageDimensions,
+#     margin ? PageMargins,
+#     scale ? F64, # 0.1 - 2.0 - default: 1.0
+#     orientation ? PageOrientation, # default: portrait
+#     shrinkToFit ? Bool, # default: true
+#     background ? Bool, # default: false
+#     pageRanges ? List Str, # default []
+# }
+#
+# PageDimensions : {
+#     width : F64, # default: 21.59 cm
+#     height : F64, # default: 27.94 cm
+# }
+#
+# PageMargins : {
+#     top : F64, # default: 1 cm
+#     bottom : F64, # default: 1 cm
+#     left : F64, # default: 1 cm
+#     right : F64, # default: 1 cm
+# }
+
+## Print current page to PDF.
+##
+## The result will be **base64** encoded `Str`.
+##
+## All options are optional, with defaults:
+## ```
+## PageOrientation : [Landscape, Portrait]
+##
+## PrintPdfPayload : {
+##     page ? PageDimensions,
+##     margin ? PageMargins,
+##     scale ? F64, # 0.1 - 2.0 - default: 1.0
+##     orientation ? PageOrientation, # default: portrait
+##     shrinkToFit ? Bool, # default: true
+##     background ? Bool, # default: false
+##     pageRanges ? List Str, # default []
+## }
+##
+## PageDimensions : {
+##     width : F64, # default: 21.59 cm
+##     height : F64, # default: 27.94 cm
+## }
+##
+## PageMargins : {
+##     top : F64, # default: 1 cm
+##     bottom : F64, # default: 1 cm
+##     left : F64, # default: 1 cm
+##     right : F64, # default: 1 cm
+## }
+## ```
+## ```
+## base64PdfStr = browser |> Browser.printPdfBase64! {}
+## ```
+# printPdfBase64 : Browser, PrintPdfPayload -> Task.Task Str [WebDriverError Str]
+# printPdfBase64 = \browser, { scale ? 1.0f64, orientation ? Portrait, shrinkToFit ? Bool.true, background ? Bool.false, page ? { width: 21.59f64, height: 27.94f64 }, margin ? { top: 1.0f64, bottom: 1.0f64, left: 1.0f64, right: 1.0f64 }, pageRanges ? [] } ->
+#     { sessionId } = Internal.unpackBrowserData browser
+#
+#     orientationStr = if orientation == Portrait then "portrait" else "landscape"
+#     shrinkToFitI64 = if shrinkToFit then 1 else 0
+#     backgroundI64 = if background then 1 else 0
+#
+#     Effect.browserGetPdf sessionId page.width page.height margin.top margin.bottom margin.left margin.right scale orientationStr shrinkToFitI64 backgroundI64 pageRanges |> Task.mapErr WebDriverError
 
 WindowRect : {
     x : I64,

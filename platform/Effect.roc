@@ -13,7 +13,8 @@ hosted Effect
         getTimeMilis,
         createDirIfNotExist,
         fileWriteUtf8,
-        getScreenshot,
+        browserGetScreenshot,
+        # browserGetPdf,
         elementGetText,
         elementIsSelected,
         elementGetAttribute,
@@ -67,7 +68,9 @@ browserSetWindowRect : Str, I64, I64, I64, I64, I64 -> Task (List I64) Str
 
 browserGetWindowRect : Str -> Task (List I64) Str
 
-getScreenshot : Str -> Task Str Str
+browserGetScreenshot : Str -> Task Str Str
+
+# browserGetPdf : Str, F64, F64, F64, F64, F64, F64, F64, Str, I64, I64, List Str -> Task Str Str
 
 browserNavigateBack : Str -> Task {} Str
 

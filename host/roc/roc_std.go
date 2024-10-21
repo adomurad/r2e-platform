@@ -95,9 +95,9 @@ func roc_panic(msg *RocStr, tagID C.uint) {
 //export roc_dbg
 func roc_dbg(loc *RocStr, msg *RocStr, src *RocStr) {
 	if src.String() == msg.String() {
-		fmt.Fprintf(os.Stderr, "[%s] {%s}\n", loc, msg)
+		fmt.Fprintf(os.Stderr, "[%s] %s\n", loc, msg)
 	} else {
-		fmt.Fprintf(os.Stderr, "[%s] {%s} = {%s}\n", loc, src, msg)
+		fmt.Fprintf(os.Stderr, "[%s] %s = %s\n", loc, src, msg)
 	}
 }
 

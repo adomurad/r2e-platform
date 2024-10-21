@@ -129,9 +129,7 @@ runTestSafe = \testBody ->
 # takeConditionalScreenshot : Bool, Internal.Browser -> Task [ScreenshotBase64 Str, NoScreenshot] _
 takeConditionalScreenshot = \shouldTakeScreenshot, browser ->
     if shouldTakeScreenshot then
-        screenshot =
-            browser
-                |> Browser.getScreenshotBase64!
+        screenshot = browser |> Browser.takeScreenshotBase64!
         Task.ok (ScreenshotBase64 screenshot)
     else
         Task.ok NoScreenshot
