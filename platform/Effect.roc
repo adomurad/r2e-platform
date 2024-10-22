@@ -11,6 +11,9 @@ hosted Effect
         browserFindElements,
         elementClick,
         getTimeMilis,
+        isDebugMode,
+        incrementTest,
+        getLogsForTest,
         createDirIfNotExist,
         fileWriteUtf8,
         browserGetScreenshot,
@@ -45,6 +48,12 @@ stdinLine : {} -> Task Str Str
 wait : U64 -> Task {} Str
 
 getTimeMilis : {} -> Task I64 Str
+
+isDebugMode : {} -> Task I64 Str
+
+incrementTest : {} -> Task {} Str
+
+getLogsForTest : I64 -> Task (List Str) Str
 
 # file system
 createDirIfNotExist : Str -> Task {} Str

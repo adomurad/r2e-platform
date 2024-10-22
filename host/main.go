@@ -15,6 +15,7 @@ func main() {
 	options := roc.Options{
 		SetupOnly:               false,
 		PrintBrowserVersionOnly: false,
+		DebugMode:               false,
 	}
 
 	// os.Args is a slice of strings
@@ -32,6 +33,9 @@ func main() {
 		case "--headless":
 			// TODO - this will be provided by the Roc app
 			options.Headless = true
+		case "--debug":
+			// TODO - this will be provided by the Roc app
+			options.DebugMode = true
 		}
 	}
 

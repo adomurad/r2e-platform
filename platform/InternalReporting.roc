@@ -8,6 +8,7 @@ TestRunResult err : {
     duration : U64,
     result : Result {} []err,
     screenshot : [NoScreenshot, Screenshot Str],
+    logs : List Str,
 } where err implements Inspect
 
 TestRunMetadata : {

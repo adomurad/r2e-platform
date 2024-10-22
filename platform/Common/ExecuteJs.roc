@@ -3,6 +3,7 @@ module [executeJs, executeJsWithArgs, JsValue]
 import Internal exposing [Browser]
 import Effect
 import PropertyDecoder
+import EncodeDecode
 
 JsValue : [String Str, Number F64, Boolean Bool, Null]
 
@@ -10,7 +11,7 @@ executeJs : Browser, Str -> Task a [WebDriverError Str, JsReturnTypeError Str] w
 executeJs = \browser, script ->
     { sessionId } = Internal.unpackBrowserData browser
 
-    resultStr = Effect.executeJs sessionId script "[]" |> Task.mapErr! WebDriverError
+    resultStr = Effect.executeJs sessionId script "[]" |> Task.mapErr! \err -> WebDriverError err
     resultUtf8 = resultStr |> Str.toUtf8
 
     decoded : Result a _
@@ -42,8 +43,10 @@ jsArgumentsToStr = \args ->
         args
         |> List.walk "" \state, arg ->
             when arg is
-                # TODO escape json strings
-                String str -> state |> Str.concat ",\"$(str)\""
+                String str ->
+                    escapedStr = EncodeDecode.encodeJsonString str
+                    state |> Str.concat ",$(escapedStr)"
+
                 Number num -> state |> Str.concat ",$(num |> Num.toStr)"
                 Null -> state |> Str.concat ",null"
                 Boolean bool ->

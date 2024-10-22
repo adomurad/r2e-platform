@@ -22,6 +22,7 @@ TestCaseResult err : {
     result : Result {} []err,
     duration : U64,
     screenshot : [NoScreenshot, Screenshot Str],
+    logs : List Str,
 } where err implements Inspect
 
 test = \name, testBody ->
@@ -68,6 +69,8 @@ runTest = \i, @TestCase { name, testBody } ->
     Debug.printLine! "" # empty line for readability
     Debug.printLine! "$(color.gray)Test $(indexStr):$(color.end) \"$(name)\": Running..."
 
+    Utils.incrementTest!
+
     startTime = Utils.getTimeMilis!
     resultWithMaybeScreenshot = (runTestSafe testBody) |> Task.result!
 
@@ -80,11 +83,14 @@ runTest = \i, @TestCase { name, testBody } ->
             Err (ResultWithoutScreenshot res) -> { result: Err res, screenshot: NoScreenshot }
             Err (ResultWithScreenshot res screenBase64) -> { result: Err res, screenshot: Screenshot screenBase64 }
 
+    testLogs = Utils.getLogsForTest! (i + 1 |> Num.toI64)
+
     testCaseResult = {
         name,
         result,
         duration,
         screenshot,
+        logs: testLogs,
     }
 
     resultLogMessage =

@@ -4,31 +4,33 @@ module [
     openNewWindowWithCleanup,
     closeWindow,
     navigateTo,
-    setWindowRect,
-    getWindowRect,
+    navigateBack,
+    navigateForward,
+    reloadPage,
     getTitle,
     getUrl,
+    Locator,
     findElement,
     tryFindElement,
     findSingleElement,
     findElements,
     takeScreenshotBase64,
     # printPdfBase64,
-    Locator,
-    navigateBack,
-    navigateForward,
-    reloadPage,
     maximizeWindow,
     minimizeWindow,
     fullScreenWindow,
+    setWindowRect,
+    getWindowRect,
     executeJs,
     executeJsWithOutput,
     executeJsWithArgs,
-
 ]
 
 import Effect
-import CommonBrowser
+import Common.ExecuteJs as ExecuteJs
+import Common.Locator as Locator
+import DebugMode
+import Debug
 import Internal exposing [Browser, Element]
 
 ## Opens a new `Browser` window.
@@ -43,6 +45,9 @@ import Internal exposing [Browser, Element]
 ## ```
 openNewWindow : Task Browser [WebDriverError Str]
 openNewWindow =
+    DebugMode.runIfDebugMode! \{} ->
+        Debug.printLine! "Opening new browser window"
+
     Effect.startSession {}
     |> Task.mapErr WebDriverError
     |> Task.map \sessionId ->
@@ -75,6 +80,10 @@ openNewWindowWithCleanup = \callback ->
 closeWindow : Browser -> Task {} [WebDriverError Str]
 closeWindow = \browser ->
     { sessionId } = Internal.unpackBrowserData browser
+
+    DebugMode.runIfDebugMode! \{} ->
+        Debug.printLine! "Closing browser window"
+
     Effect.deleteSession sessionId |> Task.mapErr WebDriverError
 
 ## Navigate the browser to the given URL.
@@ -86,7 +95,16 @@ closeWindow = \browser ->
 navigateTo : Browser, Str -> Task {} [WebDriverError Str]
 navigateTo = \browser, url ->
     { sessionId } = Internal.unpackBrowserData browser
-    Effect.browserNavigateTo sessionId url |> Task.mapErr WebDriverError
+
+    DebugMode.runIfDebugMode! \{} ->
+        Debug.printLine! "Navigating to: $(url)"
+
+    Effect.browserNavigateTo sessionId url |> Task.mapErr! WebDriverError
+
+    DebugMode.runIfDebugMode! \{} ->
+        DebugMode.wait!
+
+    Task.ok {}
 
 ## Get browser title.
 ##
@@ -99,6 +117,10 @@ navigateTo = \browser, url ->
 getTitle : Browser -> Task.Task Str [WebDriverError Str]
 getTitle = \browser ->
     { sessionId } = Internal.unpackBrowserData browser
+
+    DebugMode.runIfDebugMode! \{} ->
+        Debug.printLine! "Getting title of the current page"
+
     Effect.browserGetTitle sessionId |> Task.mapErr WebDriverError
 
 ## Get current URL.
@@ -112,6 +134,10 @@ getTitle = \browser ->
 getUrl : Browser -> Task Str [WebDriverError Str]
 getUrl = \browser ->
     { sessionId } = Internal.unpackBrowserData browser
+
+    DebugMode.runIfDebugMode! \{} ->
+        Debug.printLine! "Getting url of the current page"
+
     Effect.browserGetUrl sessionId
     |> Task.mapErr WebDriverError
 
@@ -127,26 +153,7 @@ getUrl = \browser ->
 ##
 ## `PartialLinkText Str` - e.g. PartialLinkText "Exam" in <a href="/examples-page">Examples</a>
 ##
-Locator : [
-    # !WARNING this code is duplicated in `Element` module
-    Css Str,
-    TestId Str,
-    XPath Str,
-    LinkText Str,
-    PartialLinkText Str,
-]
-
-# !WARNING this code is duplicated in `Element` module
-getLocator : Locator -> (Str, Str)
-getLocator = \locator ->
-    when locator is
-        Css cssSelector -> ("css selector", cssSelector)
-        # TODO - script injection
-        TestId id -> ("css selector", "[data-testid=\"$(id)\"]")
-        LinkText text -> ("link text", text)
-        PartialLinkText text -> ("partial link text", text)
-        # Tag tag -> ("tag name", tag)
-        XPath path -> ("xpath", path)
+Locator : Locator.Locator
 
 ## Find an `Element` in the `Browser`.
 ##
@@ -172,13 +179,22 @@ getLocator = \locator ->
 findElement : Browser, Locator -> Task Element [WebDriverError Str, ElementNotFound Str]
 findElement = \browser, locator ->
     { sessionId } = Internal.unpackBrowserData browser
-    (using, value) = getLocator locator
-
-    elementId = Effect.browserFindElement sessionId using value |> Task.mapErr! handleFindElementError
+    (using, value) = Locator.getLocator locator
 
     selectorText = "$(locator |> Inspect.toStr)"
 
-    Internal.packElementData { sessionId, elementId, selectorText } |> Task.ok
+    DebugMode.runIfDebugMode! \{} ->
+        Debug.printLine! "Searching for element: $(selectorText)"
+
+    elementId = Effect.browserFindElement sessionId using value |> Task.mapErr! handleFindElementError
+
+    DebugMode.runIfDebugMode! \{} ->
+        Debug.printLine! "Found element: $(selectorText)"
+        DebugMode.showDebugMessageInBrowser! sessionId "Find Element $(selectorText)"
+        DebugMode.flashElements! sessionId locator Single
+        DebugMode.wait!
+
+    Internal.packElementData { sessionId, elementId, selectorText, locator } |> Task.ok
 
 ## Find an `Element` in the `Browser`.
 ##
@@ -225,7 +241,7 @@ findSingleElement = \browser, locator ->
     elements = findElements! browser locator
     when elements |> List.len is
         0 ->
-            (_, value) = getLocator locator
+            (_, value) = Locator.getLocator locator
             Task.err (ElementNotFound "element with selector $(value) was not found")
 
         1 ->
@@ -235,7 +251,7 @@ findSingleElement = \browser, locator ->
             |> Task.fromResult
 
         n ->
-            (_, value) = getLocator locator
+            (_, value) = Locator.getLocator locator
             Task.err (AssertionError "expected to find only 1 element with selector \"$(value)\", but found $(n |> Num.toStr)")
 
 ## Find all `Elements` in the `Browser`.
@@ -252,17 +268,29 @@ findSingleElement = \browser, locator ->
 findElements : Browser, Locator -> Task (List Element) [WebDriverError Str, ElementNotFound Str]
 findElements = \browser, locator ->
     { sessionId } = Internal.unpackBrowserData browser
-    (using, value) = getLocator locator
-
-    result = Effect.browserFindElements sessionId using value |> Task.mapErr handleFindElementError |> Task.result!
+    (using, value) = Locator.getLocator locator
 
     selectorText = "$(locator |> Inspect.toStr)"
 
+    DebugMode.runIfDebugMode! \{} ->
+        Debug.printLine! "Searching for elements: $(selectorText)"
+
+    result = Effect.browserFindElements sessionId using value |> Task.mapErr handleFindElementError |> Task.result!
+
     when result is
         Ok elementIds ->
+            DebugMode.runIfDebugMode! \{} ->
+                Debug.printLine! "Found $(elementIds |> List.len |> Num.toStr) elements: $(selectorText)"
+                if elementIds |> List.isEmpty then
+                    Task.ok {}
+                else
+                    DebugMode.showDebugMessageInBrowser! sessionId "Find Elements $(selectorText)"
+                    DebugMode.flashElements! sessionId locator All
+                    DebugMode.wait!
+
             elementIds
             |> List.map \elementId ->
-                Internal.packElementData { sessionId, elementId, selectorText }
+                Internal.packElementData { sessionId, elementId, selectorText, locator }
             |> Task.ok
 
         Err (ElementNotFound _) -> Task.ok []
@@ -283,6 +311,9 @@ handleFindElementError = \err ->
 takeScreenshotBase64 : Browser -> Task Str [WebDriverError Str]
 takeScreenshotBase64 = \browser ->
     { sessionId } = Internal.unpackBrowserData browser
+
+    DebugMode.runIfDebugMode! \{} ->
+        Debug.printLine! "Taking screenshot of the whole page"
 
     Effect.browserGetScreenshot sessionId |> Task.mapErr WebDriverError
 
@@ -405,6 +436,12 @@ setWindowRect : Browser, SetWindowRectOptions -> Task.Task WindowRect [WebDriver
 setWindowRect = \browser, setRectOptions ->
     { sessionId } = Internal.unpackBrowserData browser
 
+    DebugMode.runIfDebugMode! \{} ->
+        when setRectOptions is
+            Move { x, y } -> Debug.printLine "Moving browser window to: ($(x |> Num.toStr), $(y |> Num.toStr))"
+            Resize { width, height } -> Debug.printLine "Resizing browser window to: ($(width |> Num.toStr), $(height |> Num.toStr))"
+            MoveAndResize { x, y, width, height } -> Debug.printLine "Moving browser window to: ($(x |> Num.toStr), $(y |> Num.toStr)), and resizing to: ($(width |> Num.toStr), $(height |> Num.toStr))"
+
     { disciminant, newX, newY, newWidth, newHeight } =
         when setRectOptions is
             Move { x, y } -> { disciminant: 1, newX: x, newY: y, newWidth: 0, newHeight: 0 }
@@ -436,6 +473,9 @@ getWindowRect : Browser -> Task WindowRect [WebDriverError Str]
 getWindowRect = \browser ->
     { sessionId } = Internal.unpackBrowserData browser
 
+    DebugMode.runIfDebugMode! \{} ->
+        Debug.printLine! "Getting browser position and size"
+
     Effect.browserGetWindowRect sessionId
     |> Task.map \list ->
         when list is
@@ -452,6 +492,9 @@ navigateBack : Browser -> Task {} [WebDriverError Str]
 navigateBack = \browser ->
     { sessionId } = Internal.unpackBrowserData browser
 
+    DebugMode.runIfDebugMode! \{} ->
+        Debug.printLine! "Navigating back"
+
     Effect.browserNavigateBack sessionId |> Task.mapErr WebDriverError
 
 ## Navigate forward in the browser history.
@@ -463,6 +506,9 @@ navigateForward : Browser -> Task {} [WebDriverError Str]
 navigateForward = \browser ->
     { sessionId } = Internal.unpackBrowserData browser
 
+    DebugMode.runIfDebugMode! \{} ->
+        Debug.printLine! "Navigating froward"
+
     Effect.browserNavigateForward sessionId |> Task.mapErr WebDriverError
 
 ## Reload the current page.
@@ -473,6 +519,9 @@ navigateForward = \browser ->
 reloadPage : Browser -> Task {} [WebDriverError Str]
 reloadPage = \browser ->
     { sessionId } = Internal.unpackBrowserData browser
+
+    DebugMode.runIfDebugMode! \{} ->
+        Debug.printLine! "Reloading page"
 
     Effect.browserReload sessionId |> Task.mapErr WebDriverError
 
@@ -486,6 +535,9 @@ reloadPage = \browser ->
 maximizeWindow : Browser -> Task WindowRect [WebDriverError Str]
 maximizeWindow = \browser ->
     { sessionId } = Internal.unpackBrowserData browser
+
+    DebugMode.runIfDebugMode! \{} ->
+        Debug.printLine! "Maximizing browser window"
 
     Effect.browserMaximize sessionId
     |> Task.map \list ->
@@ -505,6 +557,9 @@ minimizeWindow : Browser -> Task WindowRect [WebDriverError Str]
 minimizeWindow = \browser ->
     { sessionId } = Internal.unpackBrowserData browser
 
+    DebugMode.runIfDebugMode! \{} ->
+        Debug.printLine! "Minimizing browser window"
+
     Effect.browserMinimize sessionId
     |> Task.map \list ->
         when list is
@@ -519,9 +574,12 @@ minimizeWindow = \browser ->
 ## ```
 ## newRect = browser |> Browser.fullScreenWindow!
 ## ```
-fullScreenWindow : Browser -> Task.Task WindowRect [WebDriverError Str]
+fullScreenWindow : Browser -> Task WindowRect [WebDriverError Str]
 fullScreenWindow = \browser ->
     { sessionId } = Internal.unpackBrowserData browser
+
+    DebugMode.runIfDebugMode! \{} ->
+        Debug.printLine! "Making browser window full screen"
 
     Effect.browserFullScreen sessionId
     |> Task.map \list ->
@@ -537,8 +595,11 @@ fullScreenWindow = \browser ->
 ## ```
 executeJs : Browser, Str -> Task {} [WebDriverError Str, JsReturnTypeError Str] where a implements Decoding
 executeJs = \browser, script ->
+    DebugMode.runIfDebugMode! \{} ->
+        Debug.printLine! "Executing JavaScript in the browser"
+
     _output : Str
-    _output = CommonBrowser.executeJs! browser script
+    _output = ExecuteJs.executeJs! browser script
     Task.ok {}
 
 ## Execute JavaScript in the `Browser` and get the response.
@@ -573,7 +634,10 @@ executeJs = \browser, script ->
 ## The function can return a `Promise`.
 executeJsWithOutput : Browser, Str -> Task a [WebDriverError Str, JsReturnTypeError Str] where a implements Decoding
 executeJsWithOutput = \browser, script ->
-    CommonBrowser.executeJs browser script
+    DebugMode.runIfDebugMode! \{} ->
+        Debug.printLine! "Executing JavaScript in the browser"
+
+    ExecuteJs.executeJs browser script
 
 JsValue : [String Str, Number F64, Boolean Bool, Null]
 
@@ -608,4 +672,7 @@ JsValue : [String Str, Number F64, Boolean Bool, Null]
 ## The function can return a `Promise`.
 executeJsWithArgs : Browser, Str, List JsValue -> Task a [WebDriverError Str, JsReturnTypeError Str] where a implements Decoding
 executeJsWithArgs = \browser, script, arguments ->
-    CommonBrowser.executeJsWithArgs browser script arguments
+    DebugMode.runIfDebugMode! \{} ->
+        Debug.printLine! "Executing JavaScript in the browser"
+
+    ExecuteJs.executeJsWithArgs browser script arguments

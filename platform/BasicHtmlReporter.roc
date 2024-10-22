@@ -23,11 +23,11 @@ reporter = Reporting.createReporter "basicHtmlReporter" \results, meta ->
 
     [{ filePath: "index.html", content: htmlStr }]
 
-resultToHtml = \{ name, result, duration, screenshot } ->
+resultToHtml = \{ name, result, duration, screenshot, logs } ->
     safeName = name |> htmlEncode
     isOk = result |> Result.isOk
     class = if isOk then "ok" else "error"
-    testDetails = getTestDetails result screenshot
+    testDetails = getTestDetails result screenshot logs
     testDuration = (Num.toFrac duration) / 1000 |> fracToStr
 
     """
@@ -40,12 +40,32 @@ resultToHtml = \{ name, result, duration, screenshot } ->
     </li>
     """
 
-getTestDetails = \result, screenshot ->
+getTestDetails = \result, screenshot, logs ->
     when result is
-        Ok {} -> ""
+        Ok {} if logs |> List.isEmpty ->
+            """
+            <div class="test-details">
+                <div class="block">
+                    <div class="output">
+                        -
+                    </div>
+                </div>
+            </div>
+            """
+
+        Ok {} ->
+            """
+            <div class="test-details">
+                <div class="block">
+                    <div class="output">
+                        $(printLogs logs)
+                    </div>
+                </div>
+            </div>
+            """
+
         Err err ->
             safeMsg = err |> handleError |> htmlEncode
-            # optionalScreenshot = "wow"
             optionalScreenshot =
                 when screenshot is
                     NoScreenshot -> ""
@@ -57,12 +77,31 @@ getTestDetails = \result, screenshot ->
             <div class="test-details">
                 <div class="block">
                     <div class="output">
-                        $(safeMsg)
+                        $(printLogs logs)
+                        <div class="error-message">
+                            $(safeMsg)
+                        </div>
                     </div>
                 </div>
                 $(optionalScreenshot)
             </div>
             """
+
+printLogs = \logs ->
+    if logs |> List.isEmpty then
+        ""
+    else
+        items =
+            logs
+            |> List.map \log ->
+                """
+                <li>$(log |> htmlEncode)</li>
+                """
+            |> Str.joinWith ""
+
+        """
+        <ul class="log-list">$(items)</ul>
+        """
 
 handleError = \errorTag ->
     when Error.webDriverErrorToStr errorTag is
@@ -186,6 +225,11 @@ getHtml = \duration, successCount, errorCount, resultsContent ->
         list-style-type: square;
     }
 
+    ul.log-list {
+        list-style-type: square;
+        padding-left: 18px;
+    }
+
     li.ok {
         color: var(--ok-color);
     }
@@ -195,9 +239,16 @@ getHtml = \duration, successCount, errorCount, resultsContent ->
     }
 
     .output {
+        display: flex;
+        flex-direction: column;
+        gap: 1em;
         color: var(--text-color);
         font-family: system-ui, sans-serif;
         font-weight: normal;
+    }
+
+    .error-message {
+        color: var(--error-color);
     }
 
     .test-header {
@@ -215,10 +266,7 @@ getHtml = \duration, successCount, errorCount, resultsContent ->
     }
 
     .test-details {
-
-
         max-height: 0;
-
         overflow: hidden;
         transition: max-height 0.3s ease;
     }
@@ -276,15 +324,15 @@ getHtml = \duration, successCount, errorCount, resultsContent ->
     <script>
     document.querySelectorAll('.test-header').forEach(listItem => {
         listItem.addEventListener('click', () => {
-        const accordionContent = listItem.nextElementSibling;
+            const accordionContent = listItem.nextElementSibling;
 
-        listItem.classList.toggle('active');
+            listItem.classList.toggle('active');
 
-        if (listItem.classList.contains('active')) {
-            accordionContent.style.maxHeight = accordionContent.scrollHeight + 'px';
-        } else {
-            accordionContent.style.maxHeight = 0;
-        }
+            if (listItem.classList.contains('active')) {
+                accordionContent.style.maxHeight = accordionContent.scrollHeight + 'px';
+            } else {
+                accordionContent.style.maxHeight = 0;
+            }
         });
     });
 

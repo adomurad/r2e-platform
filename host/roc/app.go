@@ -6,6 +6,7 @@ import "C"
 import (
 	"fmt"
 	"host/driversetup"
+	"host/loglist"
 	"host/setup"
 	"host/utils"
 	"host/webdriver"
@@ -19,10 +20,15 @@ type Options struct {
 	SetupOnly               bool
 	PrintBrowserVersionOnly bool
 	Headless                bool
+	DebugMode               bool
 }
 
 // TODO change when passing more than 1 value from Roc app is possible
-var headless = false
+var (
+	headless = false
+	// TODO should be passed from Roc app ?
+	isDebugMode = false
+)
 
 func Main(options Options) int {
 	if options.PrintBrowserVersionOnly {
@@ -32,6 +38,10 @@ func Main(options Options) int {
 
 	if options.Headless {
 		headless = true
+	}
+
+	if options.DebugMode {
+		isDebugMode = true
 	}
 
 	err := driversetup.DownloadChromeAndDriver()
@@ -85,9 +95,22 @@ func Main(options Options) int {
 	}
 }
 
+//export roc_fx_incrementTest
+func roc_fx_incrementTest() C.struct_ResultVoidStr {
+	loglist.IncrementCurrentTest()
+	return createRocResultStr(RocOk, "")
+}
+
+//export roc_fx_getLogsForTest
+func roc_fx_getLogsForTest(testIndex int64) C.struct_ResultListStr {
+	logs := loglist.GetLogsForTest(testIndex)
+	return createRocResult_ListStr_Str(RocOk, logs, "")
+}
+
 //export roc_fx_stdoutLine
 func roc_fx_stdoutLine(msg *RocStr) C.struct_ResultVoidStr {
 	fmt.Println(msg)
+	loglist.AddLogForTest(msg.String())
 	return createRocResultStr(RocOk, "")
 }
 
@@ -452,6 +475,15 @@ func roc_fx_getTimeMilis() C.struct_ResultI64Str {
 
 	// return createRocResultI64(RocErr, 0, "upsi")
 	return createRocResultI64(RocOk, now, "")
+}
+
+//export roc_fx_isDebugMode
+func roc_fx_isDebugMode() C.struct_ResultI64Str {
+	isDebugModeInt := 0
+	if isDebugMode {
+		isDebugModeInt = 1
+	}
+	return createRocResultI64(RocOk, int64(isDebugModeInt), "")
 }
 
 //export roc_fx_createDirIfNotExist

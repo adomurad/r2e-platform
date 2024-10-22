@@ -1,5 +1,7 @@
 # TODO
 
+- Assert.expectToMatchSnaphot - element screenshot comparing
+
 - windows support
 - setup automatic tests for each supported target
 - screenshots of elements

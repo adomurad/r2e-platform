@@ -10,6 +10,8 @@ module [
     Element,
 ]
 
+import Common.Locator exposing [Locator]
+
 # ----------------------------------------------------------------
 
 Browser := {
@@ -21,6 +23,7 @@ Element := {
     elementId : Str,
     # used to provide better context in Asserts
     selectorText : Str,
+    locator : Locator,
 }
 
 packBrowserData = \data ->
