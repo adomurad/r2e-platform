@@ -1,6 +1,9 @@
 # this module will be replaced when effect interpreters are implemented
 hosted Effect
     exposes [
+        setTimeouts,
+        setWindowSize,
+        getAssertTimeout,
         stdoutLine,
         stdinLine,
         wait,
@@ -44,6 +47,12 @@ hosted Effect
     imports []
 
 # effects that are provided by the host
+setTimeouts : U64, U64, U64, U64 -> Task {} Str
+
+setWindowSize : Str -> Task {} Str
+
+getAssertTimeout : {} -> Task I64 Str
+
 stdoutLine : Str -> Task {} Str
 
 stdinLine : {} -> Task Str Str

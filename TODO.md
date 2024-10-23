@@ -4,6 +4,7 @@
 
 - Browser.getUrlPath, Assert.urlPathShouldBe, Browser.getUrlHash??? getUrlQuery
   ? or Url.parseUrl : Str -> Url
+- ovverride timeouts for a single tests - change browser?
 
 - windows support
 - setup automatic tests for each supported target

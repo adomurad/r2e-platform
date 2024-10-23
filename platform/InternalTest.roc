@@ -4,8 +4,8 @@ import Internal exposing [Browser]
 import Debug
 import Utils
 import Browser
-import BasicHtmlReporter
 import InternalReporting
+import Config exposing [R2EConfiguration]
 import Error
 
 import Assert # wihtout an even number of imports in this module, Roc compiler fails
@@ -31,7 +31,8 @@ test = \name, testBody ->
         testBody,
     }
 
-runTests = \testCases ->
+runTests : List (TestCase _), R2EConfiguration _ -> Task {} _
+runTests = \testCases, config ->
     Assert.shouldBe! 1 1 # supressing the warning
 
     Debug.printLine! "Starting test run..."
@@ -51,8 +52,8 @@ runTests = \testCases ->
     endTime = Utils.getTimeMilis!
     duration = endTime - startTime
 
-    reporters = [BasicHtmlReporter.reporter]
-    outDir = "testResults"
+    reporters = config.reporters
+    outDir = config.resultsDirName
     # TODO - fail gracefully
     InternalReporting.runReporters! reporters results outDir duration
 

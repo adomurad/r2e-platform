@@ -1,9 +1,12 @@
-app [testCases] { r2e: platform "../platform/main.roc" }
+app [testCases, config] { r2e: platform "../platform/main.roc" }
 
 import r2e.Test exposing [test]
+import r2e.Config
 import r2e.Browser
 import r2e.Element
 import r2e.Assert
+
+config = Config.defaultConfig
 
 testCases = [
     test1,
@@ -34,7 +37,7 @@ test2 = test "elementShouldBeVisible timeout" \browser ->
     result = div1 |> Assert.elementShouldBeVisible |> Task.result!
     when result is
         Ok _ -> Assert.failWith "should not be visible"
-        Err err -> Assert.shouldBe (err |> Inspect.toStr) "(AssertionError \"Expected element (Css \".hide-by-opacity\") to be visible\")"
+        Err err -> Assert.shouldBe (err |> Inspect.toStr) "(AssertionError \"Expected element (Css \".hide-by-opacity\") to be visible (waited for 3000ms)\")"
 
 test3 = test "elementShouldHaveText 1s" \browser ->
     browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
@@ -52,6 +55,6 @@ test4 = test "elementShouldHaveText timeout" \browser ->
     result = button1 |> Assert.elementShouldHaveText "fail" |> Task.result!
     when result is
         Ok _ -> Assert.failWith "should fail"
-        Err err -> Assert.shouldBe (err |> Inspect.toStr) "(AssertionError \"Expected element (Css \"#show-opacity\") to have text \"fail\", but got \"Show via opacity\"\")"
+        Err err -> Assert.shouldBe (err |> Inspect.toStr) "(AssertionError \"Expected element (Css \"#show-opacity\") to have text \"fail\", but got \"Show via opacity\" (waited for 3000ms)\")"
 
 # TODO test Assert.elementShouldHaveValue

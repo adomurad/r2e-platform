@@ -1,4 +1,4 @@
-module [getTimeMilis, incrementTest, getLogsForTest, getTestNameFilter]
+module [getTimeMilis, incrementTest, getLogsForTest, getTestNameFilter, setTimeouts, setWindowSize, getAssertTimeout]
 
 import Effect
 
@@ -27,3 +27,20 @@ getTestNameFilter =
         else
             FilterTests val
     |> Task.mapErr \_ -> crash "getTestNameFilter should never crash"
+
+setTimeouts : { assertTimeout : U64, pageLoadTimeout : U64, scriptExecutionTimeout : U64, elementImplicitTimeout : U64 } -> Task {} _
+setTimeouts = \{ assertTimeout, pageLoadTimeout, scriptExecutionTimeout, elementImplicitTimeout } ->
+    Effect.setTimeouts assertTimeout pageLoadTimeout scriptExecutionTimeout elementImplicitTimeout
+    |> Task.mapErr \_ -> crash "setTimeuts should never crash"
+
+setWindowSize : [Size U64 U64] -> Task {} _
+setWindowSize = \Size x y ->
+    size = "$(x |> Num.toStr),$(y |> Num.toStr)"
+    Effect.setWindowSize size
+    |> Task.mapErr \_ -> crash "setWindowSize should never crash"
+
+getAssertTimeout : Task U64 []
+getAssertTimeout =
+    Effect.getAssertTimeout {}
+    |> Task.map Num.toU64
+    |> Task.mapErr \_ -> crash "getAssertTimeout should never crash"

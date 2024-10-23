@@ -26,9 +26,6 @@ import Utils
 import Browser
 import InternalElement
 
-# TODO - Roc app should pass this as parameter
-assertTimeout = 3000
-
 ## Checks if the value of __actual__ is equal to the __expected__.
 ##
 ## ```
@@ -214,13 +211,15 @@ elementShouldHaveText = \element, expectedText ->
     DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Assert: Waiting for element $(selectorText) to have text: \"$(expectedText)\""
 
+    assertTimeout = Utils.getAssertTimeout!
+
     tryFor assertTimeout \{} ->
         elementText = InternalElement.getText! element
 
         if expectedText == elementText then
             Task.ok {}
         else
-            Task.err (AssertionError "Expected element $(selectorText) to have text \"$(expectedText)\", but got \"$(elementText)\"")
+            Task.err (AssertionError "Expected element $(selectorText) to have text \"$(expectedText)\", but got \"$(elementText)\" (waited for $(assertTimeout |> Num.toStr)ms)")
 
 tryFor : U64, ({} -> Task ok []a) -> Task {} []a
 tryFor = \timeout, task ->
@@ -256,13 +255,15 @@ elementShouldHaveValue = \element, expectedValue ->
     DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Assert: Waiting for element $(selectorText) to have value: \"$(expectedValue)\""
 
+    assertTimeout = Utils.getAssertTimeout!
+
     tryFor assertTimeout \{} ->
         elementValue = element |> InternalElement.getProperty! "value"
 
         if expectedValue == elementValue then
             Task.ok {}
         else
-            Task.err (AssertionError "Expected element $(selectorText) to have value \"$(expectedValue)\", but got \"$(elementValue)\"")
+            Task.err (AssertionError "Expected element $(selectorText) to have value \"$(expectedValue)\", but got \"$(elementValue)\" (waited for $(assertTimeout |> Num.toStr)ms)")
 
 ## Checks if the `Element` is visible in the `Browser`.
 ##
@@ -282,10 +283,12 @@ elementShouldBeVisible = \element ->
     DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Assert: Waiting for element $(selectorText) to visible"
 
+    assertTimeout = Utils.getAssertTimeout!
+
     tryFor assertTimeout \{} ->
         isVisible = element |> InternalElement.isVisible!
 
         when isVisible is
             Visible -> Task.ok {}
             NotVisible ->
-                Task.err (AssertionError "Expected element $(selectorText) to be visible")
+                Task.err (AssertionError "Expected element $(selectorText) to be visible (waited for $(assertTimeout |> Num.toStr)ms)")

@@ -22,8 +22,11 @@ type CreateSession_Response struct {
 }
 
 type SessionOptions struct {
-	// TODO - props like window-size, timeouts, etc passed down from the  Roc app
-	Headless bool
+	Headless        bool
+	WindowSize      string
+	ImplicitTimeout uint64
+	PageLoadTimeout uint64
+	ScriptTimeout   uint64
 }
 
 func CreateSession(options SessionOptions) (string, error) {
@@ -33,31 +36,38 @@ func CreateSession(options SessionOptions) (string, error) {
 		return "", err
 	}
 
-	headlessSwtich := ""
-	if options.Headless {
-		headlessSwtich = ", \"--headless\""
+	binaryArgs := []string{
+		"--window-size=" + options.WindowSize,
 	}
 
-	// TODO parametrize this when passing more data from Roc app is possible
-	jsonData := []byte(fmt.Sprintf(`{
-		"capabilities": {
-      "alwaysMatch": {
-        "timeouts": {
-          "implicit": 5000,
-          "pageLoad": 10000,
-          "script": 10000
-        }
-      },
-			"firstMatch": [
+	if options.Headless {
+		binaryArgs = append(binaryArgs, "--headless")
+	}
+
+	reqBody := map[string]interface{}{
+		"capabilities": map[string]interface{}{
+			"alwaysMatch": map[string]interface{}{
+				"timeouts": map[string]interface{}{
+					"implicit": options.ImplicitTimeout,
+					"pageLoad": options.PageLoadTimeout,
+					"script":   options.ScriptTimeout,
+				},
+			},
+			"firstMatch": []map[string]interface{}{
 				{
-					"goog:chromeOptions": {
-						"binary": "%s",
-            "args": ["--window-size=1024,768"%s]
-					}
-				}
-			]
-		}
-	}`, paths.BrowserPath, headlessSwtich))
+					"goog:chromeOptions": map[string]interface{}{
+						"binary": paths.BrowserPath,
+						"args":   binaryArgs,
+					},
+				},
+			},
+		},
+	}
+
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		return "", err
+	}
 
 	var response CreateSession_Response
 	err = makeHttpRequest("POST", url, bytes.NewBuffer(jsonData), &response)

@@ -25,7 +25,6 @@ type Options struct {
 	TestNameFilter          string
 }
 
-// TODO change when passing more than 1 value from Roc app is possible
 var options = Options{
 	SetupOnly:               false,
 	PrintBrowserVersionOnly: false,
@@ -33,6 +32,18 @@ var options = Options{
 	Headless:                false,
 	DebugMode:               false,
 	TestNameFilter:          "",
+}
+
+type OptionsFromUserApp struct {
+	AssertTimeout          uint64
+	PageloadTimeout        uint64
+	ScriptExecutionTimeout uint64
+	ElementImplicitTimeout uint64
+	WindowSize             string
+}
+
+var optionsFromUserApp = OptionsFromUserApp{
+	// set by the UserApp in roc_fx_setTimeouts and roc_fx_setWindowSize
 }
 
 func Main(cliOptions Options) int {
@@ -94,6 +105,32 @@ func Main(cliOptions Options) int {
 	}
 }
 
+//export roc_fx_setTimeouts
+func roc_fx_setTimeouts(assertTimeout, pageTimeout, scriptTimeout, implicitTimeout uint64) C.struct_ResultVoidStr {
+	optionsFromUserApp.AssertTimeout = assertTimeout
+	optionsFromUserApp.PageloadTimeout = pageTimeout
+	optionsFromUserApp.ScriptExecutionTimeout = scriptTimeout
+	optionsFromUserApp.ElementImplicitTimeout = implicitTimeout
+
+	return createRocResultStr(RocOk, "")
+}
+
+//export roc_fx_setWindowSize
+func roc_fx_setWindowSize(size *RocStr) C.struct_ResultVoidStr {
+	// make sure to make a copy of the str - this memory might be realocated
+	bytesCopy := make([]byte, len(size.String()))
+	copy(bytesCopy, []byte(size.String()))
+	sizeCopy := string(bytesCopy)
+	optionsFromUserApp.WindowSize = sizeCopy
+
+	return createRocResultStr(RocOk, "")
+}
+
+//export roc_fx_getAssertTimeout
+func roc_fx_getAssertTimeout() C.struct_ResultU64Str {
+	return createRocResultU64(RocOk, optionsFromUserApp.AssertTimeout, "")
+}
+
 //export roc_fx_incrementTest
 func roc_fx_incrementTest() C.struct_ResultVoidStr {
 	loglist.IncrementCurrentTest()
@@ -135,7 +172,11 @@ func roc_fx_wait(timeout int64) C.struct_ResultVoidStr {
 //export roc_fx_startSession
 func roc_fx_startSession() C.struct_ResultVoidStr {
 	serverOptions := webdriver.SessionOptions{
-		Headless: options.Headless,
+		Headless:        options.Headless,
+		WindowSize:      optionsFromUserApp.WindowSize,
+		ImplicitTimeout: optionsFromUserApp.ElementImplicitTimeout,
+		PageLoadTimeout: optionsFromUserApp.PageloadTimeout,
+		ScriptTimeout:   optionsFromUserApp.ScriptExecutionTimeout,
 	}
 
 	sessionId, err := webdriver.CreateSession(serverOptions)
@@ -603,6 +644,24 @@ func createRocResultI64(resultType RocResultType, value int64, error string) C.s
 	if resultType == RocOk {
 		payloadPtr := unsafe.Pointer(&result.payload)
 		*(*C.int64_t)(payloadPtr) = C.int64_t(value)
+
+	} else {
+
+		rocStr := NewRocStr(error)
+		payloadPtr := unsafe.Pointer(&result.payload)
+		*(*C.struct_RocStr)(payloadPtr) = rocStr.C()
+	}
+	return result
+}
+
+func createRocResultU64(resultType RocResultType, value uint64, error string) C.struct_ResultU64Str {
+	var result C.struct_ResultU64Str
+
+	result.disciminant = C.uchar(resultType)
+
+	if resultType == RocOk {
+		payloadPtr := unsafe.Pointer(&result.payload)
+		*(*C.uint64_t)(payloadPtr) = C.uint64_t(value)
 
 	} else {
 

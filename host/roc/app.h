@@ -13,6 +13,14 @@ struct ResultI64Str {
     unsigned char disciminant;
 };
 
+struct ResultU64Str {
+    union {
+      uint64_t num;
+      struct RocStr str;
+    } payload;
+    unsigned char disciminant;
+};
+
 struct ResultVoidStr {
     union {struct RocStr str;} payload;
     unsigned char disciminant;

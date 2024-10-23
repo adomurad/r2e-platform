@@ -1,9 +1,12 @@
-app [testCases] { r2e: platform "../platform/main.roc" }
+app [testCases, config] { r2e: platform "../platform/main.roc" }
 
 import r2e.Test exposing [test]
+import r2e.Config
 import r2e.Browser
 import r2e.Assert
 import r2e.Debug
+
+config = Config.defaultConfig
 
 testCases = [
     test1,
