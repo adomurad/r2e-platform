@@ -13,6 +13,7 @@ hosted Effect
         getTimeMilis,
         isDebugMode,
         incrementTest,
+        getTestNameFilter,
         getLogsForTest,
         createDirIfNotExist,
         fileWriteUtf8,
@@ -54,6 +55,8 @@ isDebugMode : {} -> Task I64 Str
 incrementTest : {} -> Task {} Str
 
 getLogsForTest : I64 -> Task (List Str) Str
+
+getTestNameFilter : {} -> Task Str Str
 
 # file system
 createDirIfNotExist : Str -> Task {} Str

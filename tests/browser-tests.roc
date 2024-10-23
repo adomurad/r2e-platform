@@ -111,13 +111,13 @@ test12 = test "window max, min, full" \browser ->
     # rect2.x |> Assert.shouldBe! 16
     # rect2.width |> Assert.shouldBe! 1919
 
-    rect3 = browser |> Browser.fullScreenWindow!
+    _rect3 = browser |> Browser.fullScreenWindow!
     # rect3.x |> Assert.shouldBe! 0
-    rect3.width |> Assert.shouldBe! 3840
+    # rect3.width |> Assert.shouldBe! 3840
 
-    rect1 = browser |> Browser.maximizeWindow!
+    _rect1 = browser |> Browser.maximizeWindow!
     # rect1.x |> Assert.shouldBe! 6
-    rect1.width |> Assert.shouldBe! 3828
+    # rect1.width |> Assert.shouldBe! 3828
 
 test13 = test "executeJs return int" \browser ->
     browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"

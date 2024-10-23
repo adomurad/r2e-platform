@@ -36,10 +36,14 @@ runTests = \testCases ->
 
     Debug.printLine! "Starting test run..."
 
+    testFilter = Utils.getTestNameFilter!
+    printFilterWarning! testFilter
+
     startTime = Utils.getTimeMilis!
 
     results =
         testCases
+            |> List.keepIf (filterTestCase testFilter)
             |> List.mapWithIndex \testCase, i ->
                 runTest i testCase
             |> Task.sequence!
@@ -157,9 +161,21 @@ printResultSummary = \results ->
 
     Debug.printLine "$(msgWithColor)\n"
 
+printFilterWarning = \testFilter ->
+    when testFilter is
+        FilterTests str -> Debug.printLine "\n$(color.yellow)FILTER: running only tests containing the str: \"$(str)\"$(color.end)"
+        NoFilter -> Task.ok {}
+
+filterTestCase = \filter ->
+    \@TestCase { name } ->
+        when filter is
+            FilterTests str -> name |> Str.contains str
+            NoFilter -> Bool.true
+
 color = {
     gray: "\u(001b)[4;90m",
     red: "\u(001b)[91m",
     green: "\u(001b)[92m",
+    yellow: "\u(001b)[33m",
     end: "\u(001b)[0m",
 }

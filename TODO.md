@@ -2,6 +2,9 @@
 
 - Assert.expectToMatchSnaphot - element screenshot comparing
 
+- Browser.getUrlPath, Assert.urlPathShouldBe, Browser.getUrlHash??? getUrlQuery
+  ? or Url.parseUrl : Str -> Url
+
 - windows support
 - setup automatic tests for each supported target
 - screenshots of elements

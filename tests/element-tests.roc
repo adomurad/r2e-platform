@@ -266,7 +266,6 @@ test24 = test "inputText {enter}" \browser ->
     text |> Assert.shouldBe "Thank you, test!"
 
 test25 = test "clearElement" \browser ->
-    # TODO test form clearing
     browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
     input = browser |> Browser.findElement! (TestId "name-input")
 

@@ -21,27 +21,24 @@ type Options struct {
 	PrintBrowserVersionOnly bool
 	Headless                bool
 	DebugMode               bool
+	TestNameFilter          string
 }
 
 // TODO change when passing more than 1 value from Roc app is possible
-var (
-	headless = false
-	// TODO should be passed from Roc app ?
-	isDebugMode = false
-)
+var options = Options{
+	SetupOnly:               false,
+	PrintBrowserVersionOnly: false,
+	Headless:                false,
+	DebugMode:               false,
+	TestNameFilter:          "",
+}
 
-func Main(options Options) int {
+func Main(cliOptions Options) int {
+	options = cliOptions
+
 	if options.PrintBrowserVersionOnly {
 		fmt.Printf("%s", setup.BrowserVersion)
 		return 0
-	}
-
-	if options.Headless {
-		headless = true
-	}
-
-	if options.DebugMode {
-		isDebugMode = true
 	}
 
 	err := driversetup.DownloadChromeAndDriver()
@@ -101,6 +98,11 @@ func roc_fx_incrementTest() C.struct_ResultVoidStr {
 	return createRocResultStr(RocOk, "")
 }
 
+//export roc_fx_getTestNameFilter
+func roc_fx_getTestNameFilter() C.struct_ResultVoidStr {
+	return createRocResultStr(RocOk, options.TestNameFilter)
+}
+
 //export roc_fx_getLogsForTest
 func roc_fx_getLogsForTest(testIndex int64) C.struct_ResultListStr {
 	logs := loglist.GetLogsForTest(testIndex)
@@ -131,7 +133,7 @@ func roc_fx_wait(timeout int64) C.struct_ResultVoidStr {
 //export roc_fx_startSession
 func roc_fx_startSession() C.struct_ResultVoidStr {
 	serverOptions := webdriver.SessionOptions{
-		Headless: headless,
+		Headless: options.Headless,
 	}
 
 	sessionId, err := webdriver.CreateSession(serverOptions)
@@ -480,7 +482,7 @@ func roc_fx_getTimeMilis() C.struct_ResultI64Str {
 //export roc_fx_isDebugMode
 func roc_fx_isDebugMode() C.struct_ResultI64Str {
 	isDebugModeInt := 0
-	if isDebugMode {
+	if options.DebugMode {
 		isDebugModeInt = 1
 	}
 	return createRocResultI64(RocOk, int64(isDebugModeInt), "")
