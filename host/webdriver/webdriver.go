@@ -52,7 +52,7 @@ func CreateSession(options SessionOptions) (string, error) {
 				{
 					"goog:chromeOptions": {
 						"binary": "%s",
-            "args": ["--window-size=1920,1080"%s]
+            "args": ["--window-size=1024,768"%s]
 					}
 				}
 			]
@@ -596,6 +596,22 @@ func GetElementText(sessionId, elementId string) (string, error) {
 	err := makeHttpRequest("GET", url, nil, &response)
 	if err != nil {
 		return "", err
+	}
+
+	return response.Value, nil
+}
+
+type IsElementDisplayed_Response struct {
+	Value bool `json:"value"`
+}
+
+func IsElementDisplayed(sessionId, elementId string) (bool, error) {
+	url := fmt.Sprintf("%s/session/%s/element/%s/displayed", baseUrl, sessionId, elementId)
+
+	var response IsElementDisplayed_Response
+	err := makeHttpRequest("GET", url, nil, &response)
+	if err != nil {
+		return false, err
 	}
 
 	return response.Value, nil

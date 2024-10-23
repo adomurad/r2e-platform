@@ -75,7 +75,7 @@ test7 = test "getWindowRect" \browser ->
     rect = browser |> Browser.getWindowRect!
 
     rect.x |> Assert.shouldBe! 16
-    rect.width |> Assert.shouldBe 1919
+    rect.width |> Assert.shouldBe 1024
 
 test8 = test "getTitle" \browser ->
     browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
@@ -116,8 +116,9 @@ test12 = test "window max, min, full" \browser ->
     # rect3.width |> Assert.shouldBe! 3840
 
     _rect1 = browser |> Browser.maximizeWindow!
-    # rect1.x |> Assert.shouldBe! 6
-    # rect1.width |> Assert.shouldBe! 3828
+    Task.ok {}
+# rect1.x |> Assert.shouldBe! 6
+# rect1.width |> Assert.shouldBe! 3828
 
 test13 = test "executeJs return int" \browser ->
     browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"

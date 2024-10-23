@@ -1,4 +1,4 @@
-module [runIfDebugMode, flashElements, wait, showDebugMessageInBrowser]
+module [runIfDebugMode, flashElements, wait, showDebugMessageInBrowser, runIfVerbose]
 
 import Effect
 import Common.ExecuteJs as ExecuteJs
@@ -14,9 +14,29 @@ isDebugMode =
             _ -> Bool.false
     |> Task.mapErr \_ -> crash "isDebugMode should never crash"
 
+isVerbose : Task Bool []
+isVerbose =
+    Effect.isVerbose {}
+    |> Task.map \num ->
+        when num is
+            1 -> Bool.true
+            _ -> Bool.false
+    |> Task.mapErr \_ -> crash "isVerbose should never crash"
+
 debugModeWaitTime = 1500
 
 wait = Effect.wait debugModeWaitTime |> Task.mapErr \_ -> crash "sleep should not fail"
+
+runIfVerbose : ({} -> Task ok err) -> Task {} []
+runIfVerbose = \task ->
+    hasVerboseFlag = isVerbose!
+    hasDebugFlag = isDebugMode!
+
+    if hasVerboseFlag || hasDebugFlag then
+        _ = task {} |> Task.result!
+        Task.ok {}
+    else
+        Task.ok {}
 
 runIfDebugMode : ({} -> Task ok err) -> Task {} []
 runIfDebugMode = \task ->

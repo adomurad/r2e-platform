@@ -7,6 +7,7 @@ module [
     inputText,
     clear,
     isSelected,
+    isVisible,
     getProperty,
     getAttribute,
     getAttributeOrEmpty,
@@ -19,6 +20,8 @@ module [
 ]
 
 import Internal exposing [Element]
+import InternalElement
+import InternalError
 import PropertyDecoder
 import Common.Locator as Locator
 import Effect
@@ -37,18 +40,24 @@ click : Element -> Task {} [WebDriverError Str, ElementNotFound Str]
 click = \element ->
     { sessionId, elementId, locator, selectorText } = Internal.unpackElementData element
 
-    DebugMode.runIfDebugMode! \{} ->
+    DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Trying to click element: $(selectorText)"
 
-    Effect.elementClick sessionId elementId |> Task.mapErr! handleElementError
+    Effect.elementClick sessionId elementId |> Task.mapErr! InternalError.handleElementError
+
+    DebugMode.runIfVerbose! \{} ->
+        Debug.printLine! "Element clicked: $(selectorText)"
 
     DebugMode.runIfDebugMode! \{} ->
-        Debug.printLine! "Element clicked: $(selectorText)"
         DebugMode.showDebugMessageInBrowser! sessionId "Click Element $(selectorText)"
         DebugMode.flashElements! sessionId locator Single
         DebugMode.wait!
 
 ## Get text of the `Element`.
+##
+## This function will return the displayed text in the `Browser` for this `Element` and it's children.
+##
+## When the `Element` is not visible, then the text will be an empty `Str`.
 ##
 ## ```
 ## # find button element
@@ -58,12 +67,12 @@ click = \element ->
 ## ```
 getText : Element -> Task Str [WebDriverError Str, ElementNotFound Str]
 getText = \element ->
-    { sessionId, elementId, selectorText } = Internal.unpackElementData element
+    { selectorText } = Internal.unpackElementData element
 
-    DebugMode.runIfDebugMode! \{} ->
+    DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Getting element text: $(selectorText)"
 
-    Effect.elementGetText sessionId elementId |> Task.mapErr handleElementError
+    InternalElement.getText element
 
 ## Get **value** of the `Element`.
 ##
@@ -107,15 +116,34 @@ isSelected : Element -> Task [Selected, NotSelected] [WebDriverError Str, Elemen
 isSelected = \element ->
     { sessionId, elementId, selectorText } = Internal.unpackElementData element
 
-    DebugMode.runIfDebugMode! \{} ->
+    DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Checking if element is slected: $(selectorText)"
 
-    result = Effect.elementIsSelected sessionId elementId |> Task.mapErr! handleElementError
+    result = Effect.elementIsSelected sessionId elementId |> Task.mapErr! InternalError.handleElementError
 
     if result == "true" then
         Task.ok Selected
     else
         Task.ok NotSelected
+
+## Check if `Element` is visible in the `Browser`.
+##
+## ```
+## # find error message element
+## errorMsg = browser |> Browser.findElement! (Css "#error-msg")
+## # get button text
+## isVisible = checkbox |> Element.isVisible!
+## # assert expected value
+## isVisible |> Assert.shoulBe! Visible
+## ```
+isVisible : Element -> Task [Visible, NotVisible] [WebDriverError Str, ElementNotFound Str]
+isVisible = \element ->
+    { selectorText } = Internal.unpackElementData element
+
+    DebugMode.runIfVerbose! \{} ->
+        Debug.printLine! "Checking if element is visible: $(selectorText)"
+
+    InternalElement.isVisible element
 
 ## Get **attribute** of an `Element`.
 ##
@@ -133,10 +161,10 @@ getAttribute : Element, Str -> Task Str [WebDriverError Str, ElementNotFound Str
 getAttribute = \element, attributeName ->
     { sessionId, elementId, selectorText } = Internal.unpackElementData element
 
-    DebugMode.runIfDebugMode! \{} ->
+    DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Getting attribute \"$(attributeName)\" for element: $(selectorText)"
 
-    result = Effect.elementGetAttribute sessionId elementId attributeName |> Task.mapErr! handleElementError
+    result = Effect.elementGetAttribute sessionId elementId attributeName |> Task.mapErr! InternalError.handleElementError
     result
 
 ## Get **attribute** of an `Element`.
@@ -153,10 +181,10 @@ getAttributeOrEmpty : Element, Str -> Task (Result Str [Empty]) [WebDriverError 
 getAttributeOrEmpty = \element, attributeName ->
     { sessionId, elementId, selectorText } = Internal.unpackElementData element
 
-    DebugMode.runIfDebugMode! \{} ->
+    DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Getting attribute \"$(attributeName)\" for element: $(selectorText)"
 
-    result = Effect.elementGetAttribute sessionId elementId attributeName |> Task.mapErr! handleElementError
+    result = Effect.elementGetAttribute sessionId elementId attributeName |> Task.mapErr! InternalError.handleElementError
 
     if result == "" then
         Task.ok (Err Empty)
@@ -201,20 +229,12 @@ getAttributeOrEmpty = \element, attributeName ->
 ## ```
 getProperty : Internal.Element, Str -> Task a [ElementNotFound Str, PropertyTypeError Str, WebDriverError Str] where a implements Decoding
 getProperty = \element, propertyName ->
-    { sessionId, elementId, selectorText } = Internal.unpackElementData element
+    { selectorText } = Internal.unpackElementData element
 
-    DebugMode.runIfDebugMode! \{} ->
+    DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Getting property \"$(propertyName)\" for element: $(selectorText)"
 
-    resultStr = Effect.elementGetProperty sessionId elementId propertyName |> Task.mapErr! handleElementError
-    resultUtf8 = resultStr |> Str.toUtf8
-
-    decoded : Result a _
-    decoded = Decode.fromBytes resultUtf8 PropertyDecoder.utf8
-
-    when decoded is
-        Ok val -> Task.ok val
-        Err _ -> Task.err (PropertyTypeError "could not cast property \"$(propertyName)\" with value \"$(resultStr)\" to expected type")
+    InternalElement.getProperty element propertyName
 
 ## Get **property** of an `Element`.
 ##
@@ -247,10 +267,10 @@ getPropertyOrEmpty : Element, Str -> Task (Result a [Empty]) [WebDriverError Str
 getPropertyOrEmpty = \element, propertyName ->
     { sessionId, elementId, selectorText } = Internal.unpackElementData element
 
-    DebugMode.runIfDebugMode! \{} ->
+    DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Getting property \"$(propertyName)\" for element: $(selectorText)"
 
-    resultStr = Effect.elementGetProperty sessionId elementId propertyName |> Task.mapErr! handleElementError
+    resultStr = Effect.elementGetProperty sessionId elementId propertyName |> Task.mapErr! InternalError.handleElementError
 
     if resultStr == "" then
         Task.ok (Err Empty)
@@ -287,14 +307,16 @@ inputText : Element, Str -> Task.Task {} [WebDriverError Str, ElementNotFound St
 inputText = \element, str ->
     { sessionId, elementId, selectorText, locator } = Internal.unpackElementData element
 
-    DebugMode.runIfDebugMode! \{} ->
+    DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Sending text \"$(str)\" to element: $(selectorText)"
 
     Effect.elementSendKeys sessionId elementId str
-        |> Task.mapErr! handleElementError
+        |> Task.mapErr! InternalError.handleElementError
+
+    DebugMode.runIfVerbose! \{} ->
+        Debug.printLine! "Element received text: $(selectorText)"
 
     DebugMode.runIfDebugMode! \{} ->
-        Debug.printLine! "Element received text: $(selectorText)"
         DebugMode.showDebugMessageInBrowser! sessionId "Send Text $(selectorText)"
         DebugMode.flashElements! sessionId locator Single
         DebugMode.wait!
@@ -311,21 +333,18 @@ clear : Internal.Element -> Task.Task {} [WebDriverError Str, ElementNotFound St
 clear = \element ->
     { sessionId, elementId, selectorText, locator } = Internal.unpackElementData element
 
-    DebugMode.runIfDebugMode! \{} ->
+    DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Clearing element: $(selectorText)"
 
-    Effect.elementClear sessionId elementId |> Task.mapErr! handleElementError
+    Effect.elementClear sessionId elementId |> Task.mapErr! InternalError.handleElementError
+
+    DebugMode.runIfVerbose! \{} ->
+        Debug.printLine! "Element cleared: $(selectorText)"
 
     DebugMode.runIfDebugMode! \{} ->
-        Debug.printLine! "Element cleared: $(selectorText)"
         DebugMode.showDebugMessageInBrowser! sessionId "Clear Element $(selectorText)"
         DebugMode.flashElements! sessionId locator Single
         DebugMode.wait!
-
-handleElementError = \err ->
-    when err is
-        e if e |> Str.startsWith "WebDriverElementNotFoundError" -> ElementNotFound (e |> Str.dropPrefix "WebDriverElementNotFoundError::")
-        e -> WebDriverError e
 
 ## Supported locator strategies
 ##
@@ -369,13 +388,15 @@ findElement = \element, locator ->
 
     selectorText = "$(locator |> Inspect.toStr)"
 
-    DebugMode.runIfDebugMode! \{} ->
+    DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Searching for element: $(selectorText)"
 
-    newElementId = Effect.elementFindElement sessionId elementId using value |> Task.mapErr! handleElementError
+    newElementId = Effect.elementFindElement sessionId elementId using value |> Task.mapErr! InternalError.handleElementError
+
+    DebugMode.runIfVerbose! \{} ->
+        Debug.printLine! "Found element: $(selectorText)"
 
     DebugMode.runIfDebugMode! \{} ->
-        Debug.printLine! "Found element: $(selectorText)"
         DebugMode.showDebugMessageInBrowser! sessionId "Find Element $(selectorText)"
         DebugMode.flashElements! sessionId locator Single
         DebugMode.wait!
@@ -459,15 +480,17 @@ findElements = \element, locator ->
 
     selectorText = "$(locator |> Inspect.toStr)"
 
-    DebugMode.runIfDebugMode! \{} ->
+    DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Searching for elements: $(selectorText)"
 
-    result = Effect.elementFindElements sessionId parentElementId using value |> Task.mapErr handleElementError |> Task.result!
+    result = Effect.elementFindElements sessionId parentElementId using value |> Task.mapErr InternalError.handleElementError |> Task.result!
 
     when result is
         Ok elementIds ->
-            DebugMode.runIfDebugMode! \{} ->
+            DebugMode.runIfVerbose! \{} ->
                 Debug.printLine! "Found $(elementIds |> List.len |> Num.toStr) elements: $(selectorText)"
+
+            DebugMode.runIfDebugMode! \{} ->
                 if elementIds |> List.isEmpty then
                     Task.ok {}
                 else

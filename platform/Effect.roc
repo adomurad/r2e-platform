@@ -12,6 +12,7 @@ hosted Effect
         elementClick,
         getTimeMilis,
         isDebugMode,
+        isVerbose,
         incrementTest,
         getTestNameFilter,
         getLogsForTest,
@@ -21,6 +22,7 @@ hosted Effect
         # browserGetPdf,
         elementGetText,
         elementIsSelected,
+        elementIsDisplayed,
         elementGetAttribute,
         elementGetProperty,
         elementSendKeys,
@@ -51,6 +53,8 @@ wait : U64 -> Task {} Str
 getTimeMilis : {} -> Task I64 Str
 
 isDebugMode : {} -> Task I64 Str
+
+isVerbose : {} -> Task I64 Str
 
 incrementTest : {} -> Task {} Str
 
@@ -111,6 +115,8 @@ elementClear : Str, Str -> Task {} Str
 elementGetText : Str, Str -> Task Str Str
 
 elementIsSelected : Str, Str -> Task Str Str
+
+elementIsDisplayed : Str, Str -> Task Str Str
 
 elementGetAttribute : Str, Str, Str -> Task Str Str
 

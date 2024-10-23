@@ -1,11 +1,8 @@
 module [
-    # packDriverData,
-    # unpackDriverData,
     packBrowserData,
     unpackBrowserData,
     packElementData,
     unpackElementData,
-    # Driver,
     Browser,
     Element,
 ]

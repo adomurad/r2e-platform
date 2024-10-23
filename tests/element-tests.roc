@@ -46,6 +46,7 @@ testCases = [
     test38,
     test39,
     test40,
+    test41,
 ]
 
 test1 = test "findElement and getText" \browser ->
@@ -448,3 +449,18 @@ test40 = test "findSingleElement in element" \browser ->
     button = rocBox |> Element.findSingleElement! (Css "#populate")
 
     button |> Assert.elementShouldHaveValue! "Populate"
+
+test41 = test "isVisible" \browser ->
+    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
+
+    button = browser |> Browser.findElement! (Css "#show-opacity")
+    isButtonVisible = button |> Element.isVisible!
+    isButtonVisible |> Assert.shouldBe! Visible
+
+    opacityHidden = browser |> Browser.findElement! (Css ".hide-by-opacity")
+    isOpacityHiddenVisible = opacityHidden |> Element.isVisible!
+    isOpacityHiddenVisible |> Assert.shouldBe! NotVisible
+
+    displayHidden = browser |> Browser.findElement! (Css ".hide-by-display")
+    isDisplayHiddenVisible = displayHidden |> Element.isVisible!
+    isDisplayHiddenVisible |> Assert.shouldBe! NotVisible

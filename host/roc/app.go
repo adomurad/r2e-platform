@@ -20,6 +20,7 @@ type Options struct {
 	SetupOnly               bool
 	PrintBrowserVersionOnly bool
 	Headless                bool
+	Verbose                 bool
 	DebugMode               bool
 	TestNameFilter          string
 }
@@ -28,6 +29,7 @@ type Options struct {
 var options = Options{
 	SetupOnly:               false,
 	PrintBrowserVersionOnly: false,
+	Verbose:                 false,
 	Headless:                false,
 	DebugMode:               false,
 	TestNameFilter:          "",
@@ -471,6 +473,22 @@ func roc_fx_elementIsSelected(sessionId, elementId *RocStr) C.struct_ResultVoidS
 	}
 }
 
+//export roc_fx_elementIsDisplayed
+func roc_fx_elementIsDisplayed(sessionId, elementId *RocStr) C.struct_ResultVoidStr {
+	isDisplayed, err := webdriver.IsElementDisplayed(sessionId.String(), elementId.String())
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	// TODO - not sure how to send booleans to Roc
+	// will fix this when I have more time
+	if isDisplayed {
+		return createRocResultStr(RocOk, "true")
+	} else {
+		return createRocResultStr(RocOk, "false")
+	}
+}
+
 //export roc_fx_getTimeMilis
 func roc_fx_getTimeMilis() C.struct_ResultI64Str {
 	now := time.Now().UnixMilli()
@@ -486,6 +504,15 @@ func roc_fx_isDebugMode() C.struct_ResultI64Str {
 		isDebugModeInt = 1
 	}
 	return createRocResultI64(RocOk, int64(isDebugModeInt), "")
+}
+
+//export roc_fx_isVerbose
+func roc_fx_isVerbose() C.struct_ResultI64Str {
+	isVerboseInt := 0
+	if options.Verbose {
+		isVerboseInt = 1
+	}
+	return createRocResultI64(RocOk, int64(isVerboseInt), "")
 }
 
 //export roc_fx_createDirIfNotExist
