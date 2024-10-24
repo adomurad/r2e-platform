@@ -24,7 +24,7 @@ R2EConfiguration testError : {
 ##
 ## **resultsDirName** - *"testResults"*
 ##
-## **resporters** - *[BasicHtmlReporter.resporter]*
+## **reporters** - *[BasicHtmlReporter.reporter]*
 ##
 ## **assertTimeout** - *3s*
 ##
