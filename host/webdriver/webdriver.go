@@ -695,12 +695,101 @@ func IsElementSelected(sessionId, elementId string) (bool, error) {
 	return response.Value, nil
 }
 
-type WebDriverElementNotFoundError struct {
+type Cookie struct {
+	Name     string  `json:"name"`
+	Value    string  `json:"value"`
+	Domain   string  `json:"domain"`
+	Path     string  `json:"path"`
+	HttpOnly bool    `json:"httpOnly"`
+	Secure   bool    `json:"secure"`
+	SameSite string  `json:"sameSite"`
+	Expiry   *uint32 `json:"expiry,omitempty"` // Unix Epoch Time
+}
+
+type AddCookie_Request struct {
+	Cookie Cookie `json:"cookie"`
+}
+
+func AddCookie(sessionId string, cookie Cookie) error {
+	url := fmt.Sprintf("%s/session/%s/cookie", baseUrl, sessionId)
+
+	reqBody := AddCookie_Request{
+		Cookie: cookie,
+	}
+
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		return err
+	}
+
+	err = makeHttpRequest[any]("POST", url, bytes.NewBuffer(jsonData), nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+type GetCookie_Response struct {
+	Value Cookie `json:"value"`
+}
+
+func GetCookie(sessionId, name string) (*Cookie, error) {
+	url := fmt.Sprintf("%s/session/%s/cookie/%s", baseUrl, sessionId, name)
+
+	var response GetCookie_Response
+	err := makeHttpRequest("GET", url, nil, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response.Value, nil
+}
+
+func DeleteCookie(sessionId, name string) error {
+	url := fmt.Sprintf("%s/session/%s/cookie/%s", baseUrl, sessionId, name)
+
+	err := makeHttpRequest[any]("DELETE", url, nil, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func DeleteAllCookies(sessionId string) error {
+	url := fmt.Sprintf("%s/session/%s/cookie", baseUrl, sessionId)
+
+	err := makeHttpRequest[any]("DELETE", url, nil, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+type GetAllCookies_Response struct {
+	Value []Cookie `json:"value"`
+}
+
+func GetAllCookies(sessionId string) (*[]Cookie, error) {
+	url := fmt.Sprintf("%s/session/%s/cookie", baseUrl, sessionId)
+
+	var response GetAllCookies_Response
+	err := makeHttpRequest("GET", url, nil, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response.Value, nil
+}
+
+type WebDriverNotFoundError struct {
 	Message string
 }
 
-func (e *WebDriverElementNotFoundError) Error() string {
-	return fmt.Sprintf("WebDriverElementNotFoundError::%s", e.Message)
+func (e *WebDriverNotFoundError) Error() string {
+	return fmt.Sprintf("WebDriverNotFoundError::%s", e.Message)
 }
 
 type WebDriverNotFoundResponseBody struct {
@@ -740,7 +829,7 @@ func makeHttpRequest[T any](method, url string, body *bytes.Buffer, result *T) e
 			return err
 		}
 
-		return &WebDriverElementNotFoundError{Message: responseBody.Value.Message}
+		return &WebDriverNotFoundError{Message: responseBody.Value.Message}
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {

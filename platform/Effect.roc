@@ -22,6 +22,11 @@ hosted Effect
         createDirIfNotExist,
         fileWriteUtf8,
         browserGetScreenshot,
+        addCookie,
+        getCookie,
+        getAllCookies,
+        deleteCookie,
+        deleteAllCookies,
         # browserGetPdf,
         elementGetText,
         elementIsSelected,
@@ -113,6 +118,16 @@ browserMinimize : Str -> Task (List I64) Str
 browserFullScreen : Str -> Task (List I64) Str
 
 executeJs : Str, Str, Str -> Task Str Str
+
+addCookie : Str, Str, Str, Str, Str, Str, I64, I64, I64 -> Task {} Str
+
+deleteCookie : Str, Str -> Task {} Str
+
+deleteAllCookies : Str -> Task {} Str
+
+getCookie : Str, Str -> Task (List Str) Str
+
+getAllCookies : Str -> Task (List (List Str)) Str
 
 # element effects
 elementClick : Str, Str -> Task {} Str

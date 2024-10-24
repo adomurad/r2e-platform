@@ -12,6 +12,7 @@ import (
 	"host/webdriver"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 	"unsafe"
 )
@@ -378,8 +379,8 @@ func roc_fx_browserNavigateTo(sessionId, url *RocStr) C.struct_ResultVoidStr {
 //export roc_fx_browserFindElement
 func roc_fx_browserFindElement(sessionId, using, value *RocStr) C.struct_ResultVoidStr {
 	elementId, err := webdriver.FindElement(sessionId.String(), using.String(), value.String())
-	// if notFoundError, ok := err.(*webdriver.WebDriverElementNotFoundError); ok {
-	//    return createRocResultStr(RocErr, fmt.Sprintf("WebDriverElementNotFoundError::"))
+	// if notFoundError, ok := err.(*webdriver.WebDriverNotFoundError); ok {
+	//    return createRocResultStr(RocErr, fmt.Sprintf("WebDriverNotFoundError::"))
 	// }
 	if err != nil {
 		return createRocResultStr(RocErr, err.Error())
@@ -436,6 +437,113 @@ func roc_fx_browserGetUrl(sessionId *RocStr) C.struct_ResultVoidStr {
 	}
 
 	return createRocResultStr(RocOk, title)
+}
+
+//export roc_fx_addCookie
+func roc_fx_addCookie(sessionId, name, value, domain, path, sameSite *RocStr, httpOnly, secure, expiry int64) C.struct_ResultVoidStr {
+	httpOnlyBool := false
+	if httpOnly == 1 {
+		httpOnlyBool = true
+	}
+
+	secureBool := false
+	if secure == 1 {
+		secureBool = true
+	}
+
+	var expiryNullable *uint32
+	if expiry > 0 {
+		expiryU32 := uint32(expiry)
+		expiryNullable = &expiryU32
+	}
+
+	cookie := webdriver.Cookie{
+		Name:     name.String(),
+		Value:    value.String(),
+		Domain:   domain.String(),
+		Path:     path.String(),
+		SameSite: sameSite.String(),
+		HttpOnly: httpOnlyBool,
+		Secure:   secureBool,
+		Expiry:   expiryNullable,
+	}
+
+	err := webdriver.AddCookie(sessionId.String(), cookie)
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	return createRocResultStr(RocOk, "")
+}
+
+//export roc_fx_deleteCookie
+func roc_fx_deleteCookie(sessionId, name *RocStr) C.struct_ResultVoidStr {
+	err := webdriver.DeleteCookie(sessionId.String(), name.String())
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	return createRocResultStr(RocOk, "")
+}
+
+//export roc_fx_deleteAllCookies
+func roc_fx_deleteAllCookies(sessionId *RocStr) C.struct_ResultVoidStr {
+	err := webdriver.DeleteAllCookies(sessionId.String())
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	return createRocResultStr(RocOk, "")
+}
+
+//export roc_fx_getCookie
+func roc_fx_getCookie(sessionId, name *RocStr) C.struct_ResultListStr {
+	cookie, err := webdriver.GetCookie(sessionId.String(), name.String())
+	if err != nil {
+		return createRocResult_ListAny_Str[any](RocErr, nil, err.Error())
+	}
+
+	rocCookie := cookieToRocList(*cookie)
+
+	return createRocResult_ListAny_Str(RocOk, &rocCookie, "")
+}
+
+//export roc_fx_getAllCookies
+func roc_fx_getAllCookies(sessionId *RocStr) C.struct_ResultListStr {
+	cookies, err := webdriver.GetAllCookies(sessionId.String())
+	if err != nil {
+		return createRocResult_ListAny_Str[any](RocErr, nil, err.Error())
+	}
+
+	rocList := make([]RocList[RocStr], len(*cookies))
+
+	for _, cookie := range *cookies {
+		rocCookie := cookieToRocList(cookie)
+		rocList = append(rocList, rocCookie)
+	}
+
+	rocCookies := NewRocList(rocList)
+
+	return createRocResult_ListAny_Str(RocOk, &rocCookies, "")
+}
+
+func cookieToRocList(cookie webdriver.Cookie) RocList[RocStr] {
+	expiryStr := ""
+	if cookie.Expiry != nil {
+		expiryStr = strconv.FormatUint(uint64(*cookie.Expiry), 10)
+	}
+
+	return NewRocList([]RocStr{
+		NewRocStr(cookie.Name),
+		NewRocStr(cookie.Value),
+		NewRocStr(cookie.Domain),
+		NewRocStr(cookie.Path),
+		NewRocStr(strconv.FormatBool(cookie.HttpOnly)),
+		NewRocStr(strconv.FormatBool(cookie.Secure)),
+		NewRocStr(cookie.SameSite),
+		NewRocStr(expiryStr),
+	},
+	)
 }
 
 //export roc_fx_elementClick
@@ -592,6 +700,23 @@ func createRocResultStr(resultType RocResultType, str string) C.struct_ResultVoi
 
 	payloadPtr := unsafe.Pointer(&result.payload)
 	*(*C.struct_RocStr)(payloadPtr) = rocStr.C()
+
+	return result
+}
+
+func createRocResult_ListAny_Str[T any](resultType RocResultType, rocList *RocList[T], error string) C.struct_ResultListStr {
+	var result C.struct_ResultListStr
+
+	result.disciminant = C.uchar(resultType)
+
+	if resultType == RocOk {
+		payloadPtr := unsafe.Pointer(&result.payload)
+		*(*C.struct_RocList)(payloadPtr) = rocList.C()
+	} else {
+		rocStr := NewRocStr(error)
+		payloadPtr := unsafe.Pointer(&result.payload)
+		*(*C.struct_RocStr)(payloadPtr) = rocStr.C()
+	}
 
 	return result
 }

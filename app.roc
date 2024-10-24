@@ -1,22 +1,28 @@
-# example application
-app [testCases] { r2e: platform "platform/main.roc" }
+app [testCases, config] { r2e: platform "https://github.com/adomurad/r2e-platform/releases/download/0.6.0/7vFDzZ7T9Thdkgwhl3jRVJyQBNUPm1tDIqeEc5RhRnI.tar.br" }
 
-import r2e.Console
 import r2e.Test exposing [test]
+import r2e.Config
+import r2e.Debug
 import r2e.Browser
 import r2e.Element
 import r2e.Assert
 
-testCases = [
-    test1,
-]
+config = Config.defaultConfig
 
-test1 = test "test1" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
-    checkbox = browser |> Browser.findElement! (TestId "remote-testing-checkbox")
+testCases = [test1]
 
-    checkboxType = checkbox |> Element.getProperty! "size"
-    checkboxType |> Assert.shouldBe 50
-# when checkboxType is
-#     Ok type -> type |> Assert.shouldBe "wow"
-#     Err Empty -> Assert.failWith "should not ge empty"
+test1 = test "use roc repl" \browser ->
+    # go to roc-lang.org
+    browser |> Browser.navigateTo! "http://roc-lang.org"
+    # find repl input
+    replInput = browser |> Browser.findElement! (Css "#source-input")
+    # wait for the repl to initialize
+    Debug.wait! 200
+    # send keys to repl
+    replInput |> Element.inputText! "0.1+0.2{enter}"
+    # find repl output element
+    outputEl = browser |> Browser.findElement! (Css ".output")
+    # get output text
+    outputText = outputEl |> Element.getText!
+    # assert text - fail for demo purpose
+    outputText |> Assert.shouldBe "0.3000000001 : Frac *"

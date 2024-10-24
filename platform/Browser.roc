@@ -24,6 +24,14 @@ module [
     executeJs,
     executeJsWithOutput,
     executeJsWithArgs,
+    Cookie,
+    CookieExpiry,
+    SameSiteOption,
+    addCookie,
+    getCookie,
+    getAllCookies,
+    deleteCookie,
+    deleteAllCookies,
 ]
 
 import Effect
@@ -676,3 +684,182 @@ executeJsWithArgs = \browser, script, arguments ->
         Debug.printLine! "Executing JavaScript in the browser"
 
     ExecuteJs.executeJsWithArgs browser script arguments
+
+# COOKIES
+NewCookie : {
+    name : Str,
+    value : Str,
+    domain ? Str,
+    path ? Str,
+    sameSite ? SameSiteOption,
+    secure ? Bool,
+    httpOnly ? Bool,
+    expiry ? CookieExpiry,
+}
+
+## R2E cookie representation
+##
+## ```
+## Cookie : {
+##     name : Str,
+##     value : Str,
+##     domain : Str,
+##     path : Str,
+##     sameSite : SameSiteOption,
+##     secure : Bool,
+##     httpOnly : Bool,
+##     expiry : CookieExpiry,
+## }
+##
+## CookieExpiry : [Session, MaxAge U32]
+##
+## SameSiteOption : [None, Lax, Strict]
+## ```
+Cookie : {
+    name : Str,
+    value : Str,
+    domain : Str,
+    path : Str,
+    sameSite : SameSiteOption,
+    secure : Bool,
+    httpOnly : Bool,
+    expiry : CookieExpiry,
+}
+
+CookieExpiry : [Session, MaxAge U32]
+
+SameSiteOption : [None, Lax, Strict]
+
+sameSiteOptionToStr : SameSiteOption -> Str
+sameSiteOptionToStr = \option ->
+    when option is
+        None -> "None"
+        Lax -> "Lax"
+        Strict -> "Strict"
+
+sameSiteStrToOption = \str ->
+    when str is
+        "None" -> None
+        "Lax" -> Lax
+        "Strict" -> Strict
+        # TODO - hmm
+        _ -> None
+
+boolToInt = \bool ->
+    if bool then 1 else 0
+
+## Add a cookie in the `Browser`.
+##
+## ```
+## browser |> Browser.addCookie! { name: "myCookie", value: "value1" }
+## ```
+## ```
+## browser |> Browser.addCookie! {
+##     name: "myCookie",
+##     value: "value1",
+##     domain: "my-top-level-domain.com",
+##     path: "/path",
+##     sameSite: Lax,
+##     secure: Bool.true,
+##     httpOnly: Bool.true,
+##     expiry: MaxAge 2865848396, # unix epoch
+## }
+## ```
+addCookie : Browser, NewCookie -> Task {} [WebDriverError Str]
+addCookie = \browser, { name, value, domain ? "", path ? "", sameSite ? None, secure ? Bool.false, httpOnly ? Bool.false, expiry ? Session } ->
+    { sessionId } = Internal.unpackBrowserData browser
+
+    sameSiteStr = sameSite |> sameSiteOptionToStr
+    secureInt = secure |> boolToInt
+    httpOnlyInt = httpOnly |> boolToInt
+    expiryI64 =
+        when expiry is
+            Session -> -1
+            MaxAge n -> n |> Num.toI64
+
+    Effect.addCookie sessionId name value domain path sameSiteStr httpOnlyInt secureInt expiryI64
+        |> Task.mapErr! WebDriverError
+
+## Delete a cookie in the `Browser` by name.
+##
+## ```
+## browser |> Browser.deleteCookie! "myCookieName"
+## ```
+deleteCookie : Browser, Str -> Task {} [WebDriverError Str, CookieNotFound Str]
+deleteCookie = \browser, name ->
+    { sessionId } = Internal.unpackBrowserData browser
+
+    Effect.deleteCookie sessionId name |> Task.mapErr! InternalError.handleCookieError
+
+## Delete all cookies in the `Browser`.
+##
+## ```
+## browser |> Browser.deleteAllCookies!
+## ```
+deleteAllCookies : Browser -> Task {} [WebDriverError Str]
+deleteAllCookies = \browser ->
+    { sessionId } = Internal.unpackBrowserData browser
+
+    Effect.deleteAllCookies sessionId |> Task.mapErr! WebDriverError
+
+## Get a cookie from the `Browser` by name.
+##
+## ```
+## cookie1 = browser |> Browser.getCookie! "myCookie"
+## cookie1 |> Assert.shouldBe! {
+##     name: "myCookie",
+##     value: "value1",
+##     domain: ".my-domain.io",
+##     path: "/",
+##     sameSite: Lax,
+##     expiry: Session,
+##     secure: Bool.true,
+##     httpOnly: Bool.false,
+## }
+## ```
+getCookie : Browser, Str -> Task Cookie [WebDriverError Str, CookieNotFound Str]
+getCookie = \browser, cookieName ->
+    { sessionId } = Internal.unpackBrowserData browser
+
+    cookieArray = Effect.getCookie sessionId cookieName |> Task.mapErr! InternalError.handleCookieError
+    cookieArray |> cookieArrayToRocCookie |> Task.fromResult
+
+## Get all cookies from the `Browser`.
+##
+## ```
+## cookies = browser |> Browser.getAllCookies!
+## cookies |> List.len |> Assert.shouldBe! 3
+## ```
+getAllCookies : Browser -> Task (List Cookie) [WebDriverError Str, CookieNotFound Str]
+getAllCookies = \browser ->
+    { sessionId } = Internal.unpackBrowserData browser
+
+    cookies = Effect.getAllCookies sessionId |> Task.mapErr! InternalError.handleCookieError
+    rocCookies =
+        cookies
+        |> List.map cookieArrayToRocCookie # TODO - right now I'm ignoring errors
+        |> List.keepOks \e -> e
+
+    rocCookies |> Task.ok
+
+cookieArrayToRocCookie : List Str -> Result Cookie [WebDriverError Str]
+cookieArrayToRocCookie = \cookieArray ->
+    when cookieArray is
+        [name, value, domain, path, httpOnlyStr, secureStr, sameSiteStr, expiryStr] ->
+            httpOnly = if httpOnlyStr == "true" then Bool.true else Bool.false
+            secure = if secureStr == "true" then Bool.true else Bool.false
+            sameSite = sameSiteStr |> sameSiteStrToOption
+            expiry =
+                expiryStr
+                    |> expiryStrToRoc
+                    |> Result.mapErr? \_ -> WebDriverError "could not parse cookie: probabably a bug in R2E"
+            Ok { name, value, domain, path, expiry, httpOnly, sameSite, secure }
+
+        _ -> Err (WebDriverError "could not parse cookie: probably a bug in R2E")
+
+expiryStrToRoc = \expStr ->
+    if expStr |> Str.isEmpty then
+        Session |> Ok
+    else
+        u32 = expStr |> Str.toU32?
+        u32 |> MaxAge |> Ok
