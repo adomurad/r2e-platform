@@ -1,7 +1,6 @@
-# Go Roc
+# R2E Platform
 
-Just wondering what I can do differently when implementing my
-[R2E](https://github.com/adomurad/r2e) lib as a platform.
+E2E testing in Roc!
 
 Docs: https://adomurad.github.io/r2e-platform/
 
@@ -15,6 +14,14 @@ Example Repo: https://github.com/adomurad/r2e-platform-example
 
 This platform downloads ~150MB at the first start - "chrome for testing" and
 chromedriver.
+
+## Showcase
+
+![](./images/R2E-showcase.gif)
+
+Present the results in one of the predefined formats, or create you own reporters:
+
+![](./images/R2E-results.png)
 
 ## Support
 
