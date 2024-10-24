@@ -201,6 +201,9 @@ showDebugMessageInBrowser = \sessionId, message ->
             infoBox.style.opacity = '0';  // Initially hidden
             infoBox.style.transition = 'opacity 0.5s ease-in-out';
             infoBox.style.pointerEvents = 'none';  // Prevent interaction
+            infoBox.style.fontFamily = 'system-ui, sans-serif';
+            infoBox.style.fontWeight = 'normal';
+            infoBox.style.lineHeight = '1.5';
 
             // Append the info-box to the body
             document.body.appendChild(infoBox);
