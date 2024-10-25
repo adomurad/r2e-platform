@@ -14,8 +14,6 @@
 - write to files (to save screenshots and pdfs)
 - Env and Args
 - create json / xml / junit reporters
-- send parameters from Roc app to host, e.g. headless, browser type, version,
-  timeouts, default window size, etc,
 - support chrome, firefox, edge, safari,...
 - changing timeouts per test
 - Browser.getActiveElement
@@ -27,11 +25,6 @@
 - Element.inputText - additional special commands: {backspace}, {esc},
   {up_arrow}, {down_arrow}, {left_arrow}, {right_arrow}, {tab} ?
 - Browser.getPageSourceCode
-- Browser.getAllCookies
-- Browser.getCookie
-- Browser.addCookie
-- Browser.deleteCookie
-- Browser.deleteAllCookies
 - Browser.dismissAlert
 - Browser.acceptAlert
 - Browser.getAlertText

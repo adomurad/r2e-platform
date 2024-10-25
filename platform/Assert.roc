@@ -124,33 +124,49 @@ shouldBeLesserOrEqualTo = \actual, expected ->
 
 ## Checks if the __URL__ is equal to the __expected__.
 ##
+## This function will wait for the expectation to be met,
+## for the **assertTimeout** specified in test options - default: 3s.
 ## ```
 ## # assert text
 ## browser |> Assert.urlShouldBe! "https://roc-lang.org/"
 ## ```
 urlShouldBe : Browser, Str -> Task.Task {} [AssertionError Str, WebDriverError Str]
 urlShouldBe = \browser, expected ->
-    actual = browser |> Browser.getUrl!
+    DebugMode.runIfVerbose! \{} ->
+        Debug.printLine! "Assert: Waiting for the URL to be \"$(expected)\""
 
-    if expected == actual then
-        Task.ok {}
-    else
-        Task.err (AssertionError "Expected the URL to be \"$(expected)\", but got \"$(actual)\"")
+    assertTimeout = Utils.getAssertTimeout!
+
+    tryFor assertTimeout \{} ->
+        actual = browser |> Browser.getUrl!
+
+        if expected == actual then
+            Task.ok {}
+        else
+            Task.err (AssertionError "Expected the URL to be \"$(expected)\", but got \"$(actual)\" (waited for $(assertTimeout |> Num.toStr)ms)")
 
 ## Checks if the __title__ of the page is equal to the __expected__.
 ##
+## This function will wait for the expectation to be met,
+## for the **assertTimeout** specified in test options - default: 3s.
 ## ```
 ## # assert text
 ## browser |> Assert.titleShouldBe! "The Roc Programming Language"
 ## ```
 titleShouldBe : Browser, Str -> Task {} [AssertionError Str, WebDriverError Str]
 titleShouldBe = \browser, expected ->
-    actual = browser |> Browser.getTitle!
+    DebugMode.runIfVerbose! \{} ->
+        Debug.printLine! "Assert: Waiting for the page title to be \"$(expected)\""
 
-    if expected == actual then
-        Task.ok {}
-    else
-        Task.err (AssertionError "Expected the page title to be \"$(expected)\", but got \"$(actual)\"")
+    assertTimeout = Utils.getAssertTimeout!
+
+    tryFor assertTimeout \{} ->
+        actual = browser |> Browser.getTitle!
+
+        if expected == actual then
+            Task.ok {}
+        else
+            Task.err (AssertionError "Expected the page title to be \"$(expected)\", but got \"$(actual)\" (waited for $(assertTimeout |> Num.toStr)ms)")
 
 ## Fails with given error message.
 ##
@@ -196,7 +212,7 @@ pluralize = \count, singular, plural ->
 ## Checks if the `Element` has __expected__ text.
 ##
 ## This function will wait for the `Element` to meet the expectation,
-## for the **assertTimeout** specified in test options - default: 2s.
+## for the **assertTimeout** specified in test options - default: 3s.
 ##
 ## ```
 ## # find button element
@@ -240,7 +256,7 @@ tryFor = \timeout, task ->
 ## Checks if the `Element` has __expected__ value.
 ##
 ## This function will wait for the `Element` to meet the expectation,
-## for the **assertTimeout** specified in test options - default: 2s.
+## for the **assertTimeout** specified in test options - default: 3s.
 ##
 ## ```
 ## # find input element
@@ -268,7 +284,7 @@ elementShouldHaveValue = \element, expectedValue ->
 ## Checks if the `Element` is visible in the `Browser`.
 ##
 ## This function will wait for the `Element` to meet the expectation,
-## for the **assertTimeout** specified in test options - default: 2s.
+## for the **assertTimeout** specified in test options - default: 3s.
 ##
 ## ```
 ## # find error message element
