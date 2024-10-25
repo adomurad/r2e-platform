@@ -46,7 +46,7 @@ runTests = \testCases, config ->
         testCases
             |> List.keepIf (filterTestCase testFilter)
             |> List.mapWithIndex \testCase, i ->
-                runTest i testCase
+                runTest i testCase config
             |> Task.sequence!
 
     endTime = Utils.getTimeMilis!
@@ -67,8 +67,8 @@ runTests = \testCases, config ->
     else
         Task.ok {}
 
-runTest : U64, TestCase _ -> Task (TestCaseResult [WebDriverError Str, AssertionError Str]_) []
-runTest = \i, @TestCase { name, testBody } ->
+runTest : U64, TestCase _, R2EConfiguration _ -> Task (TestCaseResult [WebDriverError Str, AssertionError Str]_) []
+runTest = \i, @TestCase { name, testBody }, config ->
     indexStr = (i + 1) |> Num.toStr
 
     Debug.printLine! "" # empty line for readability
@@ -77,7 +77,7 @@ runTest = \i, @TestCase { name, testBody } ->
     Utils.incrementTest!
 
     startTime = Utils.getTimeMilis!
-    resultWithMaybeScreenshot = (runTestSafe testBody) |> Task.result!
+    resultWithMaybeScreenshot = (runTestSafe testBody config) |> Task.result!
 
     endTime = Utils.getTimeMilis!
     duration = endTime - startTime
@@ -116,12 +116,12 @@ runTest = \i, @TestCase { name, testBody } ->
     Task.ok testCaseResult
 
 # runTestSafe : TestBody err -> Task {} _
-runTestSafe = \testBody ->
+runTestSafe = \testBody, config ->
     browser = Browser.openNewWindow |> Task.mapErr! ResultWithoutScreenshot
 
     testResult = testBody browser |> Task.result!
 
-    shouldTakeScreenshot = testResult |> Result.isErr
+    shouldTakeScreenshot = (testResult |> Result.isErr) && (config.screenshotOnFail == Yes)
     screenshot = shouldTakeScreenshot |> takeConditionalScreenshot browser |> Task.mapErr! ResultWithoutScreenshot
 
     Browser.closeWindow browser |> Task.mapErr! ResultWithoutScreenshot

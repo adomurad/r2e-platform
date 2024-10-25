@@ -12,10 +12,12 @@ R2EConfiguration testError : {
     pageLoadTimeout : U64,
     # how long to wait for JavaScript execution | Default: 10s
     scriptExecutionTimeout : U64,
-    # how long to wait when seaching for Elements, and for Elements to become interactive | Default: 5s
+    # how long to wait when searching for Elements, and for Elements to become interactive | Default: 5s
     elementImplicitTimeout : U64,
     # starting browser dimensions
     windowSize : [Size U64 U64],
+    # should take a screenshot on test fail? | Default: Yes
+    screenshotOnFail : [Yes, No],
 }
 
 ## The default test configuration to run your tests.
@@ -35,6 +37,8 @@ R2EConfiguration testError : {
 ## **elementImplicitTimeout** - *5s*
 ##
 ## **windowSize** - *Size 1024 768*
+##
+## **screenshotOnFail** - *Yes*
 ##
 ## ```
 ## app [testCases, config] { r2e: platform "..." }
@@ -57,6 +61,7 @@ defaultConfig = {
     scriptExecutionTimeout: 10_000,
     elementImplicitTimeout: 5_000,
     windowSize: Size 1024 768,
+    screenshotOnFail: Yes,
 }
 
 ## The default test configuration with overrides.
@@ -77,9 +82,10 @@ defaultConfigWith :
         scriptExecutionTimeout ? U64,
         elementImplicitTimeout ? U64,
         windowSize ? [Size U64 U64],
+        screenshotOnFail ? [Yes, No],
     }
     -> R2EConfiguration _
-defaultConfigWith = \{ resultsDirName ? defaultConfig.resultsDirName, reporters ? defaultConfig.reporters, assertTimeout ? 3_000, pageLoadTimeout ? 10_000, scriptExecutionTimeout ? 10_000, elementImplicitTimeout ? 5_000, windowSize ? Size 1024 768 } -> {
+defaultConfigWith = \{ resultsDirName ? defaultConfig.resultsDirName, reporters ? defaultConfig.reporters, assertTimeout ? 3_000, pageLoadTimeout ? 10_000, scriptExecutionTimeout ? 10_000, elementImplicitTimeout ? 5_000, windowSize ? Size 1024 768, screenshotOnFail ? Yes } -> {
     resultsDirName,
     reporters,
     assertTimeout,
@@ -87,4 +93,5 @@ defaultConfigWith = \{ resultsDirName ? defaultConfig.resultsDirName, reporters 
     scriptExecutionTimeout,
     elementImplicitTimeout,
     windowSize,
+    screenshotOnFail,
 }
