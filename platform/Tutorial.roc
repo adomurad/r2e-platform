@@ -157,6 +157,8 @@
 ##     elementImplicitTimeout: 5_000,
 ##     # browser window size
 ##     windowSize: Size 1024 768,
+##     # should take a screenshot on test fail? | Default: Yes
+##     screenshotOnFail : [Yes, No],
 ## }
 ## ```
 ##
@@ -167,6 +169,40 @@
 ##     resultsDirName: "my-results",
 ##     reporters: [BasicHtmlReporter.reporter, myJsonReporter],
 ##     assertTimeout: 5_000,
+## }
+## ```
+##
+## # Custom Test
+##
+## Sometimes you need a custom configuration for a couple of tests
+## that can use a slow action, or have some special needs.
+##
+## By creating a custom `test` function you can override the global
+## configuration for couple of tests.
+##
+## ```
+## longTest = Test.testWith {
+##     pageLoadTimeout: Override 30_000,
+##     scriptExecutionTimeout: Override 30_000,
+##     assertTimeout: Override 8000,
+##     screenshotOnFail: Override No,
+##     windowSize: Override (Size 1800 400),
+## }
+##
+## test1 = longTest "this is flaky test" \browser ->
+##     # open the test page
+##     browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/"
+## ```
+##
+## All possible overrides:
+## ```
+## ConfigOverride : {
+##     assertTimeout : [Inherit, Override U64],
+##     pageLoadTimeout : [Inherit, Override U64],
+##     scriptExecutionTimeout : [Inherit, Override U64],
+##     elementImplicitTimeout : [Inherit, Override U64],
+##     windowSize : [Inherit, Override [Size U64 U64]],
+##     screenshotOnFail : [Inherit, Override [Yes, No]],
 ## }
 ## ```
 ##

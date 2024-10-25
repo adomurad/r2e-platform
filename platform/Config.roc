@@ -4,7 +4,9 @@ import InternalReporting exposing [ReporterDefinition]
 import BasicHtmlReporter
 
 R2EConfiguration testError : {
+    # the directory name where the results will be stored
     resultsDirName : Str,
+    # what reporters to use
     reporters : List (ReporterDefinition testError),
     # how long asserts wait for condition | Default: 3s
     assertTimeout : U64,

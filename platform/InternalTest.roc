@@ -1,4 +1,4 @@
-module [test, runTests]
+module [test, testWith, runTests]
 
 import Internal exposing [Browser]
 import Debug
@@ -8,13 +8,23 @@ import InternalReporting
 import Config exposing [R2EConfiguration]
 import Error
 
-import Assert # wihtout an even number of imports in this module, Roc compiler fails
+import Assert # without an even number of imports in this module, Roc compiler fails
+
+ConfigOverride : {
+    assertTimeout : [Inherit, Override U64],
+    pageLoadTimeout : [Inherit, Override U64],
+    scriptExecutionTimeout : [Inherit, Override U64],
+    elementImplicitTimeout : [Inherit, Override U64],
+    windowSize : [Inherit, Override [Size U64 U64]],
+    screenshotOnFail : [Inherit, Override [Yes, No]],
+}
 
 TestBody err : Browser -> Task {} [WebDriverError Str]err
 
 TestCase err := {
     name : Str,
     testBody : TestBody err,
+    config : ConfigOverride,
 }
 
 TestCaseResult err : {
@@ -29,11 +39,34 @@ test = \name, testBody ->
     @TestCase {
         name,
         testBody,
+        config: {
+            assertTimeout: Inherit,
+            pageLoadTimeout: Inherit,
+            scriptExecutionTimeout: Inherit,
+            elementImplicitTimeout: Inherit,
+            windowSize: Inherit,
+            screenshotOnFail: Inherit,
+        },
     }
+
+testWith = \{ assertTimeout ? Inherit, pageLoadTimeout ? Inherit, scriptExecutionTimeout ? Inherit, elementImplicitTimeout ? Inherit, windowSize ? Inherit, screenshotOnFail ? Inherit } ->
+    \name, testBody ->
+        @TestCase {
+            name,
+            testBody,
+            config: {
+                assertTimeout,
+                pageLoadTimeout,
+                scriptExecutionTimeout,
+                elementImplicitTimeout,
+                windowSize,
+                screenshotOnFail,
+            },
+        }
 
 runTests : List (TestCase _), R2EConfiguration _ -> Task {} _
 runTests = \testCases, config ->
-    Assert.shouldBe! 1 1 # supressing the warning
+    Assert.shouldBe! 1 1 # suppressing the warning
 
     Debug.printLine! "Starting test run..."
 
@@ -68,8 +101,19 @@ runTests = \testCases, config ->
         Task.ok {}
 
 runTest : U64, TestCase _, R2EConfiguration _ -> Task (TestCaseResult [WebDriverError Str, AssertionError Str]_) []
-runTest = \i, @TestCase { name, testBody }, config ->
+runTest = \i, @TestCase { name, testBody, config: testConfigOverride }, config ->
     indexStr = (i + 1) |> Num.toStr
+
+    testConfigOverride.assertTimeout |> runIfOverride! Utils.setAssertTimeoutOverride
+    testConfigOverride.pageLoadTimeout |> runIfOverride! Utils.setPageLoadTimeoutOverride
+    testConfigOverride.scriptExecutionTimeout |> runIfOverride! Utils.setScriptTimeoutOverride
+    testConfigOverride.elementImplicitTimeout |> runIfOverride! Utils.setImplicitTimeoutOverride
+    testConfigOverride.windowSize |> runIfOverride! Utils.setWindowSizeOverride
+
+    mergedConfig =
+        when testConfigOverride.screenshotOnFail is
+            Override val -> { config & screenshotOnFail: val }
+            Inherit -> config
 
     Debug.printLine! "" # empty line for readability
     Debug.printLine! "$(color.gray)Test $(indexStr):$(color.end) \"$(name)\": Running..."
@@ -77,10 +121,12 @@ runTest = \i, @TestCase { name, testBody }, config ->
     Utils.incrementTest!
 
     startTime = Utils.getTimeMilis!
-    resultWithMaybeScreenshot = (runTestSafe testBody config) |> Task.result!
+    resultWithMaybeScreenshot = (runTestSafe testBody mergedConfig) |> Task.result!
 
     endTime = Utils.getTimeMilis!
     duration = endTime - startTime
+
+    Utils.resetTestOverrides!
 
     { result, screenshot } =
         when resultWithMaybeScreenshot is
@@ -172,6 +218,11 @@ filterTestCase = \filter ->
         when filter is
             FilterTests str -> name |> Str.contains str
             NoFilter -> Bool.true
+
+runIfOverride = \value, task ->
+    when value is
+        Override val -> task val
+        Inherit -> Task.ok {}
 
 color = {
     gray: "\u(001b)[4;90m",

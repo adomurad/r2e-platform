@@ -2,7 +2,13 @@
 hosted Effect
     exposes [
         setTimeouts,
+        setScriptTimeoutOverride,
+        setAssertTimeoutOverride,
+        setPageLoadTimeoutOverride,
+        setImplicitTimeoutOverride,
+        resetTestOverrides,
         setWindowSize,
+        setWindowSizeOverride,
         getAssertTimeout,
         stdoutLine,
         stdinLine,
@@ -54,7 +60,19 @@ hosted Effect
 # effects that are provided by the host
 setTimeouts : U64, U64, U64, U64 -> Task {} Str
 
+setAssertTimeoutOverride : U64 -> Task {} Str
+
+setPageLoadTimeoutOverride : U64 -> Task {} Str
+
+setScriptTimeoutOverride : U64 -> Task {} Str
+
+setImplicitTimeoutOverride : U64 -> Task {} Str
+
+resetTestOverrides : {} -> Task {} Str
+
 setWindowSize : Str -> Task {} Str
+
+setWindowSizeOverride : Str -> Task {} Str
 
 getAssertTimeout : {} -> Task I64 Str
 

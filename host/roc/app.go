@@ -37,14 +37,26 @@ var options = Options{
 
 type OptionsFromUserApp struct {
 	AssertTimeout          uint64
-	PageloadTimeout        uint64
+	PageLoadTimeout        uint64
 	ScriptExecutionTimeout uint64
 	ElementImplicitTimeout uint64
 	WindowSize             string
 }
 
+type TestOverrides struct {
+	AssertTimeout          *uint64
+	PageLoadTimeout        *uint64
+	ScriptExecutionTimeout *uint64
+	ElementImplicitTimeout *uint64
+	WindowSize             *string
+}
+
 var optionsFromUserApp = OptionsFromUserApp{
 	// set by the UserApp in roc_fx_setTimeouts and roc_fx_setWindowSize
+}
+
+var testOverrides = TestOverrides{
+	// overrides per test basis
 }
 
 func Main(cliOptions Options) int {
@@ -109,9 +121,45 @@ func Main(cliOptions Options) int {
 //export roc_fx_setTimeouts
 func roc_fx_setTimeouts(assertTimeout, pageTimeout, scriptTimeout, implicitTimeout uint64) C.struct_ResultVoidStr {
 	optionsFromUserApp.AssertTimeout = assertTimeout
-	optionsFromUserApp.PageloadTimeout = pageTimeout
+	optionsFromUserApp.PageLoadTimeout = pageTimeout
 	optionsFromUserApp.ScriptExecutionTimeout = scriptTimeout
 	optionsFromUserApp.ElementImplicitTimeout = implicitTimeout
+
+	return createRocResultStr(RocOk, "")
+}
+
+//export roc_fx_setAssertTimeoutOverride
+func roc_fx_setAssertTimeoutOverride(timeout uint64) C.struct_ResultVoidStr {
+	testOverrides.AssertTimeout = &timeout
+
+	return createRocResultStr(RocOk, "")
+}
+
+//export roc_fx_setPageLoadTimeoutOverride
+func roc_fx_setPageLoadTimeoutOverride(timeout uint64) C.struct_ResultVoidStr {
+	fmt.Println("setting page")
+	testOverrides.PageLoadTimeout = &timeout
+
+	return createRocResultStr(RocOk, "")
+}
+
+//export roc_fx_setScriptTimeoutOverride
+func roc_fx_setScriptTimeoutOverride(timeout uint64) C.struct_ResultVoidStr {
+	testOverrides.ScriptExecutionTimeout = &timeout
+
+	return createRocResultStr(RocOk, "")
+}
+
+//export roc_fx_setImplicitTimeoutOverride
+func roc_fx_setImplicitTimeoutOverride(timeout uint64) C.struct_ResultVoidStr {
+	testOverrides.ElementImplicitTimeout = &timeout
+
+	return createRocResultStr(RocOk, "")
+}
+
+//export roc_fx_resetTestOverrides
+func roc_fx_resetTestOverrides() C.struct_ResultVoidStr {
+	testOverrides = TestOverrides{}
 
 	return createRocResultStr(RocOk, "")
 }
@@ -127,9 +175,26 @@ func roc_fx_setWindowSize(size *RocStr) C.struct_ResultVoidStr {
 	return createRocResultStr(RocOk, "")
 }
 
+//export roc_fx_setWindowSizeOverride
+func roc_fx_setWindowSizeOverride(size *RocStr) C.struct_ResultVoidStr {
+	// make sure to make a copy of the str - this memory might be realocated
+	bytesCopy := make([]byte, len(size.String()))
+	copy(bytesCopy, []byte(size.String()))
+	sizeCopy := string(bytesCopy)
+	testOverrides.WindowSize = &sizeCopy
+
+	return createRocResultStr(RocOk, "")
+}
+
 //export roc_fx_getAssertTimeout
 func roc_fx_getAssertTimeout() C.struct_ResultU64Str {
-	return createRocResultU64(RocOk, optionsFromUserApp.AssertTimeout, "")
+	assertTimeout := optionsFromUserApp.AssertTimeout
+
+	if testOverrides.AssertTimeout != nil {
+		assertTimeout = *testOverrides.AssertTimeout
+	}
+
+	return createRocResultU64(RocOk, assertTimeout, "")
 }
 
 //export roc_fx_incrementTest
@@ -176,8 +241,24 @@ func roc_fx_startSession() C.struct_ResultVoidStr {
 		Headless:        options.Headless,
 		WindowSize:      optionsFromUserApp.WindowSize,
 		ImplicitTimeout: optionsFromUserApp.ElementImplicitTimeout,
-		PageLoadTimeout: optionsFromUserApp.PageloadTimeout,
+		PageLoadTimeout: optionsFromUserApp.PageLoadTimeout,
 		ScriptTimeout:   optionsFromUserApp.ScriptExecutionTimeout,
+	}
+
+	if testOverrides.WindowSize != nil {
+		serverOptions.WindowSize = *testOverrides.WindowSize
+	}
+
+	if testOverrides.ElementImplicitTimeout != nil {
+		serverOptions.ImplicitTimeout = *testOverrides.ElementImplicitTimeout
+	}
+
+	if testOverrides.PageLoadTimeout != nil {
+		serverOptions.PageLoadTimeout = *testOverrides.PageLoadTimeout
+	}
+
+	if testOverrides.ScriptExecutionTimeout != nil {
+		serverOptions.ScriptTimeout = *testOverrides.ScriptExecutionTimeout
 	}
 
 	sessionId, err := webdriver.CreateSession(serverOptions)
