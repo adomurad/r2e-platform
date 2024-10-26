@@ -1,6 +1,6 @@
 # TODO
 
-- Assert.expectToMatchSnaphot - element screenshot comparing
+- Assert.elementShouldMatchSnapshot - element screenshot comparing
 
 - Browser.getUrlPath, Assert.urlPathShouldBe, Browser.getUrlHash??? getUrlQuery
   ? or Url.parseUrl : Str -> Url
@@ -12,10 +12,9 @@
 - compare elements/pages based on screenshots?
 - pdf from elements/pages
 - write to files (to save screenshots and pdfs)
-- Env and Args
+- Args - not sure this is a good idea
 - create json / xml / junit reporters
 - support chrome, firefox, edge, safari,...
-- changing timeouts per test
 - Browser.getActiveElement
 - Element.getCssValue
 - Element.getTagName ???
