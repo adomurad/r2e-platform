@@ -137,7 +137,6 @@ func roc_fx_setAssertTimeoutOverride(timeout uint64) C.struct_ResultVoidStr {
 
 //export roc_fx_setPageLoadTimeoutOverride
 func roc_fx_setPageLoadTimeoutOverride(timeout uint64) C.struct_ResultVoidStr {
-	fmt.Println("setting page")
 	testOverrides.PageLoadTimeout = &timeout
 
 	return createRocResultStr(RocOk, "")
