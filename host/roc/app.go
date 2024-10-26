@@ -666,6 +666,26 @@ func roc_fx_elementGetText(sessionId, elementId *RocStr) C.struct_ResultVoidStr 
 	return createRocResultStr(RocOk, text)
 }
 
+//export roc_fx_elementGetTag
+func roc_fx_elementGetTag(sessionId, elementId *RocStr) C.struct_ResultVoidStr {
+	text, err := webdriver.GetElementTag(sessionId.String(), elementId.String())
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	return createRocResultStr(RocOk, text)
+}
+
+//export roc_fx_elementGetCss
+func roc_fx_elementGetCss(sessionId, elementId, prop *RocStr) C.struct_ResultVoidStr {
+	text, err := webdriver.GetElementCss(sessionId.String(), elementId.String(), prop.String())
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	return createRocResultStr(RocOk, text)
+}
+
 //export roc_fx_elementGetAttribute
 func roc_fx_elementGetAttribute(sessionId, elementId, attributeName *RocStr) C.struct_ResultVoidStr {
 	text, err := webdriver.GetElementAttribute(sessionId.String(), elementId.String(), attributeName.String())

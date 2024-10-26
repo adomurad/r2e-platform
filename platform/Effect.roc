@@ -43,6 +43,8 @@ hosted Effect
         elementClear,
         elementFindElement,
         elementFindElements,
+        elementGetCss,
+        elementGetTag,
         browserSetWindowRect,
         browserGetWindowRect,
         browserGetTitle,
@@ -168,5 +170,9 @@ elementGetProperty : Str, Str, Str -> Task Str Str
 elementFindElement : Str, Str, Str, Str -> Task Str Str
 
 elementFindElements : Str, Str, Str, Str -> Task (List Str) Str
+
+elementGetTag : Str, Str -> Task Str Str
+
+elementGetCss : Str, Str, Str -> Task Str Str
 
 getEnv : Str -> Task Str Str

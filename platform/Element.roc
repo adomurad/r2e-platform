@@ -12,6 +12,8 @@ module [
     getAttribute,
     getAttributeOrEmpty,
     getPropertyOrEmpty,
+    getTagName,
+    getCssProperty,
     Locator,
     findElement,
     findElements,
@@ -505,3 +507,41 @@ findElements = \element, locator ->
 
         Err (ElementNotFound _) -> Task.ok []
         Err err -> Task.err err
+
+## Get the HTML tag name of an `Element`.
+##
+## ```
+## # find input element
+## input = browser |> Browser.findElement! (Css "#email-input")
+## # get input tag name
+## tagName = input |> Element.getTagName!
+## # tag name should be "input"
+## tagName |> Assert.shouldBe "input"
+## ```
+getTagName : Element -> Task Str [WebDriverError Str, ElementNotFound Str]
+getTagName = \element ->
+    { sessionId, elementId, selectorText } = Internal.unpackElementData element
+
+    DebugMode.runIfVerbose! \{} ->
+        Debug.printLine! "Getting tag name for element: $(selectorText)"
+
+    Effect.elementGetTag sessionId elementId |> Task.mapErr InternalError.handleElementError
+
+## Get a **css property** of an `Element`.
+##
+## ```
+## # find input element
+## input = browser |> Browser.findElement! (Css "#email-input")
+## # get input type
+## inputBorder = input |> Element.getCssProperty! "border"
+## # assert
+## inputBorder |> Assert.shouldBe "2px solid rgb(0, 0, 0)"
+## ```
+getCssProperty : Element, Str -> Task Str [WebDriverError Str, ElementNotFound Str]
+getCssProperty = \element, cssProperty ->
+    { sessionId, elementId, selectorText } = Internal.unpackElementData element
+
+    DebugMode.runIfVerbose! \{} ->
+        Debug.printLine! "Getting CSS property \"$(cssProperty)\" for element: $(selectorText)"
+
+    Effect.elementGetCss sessionId elementId cssProperty |> Task.mapErr InternalError.handleElementError

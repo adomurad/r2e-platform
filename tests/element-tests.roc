@@ -50,6 +50,8 @@ testCases = [
     test39,
     test40,
     test41,
+    test42,
+    test43,
 ]
 
 test1 = test "findElement and getText" \browser ->
@@ -467,3 +469,23 @@ test41 = test "isVisible" \browser ->
     displayHidden = browser |> Browser.findElement! (Css ".hide-by-display")
     isDisplayHiddenVisible = displayHidden |> Element.isVisible!
     isDisplayHiddenVisible |> Assert.shouldBe! NotVisible
+
+test42 = test "getTagName" \browser ->
+    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
+
+    button1 = browser |> Browser.findElement! (Css "#show-opacity")
+
+    buttonTag = button1 |> Element.getTagName!
+
+    buttonTag |> Assert.shouldBe "button"
+
+test43 = test "getCss" \browser ->
+    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
+
+    button1 = browser |> Browser.findElement! (Css "#show-opacity")
+
+    border = button1 |> Element.getCssProperty! "border"
+    border |> Assert.shouldBe! "2px solid rgb(0, 0, 0)"
+
+    empty = button1 |> Element.getCssProperty! "jfkldsajflksadjlfk"
+    empty |> Assert.shouldBe ""

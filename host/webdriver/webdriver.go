@@ -611,6 +611,38 @@ func GetElementText(sessionId, elementId string) (string, error) {
 	return response.Value, nil
 }
 
+type GetElementTag_Response struct {
+	Value string `json:"value"`
+}
+
+func GetElementTag(sessionId, elementId string) (string, error) {
+	url := fmt.Sprintf("%s/session/%s/element/%s/name", baseUrl, sessionId, elementId)
+
+	var response GetElementTag_Response
+	err := makeHttpRequest("GET", url, nil, &response)
+	if err != nil {
+		return "", err
+	}
+
+	return response.Value, nil
+}
+
+type GetElementCss_Response struct {
+	Value string `json:"value"`
+}
+
+func GetElementCss(sessionId, elementId, prop string) (string, error) {
+	url := fmt.Sprintf("%s/session/%s/element/%s/css/%s", baseUrl, sessionId, elementId, prop)
+
+	var response GetElementCss_Response
+	err := makeHttpRequest("GET", url, nil, &response)
+	if err != nil {
+		return "", err
+	}
+
+	return response.Value, nil
+}
+
 type IsElementDisplayed_Response struct {
 	Value bool `json:"value"`
 }
