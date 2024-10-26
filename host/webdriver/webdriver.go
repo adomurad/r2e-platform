@@ -163,6 +163,78 @@ func NavigateForward(sessionId string) error {
 	return nil
 }
 
+func AlertAccept(sessionId string) error {
+	requestUrl := fmt.Sprintf("%s/session/%s/alert/accept", baseUrl, sessionId)
+
+	reqBody := map[string]interface{}{}
+
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		return err
+	}
+
+	err = makeHttpRequest[any]("POST", requestUrl, bytes.NewBuffer(jsonData), nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func AlertDismiss(sessionId string) error {
+	requestUrl := fmt.Sprintf("%s/session/%s/alert/dismiss", baseUrl, sessionId)
+
+	reqBody := map[string]interface{}{}
+
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		return err
+	}
+
+	err = makeHttpRequest[any]("POST", requestUrl, bytes.NewBuffer(jsonData), nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func AlertSendText(sessionId, text string) error {
+	requestUrl := fmt.Sprintf("%s/session/%s/alert/text", baseUrl, sessionId)
+
+	reqBody := map[string]interface{}{
+		"text": text,
+	}
+
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		return err
+	}
+
+	err = makeHttpRequest[any]("POST", requestUrl, bytes.NewBuffer(jsonData), nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+type AlertGetText_Response struct {
+	Value string `json:"value"`
+}
+
+func AlertGetText(sessionId string) (string, error) {
+	requestUrl := fmt.Sprintf("%s/session/%s/alert/text", baseUrl, sessionId)
+
+	var response AlertGetText_Response
+	err := makeHttpRequest("GET", requestUrl, nil, &response)
+	if err != nil {
+		return "", err
+	}
+
+	return response.Value, nil
+}
+
 type GetScreenshot_Response struct {
 	Value string `json:"value"`
 }

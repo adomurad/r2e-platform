@@ -33,6 +33,10 @@ hosted Effect
         getAllCookies,
         deleteCookie,
         deleteAllCookies,
+        alertDismiss,
+        alertSendText,
+        alertGetText,
+        alertAccept,
         # browserGetPdf,
         elementGetText,
         elementIsSelected,
@@ -150,6 +154,14 @@ deleteAllCookies : Str -> Task {} Str
 getCookie : Str, Str -> Task (List Str) Str
 
 getAllCookies : Str -> Task (List (List Str)) Str
+
+alertAccept : Str -> Task {} Str
+
+alertDismiss : Str -> Task {} Str
+
+alertSendText : Str, Str -> Task {} Str
+
+alertGetText : Str -> Task Str Str
 
 # element effects
 elementClick : Str, Str -> Task {} Str

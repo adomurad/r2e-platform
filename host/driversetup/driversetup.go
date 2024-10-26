@@ -22,6 +22,7 @@ func RunChromedriver() (*exec.Cmd, error) {
 	}
 
 	// Create the command to run ./chromedriver
+	// cmd := exec.Command(paths.DriverPath, "--disable-dev-shm-usage")
 	cmd := exec.Command(paths.DriverPath)
 	// cmd := exec.Command(paths.DriverPath, "--verbose")
 

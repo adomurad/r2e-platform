@@ -469,6 +469,46 @@ func roc_fx_browserNavigateTo(sessionId, url *RocStr) C.struct_ResultVoidStr {
 	return createRocResultStr(RocOk, "")
 }
 
+//export roc_fx_alertAccept
+func roc_fx_alertAccept(sessionId *RocStr) C.struct_ResultVoidStr {
+	err := webdriver.AlertAccept(sessionId.String())
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	return createRocResultStr(RocOk, "")
+}
+
+//export roc_fx_alertDismiss
+func roc_fx_alertDismiss(sessionId *RocStr) C.struct_ResultVoidStr {
+	err := webdriver.AlertDismiss(sessionId.String())
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	return createRocResultStr(RocOk, "")
+}
+
+//export roc_fx_alertGetText
+func roc_fx_alertGetText(sessionId *RocStr) C.struct_ResultVoidStr {
+	text, err := webdriver.AlertGetText(sessionId.String())
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	return createRocResultStr(RocOk, text)
+}
+
+//export roc_fx_alertSendText
+func roc_fx_alertSendText(sessionId, text *RocStr) C.struct_ResultVoidStr {
+	err := webdriver.AlertSendText(sessionId.String(), text.String())
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	return createRocResultStr(RocOk, "")
+}
+
 //export roc_fx_browserFindElement
 func roc_fx_browserFindElement(sessionId, using, value *RocStr) C.struct_ResultVoidStr {
 	elementId, err := webdriver.FindElement(sessionId.String(), using.String(), value.String())
