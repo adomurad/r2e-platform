@@ -764,6 +764,13 @@ func roc_fx_fileWriteUtf8(path, content *RocStr) C.struct_ResultVoidStr {
 	return createRocResultStr(RocOk, "")
 }
 
+//export roc_fx_getEnv
+func roc_fx_getEnv(name *RocStr) C.struct_ResultVoidStr {
+	value := os.Getenv(name.String())
+
+	return createRocResultStr(RocOk, value)
+}
+
 type RocResultType int
 
 const (

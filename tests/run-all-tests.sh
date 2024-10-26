@@ -41,3 +41,6 @@ fi
 echo "Running element-assertion-tests.roc"
 roc --prebuilt-platform $TEST_DIR/element-assertion-tests.roc --headless || exit 1;
 
+echo "Running env-tests.roc"
+THIS_ENV_SHOULD_NOT_BE_EMPTY=secret_value roc --prebuilt-platform $TEST_DIR/env-tests.roc --headless || exit 1;
+

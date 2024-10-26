@@ -54,6 +54,7 @@ hosted Effect
         browserMinimize,
         browserFullScreen,
         executeJs,
+        getEnv,
     ]
     imports []
 
@@ -167,3 +168,5 @@ elementGetProperty : Str, Str, Str -> Task Str Str
 elementFindElement : Str, Str, Str, Str -> Task Str Str
 
 elementFindElements : Str, Str, Str, Str -> Task (List Str) Str
+
+getEnv : Str -> Task Str Str

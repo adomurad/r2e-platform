@@ -322,15 +322,26 @@
 ##
 ## [https://github.com/adomurad/r2e-platform/blob/main/platform/BasicHtmlReporter.roc](https://github.com/adomurad/r2e-platform/blob/main/platform/BasicHtmlReporter.roc)
 ##
+## # Env
+##
+## Often in E2E tests you need to provide some secret data, like e.g. credentials.
+##
+## You can use the environment variables in R2E tests.
+##
+## ```
+##  empty = Env.get! "FAKE_ENV_FOR_SURE_EMPTY"
+##  empty |> Assert.shouldBe! ""
+##
+##  env = Env.get! "SECRET_ENV_KEY"
+##  env |> Assert.shouldBe! "secret_value"
+## ```
 ##
 ## # Roadmap
 ##
 ## - windows support - as soon as I setup Roc on windows...
 ## - automatic test retries
 ## - builtin reporters for common formats like JUnit, AllureReport, etc.
-## - Env - environment variables
 ## - snapshot testing for elements and the whole page
-## - config overrides for single tests
 ## - Firefox, Edge, Safari support
 ## - working with browser alerts
 ## - more Element interactions
