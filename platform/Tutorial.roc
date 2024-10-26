@@ -344,7 +344,6 @@
 ## - snapshot testing for elements and the whole page
 ## - Firefox, Edge, Safari support
 ## - working with browser alerts
-## - more Element interactions
 ##
 ## If something is missing or nice to have then feel free to create a feature request at [https://github.com/adomurad/r2e-platform/issues](https://github.com/adomurad/r2e-platform/issues)
 ##

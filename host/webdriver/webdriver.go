@@ -323,6 +323,29 @@ func GetWindowRect(sessionId string) (*WindowRect, error) {
 	return &response.Value, nil
 }
 
+type ElementRect struct {
+	X      float64 `json:"x"`
+	Y      float64 `json:"y"`
+	Width  int64   `json:"width"`
+	Height int64   `json:"height"`
+}
+
+type ElementRect_Response struct {
+	Value ElementRect `json:"value"`
+}
+
+func GetElementRect(sessionId, elementId string) (*ElementRect, error) {
+	url := fmt.Sprintf("%s/session/%s/element/%s/rect", baseUrl, sessionId, elementId)
+
+	var response ElementRect_Response
+	err := makeHttpRequest("GET", url, nil, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response.Value, nil
+}
+
 func FullScreen(sessionId string) (*WindowRect, error) {
 	requestUrl := fmt.Sprintf("%s/session/%s/window/fullscreen", baseUrl, sessionId)
 

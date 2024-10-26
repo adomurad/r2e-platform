@@ -52,6 +52,7 @@ testCases = [
     test41,
     test42,
     test43,
+    test44,
 ]
 
 test1 = test "findElement and getText" \browser ->
@@ -489,3 +490,15 @@ test43 = test "getCss" \browser ->
 
     empty = button1 |> Element.getCssProperty! "jfkldsajflksadjlfk"
     empty |> Assert.shouldBe ""
+
+test44 = test "getRect" \browser ->
+    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
+
+    button1 = browser |> Browser.findElement! (Css "#show-opacity")
+
+    buttonRect = button1 |> Element.getRect!
+
+    buttonRect.height |> Assert.shouldBe! 51
+    buttonRect.width |> Assert.shouldBe! 139
+    buttonRect.x |> Assert.shouldBeEqualTo! 226
+    buttonRect.y |> Assert.shouldBeEqualTo! 218.3593754

@@ -383,6 +383,19 @@ func roc_fx_browserGetWindowRect(sessionId *RocStr) C.struct_ResultListStr {
 	}
 }
 
+//export roc_fx_elementGetRect
+func roc_fx_elementGetRect(sessionId, elementId *RocStr) C.struct_ResultListStr {
+	newRect, err := webdriver.GetElementRect(sessionId.String(), elementId.String())
+	if err != nil {
+		return createRocResult_ListI64_Str(RocErr, nil, err.Error())
+	} else {
+		// FIXME, don't know how to return 2 ints and 2 floats to Roc
+		// for know this is skechy but should not cause any problem
+		rectList := []float64{newRect.X, newRect.Y, float64(newRect.Width), float64(newRect.Height)}
+		return createRocResult_ListF64_Str(RocOk, rectList, "")
+	}
+}
+
 //export roc_fx_browserMaximize
 func roc_fx_browserMaximize(sessionId *RocStr) C.struct_ResultListStr {
 	newRect, err := webdriver.Maximize(sessionId.String())
@@ -857,6 +870,24 @@ func createRocResult_ListI64_Str(resultType RocResultType, intList []int64, erro
 
 	if resultType == RocOk {
 		rocList := NewRocList(intList)
+		payloadPtr := unsafe.Pointer(&result.payload)
+		*(*C.struct_RocList)(payloadPtr) = rocList.C()
+	} else {
+		rocStr := NewRocStr(error)
+		payloadPtr := unsafe.Pointer(&result.payload)
+		*(*C.struct_RocStr)(payloadPtr) = rocStr.C()
+	}
+
+	return result
+}
+
+func createRocResult_ListF64_Str(resultType RocResultType, floatList []float64, error string) C.struct_ResultListStr {
+	var result C.struct_ResultListStr
+
+	result.disciminant = C.uchar(resultType)
+
+	if resultType == RocOk {
+		rocList := NewRocList(floatList)
 		payloadPtr := unsafe.Pointer(&result.payload)
 		*(*C.struct_RocList)(payloadPtr) = rocList.C()
 	} else {

@@ -45,6 +45,7 @@ hosted Effect
         elementFindElements,
         elementGetCss,
         elementGetTag,
+        elementGetRect,
         browserSetWindowRect,
         browserGetWindowRect,
         browserGetTitle,
@@ -174,5 +175,7 @@ elementFindElements : Str, Str, Str, Str -> Task (List Str) Str
 elementGetTag : Str, Str -> Task Str Str
 
 elementGetCss : Str, Str, Str -> Task Str Str
+
+elementGetRect : Str, Str -> Task (List F64) Str
 
 getEnv : Str -> Task Str Str

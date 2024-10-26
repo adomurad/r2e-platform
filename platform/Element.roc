@@ -14,6 +14,7 @@ module [
     getPropertyOrEmpty,
     getTagName,
     getCssProperty,
+    getRect,
     Locator,
     findElement,
     findElements,
@@ -545,3 +546,37 @@ getCssProperty = \element, cssProperty ->
         Debug.printLine! "Getting CSS property \"$(cssProperty)\" for element: $(selectorText)"
 
     Effect.elementGetCss sessionId elementId cssProperty |> Task.mapErr InternalError.handleElementError
+
+ElementRect : {
+    x : F64,
+    y : F64,
+    width : U32,
+    height : U32,
+}
+
+## Get the position and size of the `Element`.
+##
+## ```
+## # find input element
+## input = browser |> Browser.findElement! (Css "#email-input")
+## # get input tag name
+## rect = input |> Element.getRect!
+## # assert the rect
+## rect.height |> Assert.shouldBe! 51
+## rect.width |> Assert.shouldBe! 139
+## rect.x |> Assert.shouldBeEqualTo! 226.1243566
+## rect.y |> Assert.shouldBeEqualTo! 218.3593754
+## ```
+getRect : Element -> Task ElementRect [WebDriverError Str, ElementNotFound Str]
+getRect = \element ->
+    { sessionId, elementId, selectorText } = Internal.unpackElementData element
+
+    DebugMode.runIfVerbose! \{} ->
+        Debug.printLine! "Getting the rect for element: $(selectorText)"
+
+    Effect.elementGetRect sessionId elementId
+    |> Task.map \list ->
+        when list is
+            [xVal, yVal, widthVal, heightVal] -> { x: xVal, y: yVal, width: widthVal |> Num.round, height: heightVal |> Num.round }
+            _ -> crash "the contract with host should not fail"
+    |> Task.mapErr InternalError.handleElementError

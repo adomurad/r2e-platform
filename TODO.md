@@ -16,9 +16,6 @@
 - create json / xml / junit reporters
 - support chrome, firefox, edge, safari,...
 - Browser.getActiveElement
-- Element.getCssValue
-- Element.getTagName ???
-- Element.getRect
 - Element.isEnabled - only on form controlls - confusing naming, need to explore
   further
 - Element.inputText - additional special commands: {backspace}, {esc},
