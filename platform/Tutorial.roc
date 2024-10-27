@@ -159,6 +159,8 @@
 ##     windowSize: Size 1024 768,
 ##     # should take a screenshot on test fail? | Default: Yes
 ##     screenshotOnFail : [Yes, No],
+##     # number of attempts | Default: 2
+##     attempts : U64,
 ## }
 ## ```
 ##
@@ -203,6 +205,7 @@
 ##     elementImplicitTimeout : [Inherit, Override U64],
 ##     windowSize : [Inherit, Override [Size U64 U64]],
 ##     screenshotOnFail : [Inherit, Override [Yes, No]],
+##     attempts : [Inherit, Override U64],
 ## }
 ## ```
 ##
@@ -310,6 +313,8 @@
 ##     screenshot : [NoScreenshot, Screenshot Str],
 ##     # Debug.printLine calls perfomed during this test
 ##     logs : List Str,
+##     # final result of this test, or just a failed attempt?
+##     type : [FinalResult, Attempt],
 ## } where err implements Inspect
 ##
 ## TestRunMetadata : {

@@ -20,6 +20,8 @@ R2EConfiguration testError : {
     windowSize : [Size U64 U64],
     # should take a screenshot on test fail? | Default: Yes
     screenshotOnFail : [Yes, No],
+    # number of attempts | Default: 2
+    attempts : U64,
 }
 
 ## The default test configuration to run your tests.
@@ -41,6 +43,8 @@ R2EConfiguration testError : {
 ## **windowSize** - *Size 1024 768*
 ##
 ## **screenshotOnFail** - *Yes*
+##
+## **attempts** - *2*
 ##
 ## ```
 ## app [testCases, config] { r2e: platform "..." }
@@ -64,6 +68,7 @@ defaultConfig = {
     elementImplicitTimeout: 5_000,
     windowSize: Size 1024 768,
     screenshotOnFail: Yes,
+    attempts: 2,
 }
 
 ## The default test configuration with overrides.
@@ -85,9 +90,10 @@ defaultConfigWith :
         elementImplicitTimeout ? U64,
         windowSize ? [Size U64 U64],
         screenshotOnFail ? [Yes, No],
+        attempts ? U64,
     }
     -> R2EConfiguration _
-defaultConfigWith = \{ resultsDirName ? defaultConfig.resultsDirName, reporters ? defaultConfig.reporters, assertTimeout ? 3_000, pageLoadTimeout ? 10_000, scriptExecutionTimeout ? 10_000, elementImplicitTimeout ? 5_000, windowSize ? Size 1024 768, screenshotOnFail ? Yes } -> {
+defaultConfigWith = \{ resultsDirName ? defaultConfig.resultsDirName, reporters ? defaultConfig.reporters, assertTimeout ? 3_000, pageLoadTimeout ? 10_000, scriptExecutionTimeout ? 10_000, elementImplicitTimeout ? 5_000, windowSize ? Size 1024 768, screenshotOnFail ? Yes, attempts ? 2 } -> {
     resultsDirName,
     reporters,
     assertTimeout,
@@ -96,4 +102,5 @@ defaultConfigWith = \{ resultsDirName ? defaultConfig.resultsDirName, reporters 
     elementImplicitTimeout,
     windowSize,
     screenshotOnFail,
+    attempts,
 }

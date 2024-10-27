@@ -15,18 +15,29 @@ import Error
 ## ```
 reporter = Reporting.createReporter "basicHtmlReporter" \results, meta ->
     duration = ((Num.toFrac meta.duration) / 1000) |> secToMinAndSec
-    successCount = results |> List.countIf (\{ result } -> result |> Result.isOk)
-    errorCount = results |> List.countIf (\{ result } -> result |> Result.isErr)
+    # filter out failed attempts
+    finalResults = results |> List.keepIf isFinalResult
+    successCount = finalResults |> List.countIf (\{ result } -> result |> Result.isOk)
+    errorCount = finalResults |> List.countIf (\{ result } -> result |> Result.isErr)
 
     reportContent = results |> List.map resultToHtml |> List.walk "" Str.concat
     htmlStr = getHtml duration successCount errorCount reportContent
 
     [{ filePath: "index.html", content: htmlStr }]
 
-resultToHtml = \{ name, result, duration, screenshot, logs } ->
-    safeName = name |> htmlEncode
+resultToHtml = \{ name, result, duration, screenshot, logs, type } ->
+    safeName =
+        when type is
+            FinalResult -> name |> htmlEncode
+            Attempt -> "$(name) (attempt)" |> htmlEncode
     isOk = result |> Result.isOk
-    class = if isOk then "ok" else "error"
+    class =
+        when type is
+            FinalResult ->
+                if isOk then "ok" else "error"
+
+            Attempt ->
+                "warning"
     testDetails = getTestDetails result screenshot logs
     testDuration = (Num.toFrac duration) / 1000 |> fracToStr
 
@@ -103,6 +114,8 @@ printLogs = \logs ->
         <ul class="log-list">$(items)</ul>
         """
 
+isFinalResult = \{ type } -> type == FinalResult
+
 handleError = \errorTag ->
     when Error.webDriverErrorToStr errorTag is
         StringError msg -> msg
@@ -142,6 +155,7 @@ getHtml = \duration, successCount, errorCount, resultsContent ->
         /* --ok-color: #8ecc88; */
         --primary-color: #9c7cea;
         --ok-color: #12c9be;
+        --warning-color: #f39bac;
         --error-color: #fd6e08;
         --gray: #b6b6b6;
 
@@ -236,6 +250,10 @@ getHtml = \duration, successCount, errorCount, resultsContent ->
 
     li.error {
         color: var(--error-color);
+    }
+
+    li.warning {
+        color: var(--warning-color);
     }
 
     .output {

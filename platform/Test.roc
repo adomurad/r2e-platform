@@ -36,6 +36,7 @@ test = InternalTest.test
 ##     elementImplicitTimeout : [Inherit, Override U64],
 ##     windowSize : [Inherit, Override [Size U64 U64]],
 ##     screenshotOnFail : [Inherit, Override [Yes, No]],
+##     attempts : [Inherit, Override U64],
 ## }
 ## ```
 testWith = InternalTest.testWith

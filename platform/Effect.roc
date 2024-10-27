@@ -22,9 +22,9 @@ hosted Effect
         getTimeMilis,
         isDebugMode,
         isVerbose,
-        incrementTest,
+        resetTestLogBucket,
+        getLogsFromBucket,
         getTestNameFilter,
-        getLogsForTest,
         createDirIfNotExist,
         fileWriteUtf8,
         browserGetScreenshot,
@@ -99,9 +99,9 @@ isDebugMode : {} -> Task I64 Str
 
 isVerbose : {} -> Task I64 Str
 
-incrementTest : {} -> Task {} Str
+resetTestLogBucket : {} -> Task {} Str
 
-getLogsForTest : I64 -> Task (List Str) Str
+getLogsFromBucket : {} -> Task (List Str) Str
 
 getTestNameFilter : {} -> Task Str Str
 

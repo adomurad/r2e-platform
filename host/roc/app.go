@@ -6,7 +6,6 @@ import "C"
 import (
 	"fmt"
 	"host/driversetup"
-	"host/loglist"
 	"host/setup"
 	"host/utils"
 	"host/webdriver"
@@ -196,10 +195,27 @@ func roc_fx_getAssertTimeout() C.struct_ResultU64Str {
 	return createRocResultU64(RocOk, assertTimeout, "")
 }
 
-//export roc_fx_incrementTest
-func roc_fx_incrementTest() C.struct_ResultVoidStr {
-	loglist.IncrementCurrentTest()
+var testLogBucket = make([]string, 0)
+
+func addLogToBucket(message string) {
+	// make sure to make a copy of the str - this memory will be realocated
+	bytesCopy := make([]byte, len(message))
+	copy(bytesCopy, []byte(message))
+	messageCopy := string(bytesCopy)
+
+	testLogBucket = append(testLogBucket, messageCopy)
+}
+
+//export roc_fx_resetTestLogBucket
+func roc_fx_resetTestLogBucket() C.struct_ResultVoidStr {
+	testLogBucket = make([]string, 0)
 	return createRocResultStr(RocOk, "")
+}
+
+//export roc_fx_getLogsFromBucket
+func roc_fx_getLogsFromBucket() C.struct_ResultListStr {
+	logs := testLogBucket
+	return createRocResult_ListStr_Str(RocOk, logs, "")
 }
 
 //export roc_fx_getTestNameFilter
@@ -207,16 +223,10 @@ func roc_fx_getTestNameFilter() C.struct_ResultVoidStr {
 	return createRocResultStr(RocOk, options.TestNameFilter)
 }
 
-//export roc_fx_getLogsForTest
-func roc_fx_getLogsForTest(testIndex int64) C.struct_ResultListStr {
-	logs := loglist.GetLogsForTest(testIndex)
-	return createRocResult_ListStr_Str(RocOk, logs, "")
-}
-
 //export roc_fx_stdoutLine
 func roc_fx_stdoutLine(msg *RocStr) C.struct_ResultVoidStr {
 	fmt.Println(msg)
-	loglist.AddLogForTest(msg.String())
+	addLogToBucket(msg.String())
 	return createRocResultStr(RocOk, "")
 }
 

@@ -33,6 +33,7 @@ config = Config.defaultConfigWith {
     elementImplicitTimeout: 13,
     windowSize: Size 500 500,
     screenshotOnFail: No,
+    attempts: 3,
 }
 
 testCases = [
@@ -135,6 +136,7 @@ customTest = Test.testWith {
     elementImplicitTimeout: Override 4,
     screenshotOnFail: Override Yes,
     windowSize: Override (Size 1800 1000),
+    attempts: Override 5,
 }
 
 test6 = customTest "windowSize override" \browser ->

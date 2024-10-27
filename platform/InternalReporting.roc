@@ -9,6 +9,7 @@ TestRunResult err : {
     result : Result {} []err,
     screenshot : [NoScreenshot, Screenshot Str],
     logs : List Str,
+    type : [FinalResult, Attempt],
 } where err implements Inspect
 
 TestRunMetadata : {

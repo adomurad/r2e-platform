@@ -8,7 +8,7 @@ import InternalReporting
 import Config exposing [R2EConfiguration]
 import Error
 
-import Assert # without an even number of imports in this module, Roc compiler fails
+# import Assert # without an even number of imports in this module, Roc compiler fails
 
 ConfigOverride : {
     assertTimeout : [Inherit, Override U64],
@@ -17,6 +17,7 @@ ConfigOverride : {
     elementImplicitTimeout : [Inherit, Override U64],
     windowSize : [Inherit, Override [Size U64 U64]],
     screenshotOnFail : [Inherit, Override [Yes, No]],
+    attempts : [Inherit, Override U64],
 }
 
 TestBody err : Browser -> Task {} [WebDriverError Str]err
@@ -33,6 +34,7 @@ TestCaseResult err : {
     duration : U64,
     screenshot : [NoScreenshot, Screenshot Str],
     logs : List Str,
+    type : [FinalResult, Attempt],
 } where err implements Inspect
 
 test = \name, testBody ->
@@ -46,10 +48,11 @@ test = \name, testBody ->
             elementImplicitTimeout: Inherit,
             windowSize: Inherit,
             screenshotOnFail: Inherit,
+            attempts: Inherit,
         },
     }
 
-testWith = \{ assertTimeout ? Inherit, pageLoadTimeout ? Inherit, scriptExecutionTimeout ? Inherit, elementImplicitTimeout ? Inherit, windowSize ? Inherit, screenshotOnFail ? Inherit } ->
+testWith = \{ assertTimeout ? Inherit, pageLoadTimeout ? Inherit, scriptExecutionTimeout ? Inherit, elementImplicitTimeout ? Inherit, windowSize ? Inherit, screenshotOnFail ? Inherit, attempts ? Inherit } ->
     \name, testBody ->
         @TestCase {
             name,
@@ -61,12 +64,13 @@ testWith = \{ assertTimeout ? Inherit, pageLoadTimeout ? Inherit, scriptExecutio
                 elementImplicitTimeout,
                 windowSize,
                 screenshotOnFail,
+                attempts,
             },
         }
 
 runTests : List (TestCase _), R2EConfiguration _ -> Task {} _
 runTests = \testCases, config ->
-    Assert.shouldBe! 1 1 # suppressing the warning
+    # Assert.shouldBe! 1 1 # suppressing the warning
 
     Debug.printLine! "Starting test run..."
 
@@ -75,12 +79,25 @@ runTests = \testCases, config ->
 
     startTime = Utils.getTimeMilis!
 
-    results =
+    filteredTestCases =
         testCases
-            |> List.keepIf (filterTestCase testFilter)
-            |> List.mapWithIndex \testCase, i ->
-                runTest i testCase config
-            |> Task.sequence!
+        |> List.keepIf (filterTestCase testFilter)
+
+    results = Task.loop! { resultsL: [], testCasesL: filteredTestCases, indexL: 0, attempt: 1 } \{ resultsL, testCasesL, indexL, attempt } ->
+        when testCasesL is
+            [] -> Task.ok (Done resultsL)
+            [testCase, .. as rest] ->
+                # TODO better tests
+                numberOfAttempts = getOrOverrideAttempts config testCase
+
+                res = runTest! indexL attempt testCase config
+                if res.result |> Result.isOk then
+                    Task.ok (Step { resultsL: List.append resultsL res, testCasesL: rest, indexL: indexL + 1, attempt: 1 })
+                else if attempt < numberOfAttempts then
+                    attemptRes = { res & type: Attempt }
+                    Task.ok (Step { resultsL: List.append resultsL attemptRes, testCasesL: testCasesL, indexL: indexL, attempt: attempt + 1 })
+                else
+                    Task.ok (Step { resultsL: List.append resultsL res, testCasesL: rest, indexL: indexL + 1, attempt: 1 })
 
     endTime = Utils.getTimeMilis!
     duration = endTime - startTime
@@ -100,8 +117,8 @@ runTests = \testCases, config ->
     else
         Task.ok {}
 
-runTest : U64, TestCase _, R2EConfiguration _ -> Task (TestCaseResult [WebDriverError Str, AssertionError Str]_) []
-runTest = \i, @TestCase { name, testBody, config: testConfigOverride }, config ->
+runTest : U64, U64, TestCase _, R2EConfiguration _ -> Task (TestCaseResult [WebDriverError Str, AssertionError Str]_) []
+runTest = \i, attempt, @TestCase { name, testBody, config: testConfigOverride }, config ->
     indexStr = (i + 1) |> Num.toStr
 
     testConfigOverride.assertTimeout |> runIfOverride! Utils.setAssertTimeoutOverride
@@ -115,10 +132,16 @@ runTest = \i, @TestCase { name, testBody, config: testConfigOverride }, config -
             Override val -> { config & screenshotOnFail: val }
             Inherit -> config
 
-    Debug.printLine! "" # empty line for readability
-    Debug.printLine! "$(color.gray)Test $(indexStr):$(color.end) \"$(name)\": Running..."
+    attemptStr =
+        if attempt > 1 then
+            " (attempt $(attempt |> Num.toStr))"
+        else
+            ""
 
-    Utils.incrementTest!
+    Debug.printLine! "" # empty line for readability
+    Debug.printLine! "$(color.gray)Test $(indexStr):$(color.end) \"$(name)\"$(attemptStr): Running..."
+
+    Utils.resetTestLogBucket!
 
     startTime = Utils.getTimeMilis!
     resultWithMaybeScreenshot = (runTestSafe testBody mergedConfig) |> Task.result!
@@ -134,7 +157,7 @@ runTest = \i, @TestCase { name, testBody, config: testConfigOverride }, config -
             Err (ResultWithoutScreenshot res) -> { result: Err res, screenshot: NoScreenshot }
             Err (ResultWithScreenshot res screenBase64) -> { result: Err res, screenshot: Screenshot screenBase64 }
 
-    testLogs = Utils.getLogsForTest! (i + 1 |> Num.toI64)
+    testLogs = Utils.getLogsFromBucket!
 
     testCaseResult = {
         name,
@@ -142,6 +165,7 @@ runTest = \i, @TestCase { name, testBody, config: testConfigOverride }, config -
         duration,
         screenshot,
         logs: testLogs,
+        type: FinalResult,
     }
 
     resultLogMessage =
@@ -187,13 +211,16 @@ takeConditionalScreenshot = \shouldTakeScreenshot, browser ->
     else
         Task.ok NoScreenshot
 
+isFinalResult = \{ type } -> type == FinalResult
+
 printResultSummary : List (TestCaseResult _) -> Task.Task {} _
 printResultSummary = \results ->
     Debug.printLine! "" # empty line
     Debug.printLine! "Summary:"
 
-    totalCount = results |> List.len
-    errorCount = results |> List.countIf \{ result } -> result |> Result.isErr
+    finalResults = results |> List.keepIf isFinalResult
+    totalCount = finalResults |> List.len
+    errorCount = finalResults |> List.countIf \{ result } -> result |> Result.isErr
     successCount = totalCount - errorCount
     totalCountStr = totalCount |> Num.toStr
     errorCountStr = errorCount |> Num.toStr
@@ -212,6 +239,11 @@ printFilterWarning = \testFilter ->
     when testFilter is
         FilterTests str -> Debug.printLine "\n$(color.yellow)FILTER: running only tests containing the str: \"$(str)\"$(color.end)"
         NoFilter -> Task.ok {}
+
+getOrOverrideAttempts = \mainConfig, @TestCase testCase ->
+    when testCase.config.attempts is
+        Inherit -> mainConfig.attempts
+        Override num -> num
 
 filterTestCase = \filter ->
     \@TestCase { name } ->

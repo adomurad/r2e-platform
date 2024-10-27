@@ -1,7 +1,7 @@
 module [
     getTimeMilis,
-    incrementTest,
-    getLogsForTest,
+    resetTestLogBucket,
+    getLogsFromBucket,
     getTestNameFilter,
     setTimeouts,
     setWindowSize,
@@ -22,15 +22,15 @@ getTimeMilis =
     |> Task.map Num.toU64
     |> Task.mapErr \_ -> crash "getTimeMilis should never crash"
 
-incrementTest : Task {} []
-incrementTest =
-    Effect.incrementTest {}
-    |> Task.mapErr \_ -> crash "incrementTest should never crash"
+resetTestLogBucket : Task {} []
+resetTestLogBucket =
+    Effect.resetTestLogBucket {}
+    |> Task.mapErr \_ -> crash "resetTestLogBucket should never crash"
 
-getLogsForTest : I64 -> Task (List Str) []
-getLogsForTest = \testIndex ->
-    Effect.getLogsForTest testIndex
-    |> Task.mapErr \_ -> crash "getLogsForTest should never crash"
+getLogsFromBucket : Task (List Str) []
+getLogsFromBucket =
+    Effect.getLogsFromBucket {}
+    |> Task.mapErr \_ -> crash "getLogsFromBucket should never crash"
 
 getTestNameFilter : Task [FilterTests Str, NoFilter] []
 getTestNameFilter =
