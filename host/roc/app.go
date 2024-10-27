@@ -6,7 +6,6 @@ import "C"
 import (
 	"fmt"
 	"host/driversetup"
-	"host/loglist"
 	"host/setup"
 	"host/utils"
 	"host/webdriver"
@@ -37,14 +36,26 @@ var options = Options{
 
 type OptionsFromUserApp struct {
 	AssertTimeout          uint64
-	PageloadTimeout        uint64
+	PageLoadTimeout        uint64
 	ScriptExecutionTimeout uint64
 	ElementImplicitTimeout uint64
 	WindowSize             string
 }
 
+type TestOverrides struct {
+	AssertTimeout          *uint64
+	PageLoadTimeout        *uint64
+	ScriptExecutionTimeout *uint64
+	ElementImplicitTimeout *uint64
+	WindowSize             *string
+}
+
 var optionsFromUserApp = OptionsFromUserApp{
 	// set by the UserApp in roc_fx_setTimeouts and roc_fx_setWindowSize
+}
+
+var testOverrides = TestOverrides{
+	// overrides per test basis
 }
 
 func Main(cliOptions Options) int {
@@ -109,9 +120,44 @@ func Main(cliOptions Options) int {
 //export roc_fx_setTimeouts
 func roc_fx_setTimeouts(assertTimeout, pageTimeout, scriptTimeout, implicitTimeout uint64) C.struct_ResultVoidStr {
 	optionsFromUserApp.AssertTimeout = assertTimeout
-	optionsFromUserApp.PageloadTimeout = pageTimeout
+	optionsFromUserApp.PageLoadTimeout = pageTimeout
 	optionsFromUserApp.ScriptExecutionTimeout = scriptTimeout
 	optionsFromUserApp.ElementImplicitTimeout = implicitTimeout
+
+	return createRocResultStr(RocOk, "")
+}
+
+//export roc_fx_setAssertTimeoutOverride
+func roc_fx_setAssertTimeoutOverride(timeout uint64) C.struct_ResultVoidStr {
+	testOverrides.AssertTimeout = &timeout
+
+	return createRocResultStr(RocOk, "")
+}
+
+//export roc_fx_setPageLoadTimeoutOverride
+func roc_fx_setPageLoadTimeoutOverride(timeout uint64) C.struct_ResultVoidStr {
+	testOverrides.PageLoadTimeout = &timeout
+
+	return createRocResultStr(RocOk, "")
+}
+
+//export roc_fx_setScriptTimeoutOverride
+func roc_fx_setScriptTimeoutOverride(timeout uint64) C.struct_ResultVoidStr {
+	testOverrides.ScriptExecutionTimeout = &timeout
+
+	return createRocResultStr(RocOk, "")
+}
+
+//export roc_fx_setImplicitTimeoutOverride
+func roc_fx_setImplicitTimeoutOverride(timeout uint64) C.struct_ResultVoidStr {
+	testOverrides.ElementImplicitTimeout = &timeout
+
+	return createRocResultStr(RocOk, "")
+}
+
+//export roc_fx_resetTestOverrides
+func roc_fx_resetTestOverrides() C.struct_ResultVoidStr {
+	testOverrides = TestOverrides{}
 
 	return createRocResultStr(RocOk, "")
 }
@@ -127,15 +173,49 @@ func roc_fx_setWindowSize(size *RocStr) C.struct_ResultVoidStr {
 	return createRocResultStr(RocOk, "")
 }
 
-//export roc_fx_getAssertTimeout
-func roc_fx_getAssertTimeout() C.struct_ResultU64Str {
-	return createRocResultU64(RocOk, optionsFromUserApp.AssertTimeout, "")
+//export roc_fx_setWindowSizeOverride
+func roc_fx_setWindowSizeOverride(size *RocStr) C.struct_ResultVoidStr {
+	// make sure to make a copy of the str - this memory might be realocated
+	bytesCopy := make([]byte, len(size.String()))
+	copy(bytesCopy, []byte(size.String()))
+	sizeCopy := string(bytesCopy)
+	testOverrides.WindowSize = &sizeCopy
+
+	return createRocResultStr(RocOk, "")
 }
 
-//export roc_fx_incrementTest
-func roc_fx_incrementTest() C.struct_ResultVoidStr {
-	loglist.IncrementCurrentTest()
+//export roc_fx_getAssertTimeout
+func roc_fx_getAssertTimeout() C.struct_ResultU64Str {
+	assertTimeout := optionsFromUserApp.AssertTimeout
+
+	if testOverrides.AssertTimeout != nil {
+		assertTimeout = *testOverrides.AssertTimeout
+	}
+
+	return createRocResultU64(RocOk, assertTimeout, "")
+}
+
+var testLogBucket = make([]string, 0)
+
+func addLogToBucket(message string) {
+	// make sure to make a copy of the str - this memory will be realocated
+	bytesCopy := make([]byte, len(message))
+	copy(bytesCopy, []byte(message))
+	messageCopy := string(bytesCopy)
+
+	testLogBucket = append(testLogBucket, messageCopy)
+}
+
+//export roc_fx_resetTestLogBucket
+func roc_fx_resetTestLogBucket() C.struct_ResultVoidStr {
+	testLogBucket = make([]string, 0)
 	return createRocResultStr(RocOk, "")
+}
+
+//export roc_fx_getLogsFromBucket
+func roc_fx_getLogsFromBucket() C.struct_ResultListStr {
+	logs := testLogBucket
+	return createRocResult_ListStr_Str(RocOk, logs, "")
 }
 
 //export roc_fx_getTestNameFilter
@@ -143,16 +223,10 @@ func roc_fx_getTestNameFilter() C.struct_ResultVoidStr {
 	return createRocResultStr(RocOk, options.TestNameFilter)
 }
 
-//export roc_fx_getLogsForTest
-func roc_fx_getLogsForTest(testIndex int64) C.struct_ResultListStr {
-	logs := loglist.GetLogsForTest(testIndex)
-	return createRocResult_ListStr_Str(RocOk, logs, "")
-}
-
 //export roc_fx_stdoutLine
 func roc_fx_stdoutLine(msg *RocStr) C.struct_ResultVoidStr {
 	fmt.Println(msg)
-	loglist.AddLogForTest(msg.String())
+	addLogToBucket(msg.String())
 	return createRocResultStr(RocOk, "")
 }
 
@@ -176,8 +250,24 @@ func roc_fx_startSession() C.struct_ResultVoidStr {
 		Headless:        options.Headless,
 		WindowSize:      optionsFromUserApp.WindowSize,
 		ImplicitTimeout: optionsFromUserApp.ElementImplicitTimeout,
-		PageLoadTimeout: optionsFromUserApp.PageloadTimeout,
+		PageLoadTimeout: optionsFromUserApp.PageLoadTimeout,
 		ScriptTimeout:   optionsFromUserApp.ScriptExecutionTimeout,
+	}
+
+	if testOverrides.WindowSize != nil {
+		serverOptions.WindowSize = *testOverrides.WindowSize
+	}
+
+	if testOverrides.ElementImplicitTimeout != nil {
+		serverOptions.ImplicitTimeout = *testOverrides.ElementImplicitTimeout
+	}
+
+	if testOverrides.PageLoadTimeout != nil {
+		serverOptions.PageLoadTimeout = *testOverrides.PageLoadTimeout
+	}
+
+	if testOverrides.ScriptExecutionTimeout != nil {
+		serverOptions.ScriptTimeout = *testOverrides.ScriptExecutionTimeout
 	}
 
 	sessionId, err := webdriver.CreateSession(serverOptions)
@@ -303,6 +393,19 @@ func roc_fx_browserGetWindowRect(sessionId *RocStr) C.struct_ResultListStr {
 	}
 }
 
+//export roc_fx_elementGetRect
+func roc_fx_elementGetRect(sessionId, elementId *RocStr) C.struct_ResultListStr {
+	newRect, err := webdriver.GetElementRect(sessionId.String(), elementId.String())
+	if err != nil {
+		return createRocResult_ListI64_Str(RocErr, nil, err.Error())
+	} else {
+		// FIXME, don't know how to return 2 ints and 2 floats to Roc
+		// for know this is skechy but should not cause any problem
+		rectList := []float64{newRect.X, newRect.Y, float64(newRect.Width), float64(newRect.Height)}
+		return createRocResult_ListF64_Str(RocOk, rectList, "")
+	}
+}
+
 //export roc_fx_browserMaximize
 func roc_fx_browserMaximize(sessionId *RocStr) C.struct_ResultListStr {
 	newRect, err := webdriver.Maximize(sessionId.String())
@@ -369,6 +472,66 @@ func roc_fx_browserReload(sessionId *RocStr) C.struct_ResultVoidStr {
 //export roc_fx_browserNavigateTo
 func roc_fx_browserNavigateTo(sessionId, url *RocStr) C.struct_ResultVoidStr {
 	err := webdriver.NavigateTo(sessionId.String(), url.String())
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	return createRocResultStr(RocOk, "")
+}
+
+//export roc_fx_switchToFrameByElementId
+func roc_fx_switchToFrameByElementId(sessionId, elementId *RocStr) C.struct_ResultVoidStr {
+	err := webdriver.SwitchToFrameByElementId(sessionId.String(), elementId.String())
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	return createRocResultStr(RocOk, "")
+}
+
+//export roc_fx_switchToParentFrame
+func roc_fx_switchToParentFrame(sessionId *RocStr) C.struct_ResultVoidStr {
+	err := webdriver.SwitchToParenFrame(sessionId.String())
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	return createRocResultStr(RocOk, "")
+}
+
+//export roc_fx_alertAccept
+func roc_fx_alertAccept(sessionId *RocStr) C.struct_ResultVoidStr {
+	err := webdriver.AlertAccept(sessionId.String())
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	return createRocResultStr(RocOk, "")
+}
+
+//export roc_fx_alertDismiss
+func roc_fx_alertDismiss(sessionId *RocStr) C.struct_ResultVoidStr {
+	err := webdriver.AlertDismiss(sessionId.String())
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	return createRocResultStr(RocOk, "")
+}
+
+//export roc_fx_alertGetText
+func roc_fx_alertGetText(sessionId *RocStr) C.struct_ResultVoidStr {
+	text, err := webdriver.AlertGetText(sessionId.String())
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	return createRocResultStr(RocOk, text)
+}
+
+//export roc_fx_alertSendText
+func roc_fx_alertSendText(sessionId, text *RocStr) C.struct_ResultVoidStr {
+	err := webdriver.AlertSendText(sessionId.String(), text.String())
 	if err != nil {
 		return createRocResultStr(RocErr, err.Error())
 	}
@@ -586,6 +749,26 @@ func roc_fx_elementGetText(sessionId, elementId *RocStr) C.struct_ResultVoidStr 
 	return createRocResultStr(RocOk, text)
 }
 
+//export roc_fx_elementGetTag
+func roc_fx_elementGetTag(sessionId, elementId *RocStr) C.struct_ResultVoidStr {
+	text, err := webdriver.GetElementTag(sessionId.String(), elementId.String())
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	return createRocResultStr(RocOk, text)
+}
+
+//export roc_fx_elementGetCss
+func roc_fx_elementGetCss(sessionId, elementId, prop *RocStr) C.struct_ResultVoidStr {
+	text, err := webdriver.GetElementCss(sessionId.String(), elementId.String(), prop.String())
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	return createRocResultStr(RocOk, text)
+}
+
 //export roc_fx_elementGetAttribute
 func roc_fx_elementGetAttribute(sessionId, elementId, attributeName *RocStr) C.struct_ResultVoidStr {
 	text, err := webdriver.GetElementAttribute(sessionId.String(), elementId.String(), attributeName.String())
@@ -638,6 +821,16 @@ func roc_fx_elementIsDisplayed(sessionId, elementId *RocStr) C.struct_ResultVoid
 	}
 }
 
+//export roc_fx_getPageSource
+func roc_fx_getPageSource(sessionId *RocStr) C.struct_ResultVoidStr {
+	sourceHtml, err := webdriver.GetPageSource(sessionId.String())
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	return createRocResultStr(RocOk, sourceHtml)
+}
+
 //export roc_fx_getTimeMilis
 func roc_fx_getTimeMilis() C.struct_ResultI64Str {
 	now := time.Now().UnixMilli()
@@ -682,6 +875,13 @@ func roc_fx_fileWriteUtf8(path, content *RocStr) C.struct_ResultVoidStr {
 	}
 
 	return createRocResultStr(RocOk, "")
+}
+
+//export roc_fx_getEnv
+func roc_fx_getEnv(name *RocStr) C.struct_ResultVoidStr {
+	value := os.Getenv(name.String())
+
+	return createRocResultStr(RocOk, value)
 }
 
 type RocResultType int
@@ -750,6 +950,24 @@ func createRocResult_ListI64_Str(resultType RocResultType, intList []int64, erro
 
 	if resultType == RocOk {
 		rocList := NewRocList(intList)
+		payloadPtr := unsafe.Pointer(&result.payload)
+		*(*C.struct_RocList)(payloadPtr) = rocList.C()
+	} else {
+		rocStr := NewRocStr(error)
+		payloadPtr := unsafe.Pointer(&result.payload)
+		*(*C.struct_RocStr)(payloadPtr) = rocStr.C()
+	}
+
+	return result
+}
+
+func createRocResult_ListF64_Str(resultType RocResultType, floatList []float64, error string) C.struct_ResultListStr {
+	var result C.struct_ResultListStr
+
+	result.disciminant = C.uchar(resultType)
+
+	if resultType == RocOk {
+		rocList := NewRocList(floatList)
 		payloadPtr := unsafe.Pointer(&result.payload)
 		*(*C.struct_RocList)(payloadPtr) = rocList.C()
 	} else {

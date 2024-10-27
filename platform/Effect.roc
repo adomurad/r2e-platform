@@ -2,7 +2,13 @@
 hosted Effect
     exposes [
         setTimeouts,
+        setScriptTimeoutOverride,
+        setAssertTimeoutOverride,
+        setPageLoadTimeoutOverride,
+        setImplicitTimeoutOverride,
+        resetTestOverrides,
         setWindowSize,
+        setWindowSizeOverride,
         getAssertTimeout,
         stdoutLine,
         stdinLine,
@@ -16,9 +22,9 @@ hosted Effect
         getTimeMilis,
         isDebugMode,
         isVerbose,
-        incrementTest,
+        resetTestLogBucket,
+        getLogsFromBucket,
         getTestNameFilter,
-        getLogsForTest,
         createDirIfNotExist,
         fileWriteUtf8,
         browserGetScreenshot,
@@ -27,6 +33,10 @@ hosted Effect
         getAllCookies,
         deleteCookie,
         deleteAllCookies,
+        alertDismiss,
+        alertSendText,
+        alertGetText,
+        alertAccept,
         # browserGetPdf,
         elementGetText,
         elementIsSelected,
@@ -37,6 +47,9 @@ hosted Effect
         elementClear,
         elementFindElement,
         elementFindElements,
+        elementGetCss,
+        elementGetTag,
+        elementGetRect,
         browserSetWindowRect,
         browserGetWindowRect,
         browserGetTitle,
@@ -48,13 +61,29 @@ hosted Effect
         browserMinimize,
         browserFullScreen,
         executeJs,
+        getEnv,
+        getPageSource,
+        switchToFrameByElementId,
+        switchToParentFrame,
     ]
     imports []
 
 # effects that are provided by the host
 setTimeouts : U64, U64, U64, U64 -> Task {} Str
 
+setAssertTimeoutOverride : U64 -> Task {} Str
+
+setPageLoadTimeoutOverride : U64 -> Task {} Str
+
+setScriptTimeoutOverride : U64 -> Task {} Str
+
+setImplicitTimeoutOverride : U64 -> Task {} Str
+
+resetTestOverrides : {} -> Task {} Str
+
 setWindowSize : Str -> Task {} Str
+
+setWindowSizeOverride : Str -> Task {} Str
 
 getAssertTimeout : {} -> Task I64 Str
 
@@ -70,9 +99,9 @@ isDebugMode : {} -> Task I64 Str
 
 isVerbose : {} -> Task I64 Str
 
-incrementTest : {} -> Task {} Str
+resetTestLogBucket : {} -> Task {} Str
 
-getLogsForTest : I64 -> Task (List Str) Str
+getLogsFromBucket : {} -> Task (List Str) Str
 
 getTestNameFilter : {} -> Task Str Str
 
@@ -129,6 +158,14 @@ getCookie : Str, Str -> Task (List Str) Str
 
 getAllCookies : Str -> Task (List (List Str)) Str
 
+alertAccept : Str -> Task {} Str
+
+alertDismiss : Str -> Task {} Str
+
+alertSendText : Str, Str -> Task {} Str
+
+alertGetText : Str -> Task Str Str
+
 # element effects
 elementClick : Str, Str -> Task {} Str
 
@@ -149,3 +186,17 @@ elementGetProperty : Str, Str, Str -> Task Str Str
 elementFindElement : Str, Str, Str, Str -> Task Str Str
 
 elementFindElements : Str, Str, Str, Str -> Task (List Str) Str
+
+elementGetTag : Str, Str -> Task Str Str
+
+elementGetCss : Str, Str, Str -> Task Str Str
+
+elementGetRect : Str, Str -> Task (List F64) Str
+
+getEnv : Str -> Task Str Str
+
+getPageSource : Str -> Task Str Str
+
+switchToFrameByElementId : Str, Str -> Task {} Str
+
+switchToParentFrame : Str -> Task {} Str

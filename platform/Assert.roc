@@ -5,6 +5,7 @@
 module [
     shouldBe,
     shouldBeEqualTo,
+    shouldContainText,
     urlShouldBe,
     titleShouldBe,
     shouldBeGreaterOrEqualTo,
@@ -44,6 +45,18 @@ shouldBe = \actual, expected ->
         actualStr = Inspect.toStr actual
         expectedStr = Inspect.toStr expected
         Task.err (AssertionError "Expected $(expectedStr), but got $(actualStr)")
+
+## Checks if the value of __actual__ contains the `Str` __expected__.
+##
+## ```
+## "github" |> Assert.shouldContainText! "git"
+## ```
+shouldContainText : Str, Str -> Task.Task {} [AssertionError Str]
+shouldContainText = \actual, expected ->
+    if actual |> Str.contains expected then
+        Task.ok {}
+    else
+        Task.err (AssertionError "Expected \"$(actual)\" to contain text \"$(expected)\"")
 
 ## Checks if the value of __actual__ is equal to the __expected__.
 ##

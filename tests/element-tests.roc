@@ -50,6 +50,11 @@ testCases = [
     test39,
     test40,
     test41,
+    test42,
+    test43,
+    test44,
+    test45,
+    # test45_2,
 ]
 
 test1 = test "findElement and getText" \browser ->
@@ -467,3 +472,70 @@ test41 = test "isVisible" \browser ->
     displayHidden = browser |> Browser.findElement! (Css ".hide-by-display")
     isDisplayHiddenVisible = displayHidden |> Element.isVisible!
     isDisplayHiddenVisible |> Assert.shouldBe! NotVisible
+
+test42 = test "getTagName" \browser ->
+    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
+
+    button1 = browser |> Browser.findElement! (Css "#show-opacity")
+
+    buttonTag = button1 |> Element.getTagName!
+
+    buttonTag |> Assert.shouldBe "button"
+
+test43 = test "getCss" \browser ->
+    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
+
+    button1 = browser |> Browser.findElement! (Css "#show-opacity")
+
+    border = button1 |> Element.getCssProperty! "border"
+    border |> Assert.shouldBe! "2px solid rgb(0, 0, 0)"
+
+    empty = button1 |> Element.getCssProperty! "jfkldsajflksadjlfk"
+    empty |> Assert.shouldBe ""
+
+test44 = test "getRect" \browser ->
+    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
+
+    button1 = browser |> Browser.findElement! (Css "#show-opacity")
+
+    buttonRect = button1 |> Element.getRect!
+
+    buttonRect.height |> Assert.shouldBe! 51
+    buttonRect.width |> Assert.shouldBe! 139
+    buttonRect.x |> Assert.shouldBeEqualTo! 226
+    buttonRect.y |> Assert.shouldBeEqualTo! 218.3593754
+
+test45 = test "iframe" \browser ->
+    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/iframe"
+
+    frameEl = browser |> Browser.findElement! (Css "iframe")
+    Element.useIFrame! frameEl \frame ->
+        span = frame |> Browser.findElement! (Css "#span-inside-frame")
+        span |> Assert.elementShouldHaveText "This is inside an iFrame"
+
+    outsideSpan = browser |> Browser.findElement! (Css "#span-outside-frame")
+    outsideSpan |> Assert.elementShouldHaveText! "Outside frame"
+
+    Element.useIFrame! frameEl \frame ->
+        span = frame |> Browser.findElement! (Css "#span-inside-frame")
+        span |> Assert.elementShouldHaveText "This is inside an iFrame"
+
+# TODO compiler error
+# test45_2 = test "iframe with error" \browser ->
+#     browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/iframe"
+#
+#     frameEl = browser |> Browser.findElement! (Css "iframe")
+#     res =
+#         frameEl
+#             |> Element.useIFrame \_frame ->
+#                 Assert.failWith "this failed"
+#             |> Task.result!
+#
+#     res |> Assert.shouldBe! (Err (AssertionError "this failed"))
+#
+#     outsideSpan = browser |> Browser.findElement! (Css "#span-outside-frame")
+#     outsideSpan |> Assert.elementShouldHaveText! "Outside frame"
+#
+#     Element.useIFrame! frameEl \frame ->
+#         span = frame |> Browser.findElement! (Css "#span-inside-frame")
+#         span |> Assert.elementShouldHaveText "This is inside an iFrame"

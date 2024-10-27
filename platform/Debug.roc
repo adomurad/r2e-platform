@@ -1,8 +1,8 @@
-module [printLine, wait, waitForEnterKey, showElement, showElements]
+module [printLine, wait, waitForEnterKey, showElement, showElements, showCurrentFrame]
 
 import Effect
 import DebugMode
-import Internal exposing [Element]
+import Internal exposing [Element, Browser]
 
 ## Write `Str` to Stdout
 ## followed by a newline.
@@ -55,7 +55,7 @@ showElement = \element ->
     { sessionId, locator } = Internal.unpackElementData element
     DebugMode.flashElements! sessionId locator Single
 
-    wait 1000
+    wait 1500
 
 ## Blink a `List` of `Element`s in the `Browser`.
 ##
@@ -72,4 +72,18 @@ showElements = \elements ->
             { sessionId, locator } = Internal.unpackElementData element
             DebugMode.flashElements! sessionId locator All
 
-            wait 1000
+            wait 1500
+
+## Blink the current active frame (iFrame or top level frame).
+##
+## Can be useful for debugging and trouble shooting.
+##
+## ```
+## browser |> Debug.showCurrentFrame!
+## ```
+showCurrentFrame : Browser -> Task {} [WebDriverError Str, JsReturnTypeError Str]
+showCurrentFrame = \browser ->
+    { sessionId } = Internal.unpackBrowserData browser
+    DebugMode.flashCurrentFrame! sessionId
+
+    wait 1500

@@ -37,7 +37,8 @@ test1 = test "debug selectors" \browser ->
 test2 = test "showElements" \browser ->
     browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
 
-    # [] |> Debug.showElements!
+    browser |> Debug.showCurrentFrame!
+    browser |> Debug.showCurrentFrame!
 
     el1 = browser |> Browser.findElement! (TestId "name-input")
     el1 |> Debug.showElement!

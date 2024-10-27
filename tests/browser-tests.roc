@@ -30,6 +30,15 @@ testCases = [
     test20,
     test21,
     test22,
+    test23,
+    test24,
+    test25,
+    test26,
+    test27,
+    test28,
+    test29,
+    test30,
+    test31,
 ]
 
 test1 = test "navigation" \browser ->
@@ -279,3 +288,87 @@ test22 = test "cookies custom" \browser ->
         secure: Bool.true,
         httpOnly: Bool.true,
     }
+
+test23 = test "getAlertText fail" \browser ->
+    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
+
+    when browser |> Browser.getAlertText |> Task.result! is
+        Ok _ -> Assert.failWith "should fail"
+        Err (AlertNotFound err) -> err |> Assert.shouldContainText "no such alert"
+        Err _ -> Assert.failWith "should fail with other"
+
+test24 = test "acceptAlert fail" \browser ->
+    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
+
+    when browser |> Browser.acceptAlert |> Task.result! is
+        Ok _ -> Assert.failWith "should fail"
+        Err (AlertNotFound err) -> err |> Assert.shouldContainText "no such alert"
+        Err _ -> Assert.failWith "should fail with other"
+
+test25 = test "dismissAlert fail" \browser ->
+    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
+
+    when browser |> Browser.dismissAlert |> Task.result! is
+        Ok _ -> Assert.failWith "should fail"
+        Err (AlertNotFound err) -> err |> Assert.shouldContainText "no such alert"
+        Err _ -> Assert.failWith "should fail with other"
+
+test26 = test "sentTextToAlert fail" \browser ->
+    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
+
+    when browser |> Browser.sendTextToAlert "wow" |> Task.result! is
+        Ok _ -> Assert.failWith "should fail"
+        Err (AlertNotFound err) -> err |> Assert.shouldContainText "no such alert"
+        Err _ -> Assert.failWith "should fail with other"
+
+test27 = test "getAlertText" \browser ->
+    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
+
+    browser
+        |> Browser.executeJs!
+            """
+                alert("abcdef");
+            """
+
+    text = browser |> Browser.getAlertText!
+    text |> Assert.shouldBe! "abcdef"
+
+test28 = test "acceptAlert" \browser ->
+    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
+
+    browser
+        |> Browser.executeJs!
+            """
+                alert("abcdef");
+            """
+
+    browser |> Browser.acceptAlert!
+
+test29 = test "dismissAlert" \browser ->
+    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
+
+    browser
+        |> Browser.executeJs!
+            """
+                alert("abcdef");
+            """
+
+    browser |> Browser.dismissAlert!
+
+test30 = test "sendTextToAlert" \browser ->
+    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
+
+    browser
+        |> Browser.executeJs!
+            """
+                prompt("abcdef");
+            """
+
+    browser |> Browser.sendTextToAlert! "response"
+    browser |> Browser.acceptAlert!
+
+test31 = test "getPageHtml" \browser ->
+    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
+
+    html = browser |> Browser.getPageHtml!
+    html |> Assert.shouldContainText "<h1 class=\"heading\" data-testid=\"header\">Wait for elements</h1>"

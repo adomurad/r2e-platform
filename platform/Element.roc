@@ -12,11 +12,15 @@ module [
     getAttribute,
     getAttributeOrEmpty,
     getPropertyOrEmpty,
+    getTagName,
+    getCssProperty,
+    getRect,
     Locator,
     findElement,
     findElements,
     findSingleElement,
     tryFindElement,
+    useIFrame,
 ]
 
 import Internal exposing [Element]
@@ -505,3 +509,116 @@ findElements = \element, locator ->
 
         Err (ElementNotFound _) -> Task.ok []
         Err err -> Task.err err
+
+## Get the HTML tag name of an `Element`.
+##
+## ```
+## # find input element
+## input = browser |> Browser.findElement! (Css "#email-input")
+## # get input tag name
+## tagName = input |> Element.getTagName!
+## # tag name should be "input"
+## tagName |> Assert.shouldBe "input"
+## ```
+getTagName : Element -> Task Str [WebDriverError Str, ElementNotFound Str]
+getTagName = \element ->
+    { sessionId, elementId, selectorText } = Internal.unpackElementData element
+
+    DebugMode.runIfVerbose! \{} ->
+        Debug.printLine! "Getting tag name for element: $(selectorText)"
+
+    Effect.elementGetTag sessionId elementId |> Task.mapErr InternalError.handleElementError
+
+## Get a **css property** of an `Element`.
+##
+## ```
+## # find input element
+## input = browser |> Browser.findElement! (Css "#email-input")
+## # get input type
+## inputBorder = input |> Element.getCssProperty! "border"
+## # assert
+## inputBorder |> Assert.shouldBe "2px solid rgb(0, 0, 0)"
+## ```
+getCssProperty : Element, Str -> Task Str [WebDriverError Str, ElementNotFound Str]
+getCssProperty = \element, cssProperty ->
+    { sessionId, elementId, selectorText } = Internal.unpackElementData element
+
+    DebugMode.runIfVerbose! \{} ->
+        Debug.printLine! "Getting CSS property \"$(cssProperty)\" for element: $(selectorText)"
+
+    Effect.elementGetCss sessionId elementId cssProperty |> Task.mapErr InternalError.handleElementError
+
+ElementRect : {
+    x : F64,
+    y : F64,
+    width : U32,
+    height : U32,
+}
+
+## Get the position and size of the `Element`.
+##
+## ```
+## # find input element
+## input = browser |> Browser.findElement! (Css "#email-input")
+## # get input tag name
+## rect = input |> Element.getRect!
+## # assert the rect
+## rect.height |> Assert.shouldBe! 51
+## rect.width |> Assert.shouldBe! 139
+## rect.x |> Assert.shouldBeEqualTo! 226.1243566
+## rect.y |> Assert.shouldBeEqualTo! 218.3593754
+## ```
+getRect : Element -> Task ElementRect [WebDriverError Str, ElementNotFound Str]
+getRect = \element ->
+    { sessionId, elementId, selectorText } = Internal.unpackElementData element
+
+    DebugMode.runIfVerbose! \{} ->
+        Debug.printLine! "Getting the rect for element: $(selectorText)"
+
+    Effect.elementGetRect sessionId elementId
+    |> Task.map \list ->
+        when list is
+            [xVal, yVal, widthVal, heightVal] -> { x: xVal, y: yVal, width: widthVal |> Num.round, height: heightVal |> Num.round }
+            _ -> crash "the contract with host should not fail"
+    |> Task.mapErr InternalError.handleElementError
+
+## Switch the context to an iFrame.
+##
+## This function runs a callback in which you can interact
+## with the page inside an iFrame.
+##
+## ```
+## frameEl = browser |> Browser.findElement! (Css "iframe")
+##
+## Element.useIFrame! frameEl \frame ->
+##     span = frame |> Browser.findElement! (Css "#span-inside-frame")
+##     span |> Assert.elementShouldHaveText "This is inside an iFrame"
+## ```
+useIFrame : Element, (Internal.Browser -> Task {} _) -> Task {} _
+useIFrame = \element, callback ->
+    { sessionId, elementId, selectorText } = Internal.unpackElementData element
+
+    DebugMode.runIfVerbose! \{} ->
+        Debug.printLine! "Switching context to iFrame: $(selectorText)"
+
+    Effect.switchToFrameByElementId sessionId elementId |> Task.mapErr! WebDriverError
+
+    DebugMode.runIfDebugMode! \{} ->
+        DebugMode.showDebugMessageInBrowser! sessionId "Switched to iFrame $(selectorText)"
+        DebugMode.flashCurrentFrame! sessionId
+        DebugMode.wait!
+
+    browser = Internal.packBrowserData { sessionId }
+    result = callback browser |> Task.result!
+
+    DebugMode.runIfVerbose! \{} ->
+        Debug.printLine! "Switching back to iFrame parent"
+
+    Effect.switchToParentFrame sessionId |> Task.mapErr! WebDriverError
+
+    DebugMode.runIfDebugMode! \{} ->
+        DebugMode.showDebugMessageInBrowser! sessionId "Switched back to iFrame parent"
+        DebugMode.flashCurrentFrame! sessionId
+        DebugMode.wait!
+
+    result |> Task.fromResult

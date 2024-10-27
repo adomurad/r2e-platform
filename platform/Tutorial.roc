@@ -157,6 +157,10 @@
 ##     elementImplicitTimeout: 5_000,
 ##     # browser window size
 ##     windowSize: Size 1024 768,
+##     # should take a screenshot on test fail? | Default: Yes
+##     screenshotOnFail : [Yes, No],
+##     # number of attempts | Default: 2
+##     attempts : U64,
 ## }
 ## ```
 ##
@@ -167,6 +171,41 @@
 ##     resultsDirName: "my-results",
 ##     reporters: [BasicHtmlReporter.reporter, myJsonReporter],
 ##     assertTimeout: 5_000,
+## }
+## ```
+##
+## # Custom Test
+##
+## Sometimes you need a custom configuration for a couple of tests
+## that can use a slow action, or have some special needs.
+##
+## By creating a custom `test` function you can override the global
+## configuration for couple of tests.
+##
+## ```
+## longTest = Test.testWith {
+##     pageLoadTimeout: Override 30_000,
+##     scriptExecutionTimeout: Override 30_000,
+##     assertTimeout: Override 8000,
+##     screenshotOnFail: Override No,
+##     windowSize: Override (Size 1800 400),
+## }
+##
+## test1 = longTest "this is flaky test" \browser ->
+##     # open the test page
+##     browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/"
+## ```
+##
+## All possible overrides:
+## ```
+## ConfigOverride : {
+##     assertTimeout : [Inherit, Override U64],
+##     pageLoadTimeout : [Inherit, Override U64],
+##     scriptExecutionTimeout : [Inherit, Override U64],
+##     elementImplicitTimeout : [Inherit, Override U64],
+##     windowSize : [Inherit, Override [Size U64 U64]],
+##     screenshotOnFail : [Inherit, Override [Yes, No]],
+##     attempts : [Inherit, Override U64],
 ## }
 ## ```
 ##
@@ -274,6 +313,8 @@
 ##     screenshot : [NoScreenshot, Screenshot Str],
 ##     # Debug.printLine calls perfomed during this test
 ##     logs : List Str,
+##     # final result of this test, or just a failed attempt?
+##     type : [FinalResult, Attempt],
 ## } where err implements Inspect
 ##
 ## TestRunMetadata : {
@@ -286,18 +327,28 @@
 ##
 ## [https://github.com/adomurad/r2e-platform/blob/main/platform/BasicHtmlReporter.roc](https://github.com/adomurad/r2e-platform/blob/main/platform/BasicHtmlReporter.roc)
 ##
+## # Env
+##
+## Often in E2E tests you need to provide some secret data, like e.g. credentials.
+##
+## You can use the environment variables in R2E tests.
+##
+## ```
+##  empty = Env.get! "FAKE_ENV_FOR_SURE_EMPTY"
+##  empty |> Assert.shouldBe! ""
+##
+##  env = Env.get! "SECRET_ENV_KEY"
+##  env |> Assert.shouldBe! "secret_value"
+## ```
 ##
 ## # Roadmap
 ##
 ## - windows support - as soon as I setup Roc on windows...
 ## - automatic test retries
 ## - builtin reporters for common formats like JUnit, AllureReport, etc.
-## - Env - environment variables
 ## - snapshot testing for elements and the whole page
-## - config overrides for single tests
 ## - Firefox, Edge, Safari support
 ## - working with browser alerts
-## - more Element interactions
 ##
 ## If something is missing or nice to have then feel free to create a feature request at [https://github.com/adomurad/r2e-platform/issues](https://github.com/adomurad/r2e-platform/issues)
 ##

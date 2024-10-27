@@ -4,7 +4,9 @@ import InternalReporting exposing [ReporterDefinition]
 import BasicHtmlReporter
 
 R2EConfiguration testError : {
+    # the directory name where the results will be stored
     resultsDirName : Str,
+    # what reporters to use
     reporters : List (ReporterDefinition testError),
     # how long asserts wait for condition | Default: 3s
     assertTimeout : U64,
@@ -12,10 +14,14 @@ R2EConfiguration testError : {
     pageLoadTimeout : U64,
     # how long to wait for JavaScript execution | Default: 10s
     scriptExecutionTimeout : U64,
-    # how long to wait when seaching for Elements, and for Elements to become interactive | Default: 5s
+    # how long to wait when searching for Elements, and for Elements to become interactive | Default: 5s
     elementImplicitTimeout : U64,
     # starting browser dimensions
     windowSize : [Size U64 U64],
+    # should take a screenshot on test fail? | Default: Yes
+    screenshotOnFail : [Yes, No],
+    # number of attempts | Default: 2
+    attempts : U64,
 }
 
 ## The default test configuration to run your tests.
@@ -35,6 +41,10 @@ R2EConfiguration testError : {
 ## **elementImplicitTimeout** - *5s*
 ##
 ## **windowSize** - *Size 1024 768*
+##
+## **screenshotOnFail** - *Yes*
+##
+## **attempts** - *2*
 ##
 ## ```
 ## app [testCases, config] { r2e: platform "..." }
@@ -57,6 +67,8 @@ defaultConfig = {
     scriptExecutionTimeout: 10_000,
     elementImplicitTimeout: 5_000,
     windowSize: Size 1024 768,
+    screenshotOnFail: Yes,
+    attempts: 2,
 }
 
 ## The default test configuration with overrides.
@@ -77,9 +89,11 @@ defaultConfigWith :
         scriptExecutionTimeout ? U64,
         elementImplicitTimeout ? U64,
         windowSize ? [Size U64 U64],
+        screenshotOnFail ? [Yes, No],
+        attempts ? U64,
     }
     -> R2EConfiguration _
-defaultConfigWith = \{ resultsDirName ? defaultConfig.resultsDirName, reporters ? defaultConfig.reporters, assertTimeout ? 3_000, pageLoadTimeout ? 10_000, scriptExecutionTimeout ? 10_000, elementImplicitTimeout ? 5_000, windowSize ? Size 1024 768 } -> {
+defaultConfigWith = \{ resultsDirName ? defaultConfig.resultsDirName, reporters ? defaultConfig.reporters, assertTimeout ? 3_000, pageLoadTimeout ? 10_000, scriptExecutionTimeout ? 10_000, elementImplicitTimeout ? 5_000, windowSize ? Size 1024 768, screenshotOnFail ? Yes, attempts ? 2 } -> {
     resultsDirName,
     reporters,
     assertTimeout,
@@ -87,4 +101,6 @@ defaultConfigWith = \{ resultsDirName ? defaultConfig.resultsDirName, reporters 
     scriptExecutionTimeout,
     elementImplicitTimeout,
     windowSize,
+    screenshotOnFail,
+    attempts,
 }

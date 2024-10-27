@@ -8,6 +8,7 @@ platform ""
         Assert,
         Debug,
         Config,
+        Env,
         Error,
         Reporting,
         BasicHtmlReporter,

@@ -163,6 +163,118 @@ func NavigateForward(sessionId string) error {
 	return nil
 }
 
+func SwitchToFrameByElementId(sessionId, elementId string) error {
+	requestUrl := fmt.Sprintf("%s/session/%s/frame", baseUrl, sessionId)
+
+	reqBody := map[string]interface{}{
+		"id": map[string]interface{}{
+			"element-6066-11e4-a52e-4f735466cecf": elementId,
+		},
+	}
+
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		return err
+	}
+
+	err = makeHttpRequest[any]("POST", requestUrl, bytes.NewBuffer(jsonData), nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func SwitchToParenFrame(sessionId string) error {
+	requestUrl := fmt.Sprintf("%s/session/%s/frame/parent", baseUrl, sessionId)
+
+	reqBody := map[string]interface{}{}
+
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		return err
+	}
+
+	err = makeHttpRequest[any]("POST", requestUrl, bytes.NewBuffer(jsonData), nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func AlertAccept(sessionId string) error {
+	requestUrl := fmt.Sprintf("%s/session/%s/alert/accept", baseUrl, sessionId)
+
+	reqBody := map[string]interface{}{}
+
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		return err
+	}
+
+	err = makeHttpRequest[any]("POST", requestUrl, bytes.NewBuffer(jsonData), nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func AlertDismiss(sessionId string) error {
+	requestUrl := fmt.Sprintf("%s/session/%s/alert/dismiss", baseUrl, sessionId)
+
+	reqBody := map[string]interface{}{}
+
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		return err
+	}
+
+	err = makeHttpRequest[any]("POST", requestUrl, bytes.NewBuffer(jsonData), nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func AlertSendText(sessionId, text string) error {
+	requestUrl := fmt.Sprintf("%s/session/%s/alert/text", baseUrl, sessionId)
+
+	reqBody := map[string]interface{}{
+		"text": text,
+	}
+
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		return err
+	}
+
+	err = makeHttpRequest[any]("POST", requestUrl, bytes.NewBuffer(jsonData), nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+type AlertGetText_Response struct {
+	Value string `json:"value"`
+}
+
+func AlertGetText(sessionId string) (string, error) {
+	requestUrl := fmt.Sprintf("%s/session/%s/alert/text", baseUrl, sessionId)
+
+	var response AlertGetText_Response
+	err := makeHttpRequest("GET", requestUrl, nil, &response)
+	if err != nil {
+		return "", err
+	}
+
+	return response.Value, nil
+}
+
 type GetScreenshot_Response struct {
 	Value string `json:"value"`
 }
@@ -172,6 +284,22 @@ func BrowserGetScreenshot(sessionId string) (string, error) {
 
 	var response GetScreenshot_Response
 
+	err := makeHttpRequest("GET", requestUrl, nil, &response)
+	if err != nil {
+		return "", err
+	}
+
+	return response.Value, nil
+}
+
+type GetPageSource_Response struct {
+	Value string `json:"value"`
+}
+
+func GetPageSource(sessionId string) (string, error) {
+	requestUrl := fmt.Sprintf("%s/session/%s/source", baseUrl, sessionId)
+
+	var response GetPageSource_Response
 	err := makeHttpRequest("GET", requestUrl, nil, &response)
 	if err != nil {
 		return "", err
@@ -315,6 +443,29 @@ func GetWindowRect(sessionId string) (*WindowRect, error) {
 	url := fmt.Sprintf("%s/session/%s/window/rect", baseUrl, sessionId)
 
 	var response WindowRect_Response
+	err := makeHttpRequest("GET", url, nil, &response)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response.Value, nil
+}
+
+type ElementRect struct {
+	X      float64 `json:"x"`
+	Y      float64 `json:"y"`
+	Width  int64   `json:"width"`
+	Height int64   `json:"height"`
+}
+
+type ElementRect_Response struct {
+	Value ElementRect `json:"value"`
+}
+
+func GetElementRect(sessionId, elementId string) (*ElementRect, error) {
+	url := fmt.Sprintf("%s/session/%s/element/%s/rect", baseUrl, sessionId, elementId)
+
+	var response ElementRect_Response
 	err := makeHttpRequest("GET", url, nil, &response)
 	if err != nil {
 		return nil, err
@@ -603,6 +754,38 @@ func GetElementText(sessionId, elementId string) (string, error) {
 	url := fmt.Sprintf("%s/session/%s/element/%s/text", baseUrl, sessionId, elementId)
 
 	var response GetElementText_Response
+	err := makeHttpRequest("GET", url, nil, &response)
+	if err != nil {
+		return "", err
+	}
+
+	return response.Value, nil
+}
+
+type GetElementTag_Response struct {
+	Value string `json:"value"`
+}
+
+func GetElementTag(sessionId, elementId string) (string, error) {
+	url := fmt.Sprintf("%s/session/%s/element/%s/name", baseUrl, sessionId, elementId)
+
+	var response GetElementTag_Response
+	err := makeHttpRequest("GET", url, nil, &response)
+	if err != nil {
+		return "", err
+	}
+
+	return response.Value, nil
+}
+
+type GetElementCss_Response struct {
+	Value string `json:"value"`
+}
+
+func GetElementCss(sessionId, elementId, prop string) (string, error) {
+	url := fmt.Sprintf("%s/session/%s/element/%s/css/%s", baseUrl, sessionId, elementId, prop)
+
+	var response GetElementCss_Response
 	err := makeHttpRequest("GET", url, nil, &response)
 	if err != nil {
 		return "", err

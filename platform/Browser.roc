@@ -1,4 +1,4 @@
-## `Browser` module contains functions to interact with the `Browser`.
+# `Browser` module contains functions to interact with the `Browser`.
 module [
     openNewWindow,
     openNewWindowWithCleanup,
@@ -32,6 +32,11 @@ module [
     getAllCookies,
     deleteCookie,
     deleteAllCookies,
+    acceptAlert,
+    dismissAlert,
+    sendTextToAlert,
+    getAlertText,
+    getPageHtml,
 ]
 
 import Effect
@@ -503,7 +508,10 @@ navigateBack = \browser ->
     DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Navigating back"
 
-    Effect.browserNavigateBack sessionId |> Task.mapErr WebDriverError
+    Effect.browserNavigateBack sessionId |> Task.mapErr! WebDriverError
+
+    DebugMode.runIfDebugMode! \{} ->
+        DebugMode.wait!
 
 ## Navigate forward in the browser history.
 ##
@@ -517,7 +525,10 @@ navigateForward = \browser ->
     DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Navigating froward"
 
-    Effect.browserNavigateForward sessionId |> Task.mapErr WebDriverError
+    Effect.browserNavigateForward sessionId |> Task.mapErr! WebDriverError
+
+    DebugMode.runIfDebugMode! \{} ->
+        DebugMode.wait!
 
 ## Reload the current page.
 ##
@@ -531,7 +542,10 @@ reloadPage = \browser ->
     DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Reloading page"
 
-    Effect.browserReload sessionId |> Task.mapErr WebDriverError
+    Effect.browserReload sessionId |> Task.mapErr! WebDriverError
+
+    DebugMode.runIfDebugMode! \{} ->
+        DebugMode.wait!
 
 ## Maximize the `Browser` window.
 ##
@@ -608,7 +622,9 @@ executeJs = \browser, script ->
 
     _output : Str
     _output = ExecuteJs.executeJs! browser script
-    Task.ok {}
+
+    DebugMode.runIfDebugMode! \{} ->
+        DebugMode.wait!
 
 ## Execute JavaScript in the `Browser` and get the response.
 ##
@@ -645,7 +661,12 @@ executeJsWithOutput = \browser, script ->
     DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Executing JavaScript in the browser"
 
-    ExecuteJs.executeJs browser script
+    result = ExecuteJs.executeJs browser script |> Task.result!
+
+    DebugMode.runIfDebugMode! \{} ->
+        DebugMode.wait!
+
+    result |> Task.fromResult
 
 JsValue : [String Str, Number F64, Boolean Bool, Null]
 
@@ -683,7 +704,12 @@ executeJsWithArgs = \browser, script, arguments ->
     DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Executing JavaScript in the browser"
 
-    ExecuteJs.executeJsWithArgs browser script arguments
+    result = ExecuteJs.executeJsWithArgs browser script arguments |> Task.result!
+
+    DebugMode.runIfDebugMode! \{} ->
+        DebugMode.wait!
+
+    result |> Task.fromResult
 
 # COOKIES
 NewCookie : {
@@ -863,3 +889,82 @@ expiryStrToRoc = \expStr ->
     else
         u32 = expStr |> Str.toU32?
         u32 |> MaxAge |> Ok
+
+## Get alert/prompt text.
+##
+## ```
+## text = browser |> Browser.getAlertText!
+## text |> Assert.shouldBe "Are you sure to close tab?"
+## ```
+getAlertText : Browser -> Task Str [WebDriverError Str, AlertNotFound Str]
+getAlertText = \browser ->
+    { sessionId } = Internal.unpackBrowserData browser
+
+    DebugMode.runIfVerbose! \{} ->
+        Debug.printLine! "Getting alert text"
+
+    Effect.alertGetText sessionId |> Task.mapErr InternalError.handleAlertError
+
+## Input text in prompt.
+##
+## ```
+## browser |> Browser.sendTextToAlert! "my reply"
+## browser |> Browser.acceptAlert!
+## ```
+sendTextToAlert : Browser, Str -> Task {} [WebDriverError Str, AlertNotFound Str]
+sendTextToAlert = \browser, text ->
+    { sessionId } = Internal.unpackBrowserData browser
+
+    DebugMode.runIfVerbose! \{} ->
+        Debug.printLine! "Sending text to an alert: \"$(text)\""
+
+    Effect.alertSendText sessionId text |> Task.mapErr InternalError.handleAlertError
+
+## Accept alert/prompt.
+##
+## ```
+## browser |> Browser.acceptAlert!
+## ```
+acceptAlert : Browser -> Task {} [WebDriverError Str, AlertNotFound Str]
+acceptAlert = \browser ->
+    { sessionId } = Internal.unpackBrowserData browser
+
+    DebugMode.runIfVerbose! \{} ->
+        Debug.printLine! "Accepting an alert"
+
+    Effect.alertAccept sessionId |> Task.mapErr! InternalError.handleAlertError
+
+    DebugMode.runIfDebugMode! \{} ->
+        DebugMode.wait!
+
+## Dismiss alert/prompt.
+##
+## ```
+## browser |> Browser.dismissAlert!
+## ```
+dismissAlert : Browser -> Task {} [WebDriverError Str, AlertNotFound Str]
+dismissAlert = \browser ->
+    { sessionId } = Internal.unpackBrowserData browser
+
+    DebugMode.runIfVerbose! \{} ->
+        Debug.printLine! "Dismissing an alert"
+
+    Effect.alertDismiss sessionId |> Task.mapErr! InternalError.handleAlertError
+
+    DebugMode.runIfDebugMode! \{} ->
+        DebugMode.wait!
+
+## Get the serialized DOM as HTML `Str`.
+##
+## ```
+## html = browser |> Browser.getPageHtml!
+## html |> Assert.shouldContainText "<h1>Header</h1>"
+## ```
+getPageHtml : Browser -> Task Str [WebDriverError Str]
+getPageHtml = \browser ->
+    { sessionId } = Internal.unpackBrowserData browser
+
+    DebugMode.runIfVerbose! \{} ->
+        Debug.printLine! "Getting page HTML"
+
+    Effect.getPageSource sessionId |> Task.mapErr WebDriverError
