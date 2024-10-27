@@ -1,4 +1,4 @@
-module [runIfDebugMode, flashElements, wait, showDebugMessageInBrowser, runIfVerbose]
+module [runIfDebugMode, flashElements, flashCurrentFrame, wait, showDebugMessageInBrowser, runIfVerbose]
 
 import Effect
 import Common.ExecuteJs as ExecuteJs
@@ -88,6 +88,51 @@ flashElements = \sessionId, locator, quantity ->
 
     _res : Str
     _res = browser |> ExecuteJs.executeJs! js
+
+    Task.ok {}
+
+flashCurrentFrame : Str -> Task {} [JsReturnTypeError Str, WebDriverError Str]
+flashCurrentFrame = \sessionId ->
+    # TODO better tests
+    blinkScript =
+        """
+        if (!document.getElementById('r2e-blink-frame')) {
+          const style = document.createElement('style');
+          style.id = 'r2e-blink-frame';
+          style.textContent = `
+          @keyframes flashBoxShadowFrame {
+            0%, 100% { box-shadow: none; }
+            30%, 70% { box-shadow: inset 0 0 10px 5px #FF00FF; }
+          }
+          .flash-box-shadow-frame {
+            animation: flashBoxShadowFrame 1.5s ease-in-out;
+          }
+        `;
+
+          // Inject the style into the DOM
+          document.head.appendChild(style);
+
+          window.r2eFlashFrame = function flashCurrentFrame() {
+            const frameDiv = document.createElement("div");
+            frameDiv.style.position = "fixed";
+            frameDiv.style.width = "100%";
+            frameDiv.style.height = "100%";
+            frameDiv.style.zIndex = "9999";
+            document.body.prepend(frameDiv);
+            frameDiv.classList.add('flash-box-shadow-frame');
+
+            setTimeout(() => {
+              frameDiv.remove();
+            }, 1500);
+          };
+        }
+        r2eFlashFrame();
+        """
+
+    browser = Internal.packBrowserData { sessionId }
+
+    _res : Str
+    _res = browser |> ExecuteJs.executeJs! blinkScript
 
     Task.ok {}
 

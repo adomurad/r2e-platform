@@ -163,6 +163,46 @@ func NavigateForward(sessionId string) error {
 	return nil
 }
 
+func SwitchToFrameByElementId(sessionId, elementId string) error {
+	requestUrl := fmt.Sprintf("%s/session/%s/frame", baseUrl, sessionId)
+
+	reqBody := map[string]interface{}{
+		"id": map[string]interface{}{
+			"element-6066-11e4-a52e-4f735466cecf": elementId,
+		},
+	}
+
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		return err
+	}
+
+	err = makeHttpRequest[any]("POST", requestUrl, bytes.NewBuffer(jsonData), nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func SwitchToParenFrame(sessionId string) error {
+	requestUrl := fmt.Sprintf("%s/session/%s/frame/parent", baseUrl, sessionId)
+
+	reqBody := map[string]interface{}{}
+
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		return err
+	}
+
+	err = makeHttpRequest[any]("POST", requestUrl, bytes.NewBuffer(jsonData), nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func AlertAccept(sessionId string) error {
 	requestUrl := fmt.Sprintf("%s/session/%s/alert/accept", baseUrl, sessionId)
 

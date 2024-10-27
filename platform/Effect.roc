@@ -63,6 +63,8 @@ hosted Effect
         executeJs,
         getEnv,
         getPageSource,
+        switchToFrameByElementId,
+        switchToParentFrame,
     ]
     imports []
 
@@ -194,3 +196,7 @@ elementGetRect : Str, Str -> Task (List F64) Str
 getEnv : Str -> Task Str Str
 
 getPageSource : Str -> Task Str Str
+
+switchToFrameByElementId : Str, Str -> Task {} Str
+
+switchToParentFrame : Str -> Task {} Str

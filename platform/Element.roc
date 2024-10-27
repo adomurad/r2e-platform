@@ -20,6 +20,7 @@ module [
     findElements,
     findSingleElement,
     tryFindElement,
+    useIFrame,
 ]
 
 import Internal exposing [Element]
@@ -580,3 +581,44 @@ getRect = \element ->
             [xVal, yVal, widthVal, heightVal] -> { x: xVal, y: yVal, width: widthVal |> Num.round, height: heightVal |> Num.round }
             _ -> crash "the contract with host should not fail"
     |> Task.mapErr InternalError.handleElementError
+
+## Switch the context to an iFrame.
+##
+## This function runs a callback in which you can interact
+## with the page inside an iFrame.
+##
+## ```
+## frameEl = browser |> Browser.findElement! (Css "iframe")
+##
+## Element.useIFrame! frameEl \frame ->
+##     span = frame |> Browser.findElement! (Css "#span-inside-frame")
+##     span |> Assert.elementShouldHaveText "This is inside an iFrame"
+## ```
+useIFrame : Element, (Internal.Browser -> Task {} _) -> Task {} _
+useIFrame = \element, callback ->
+    { sessionId, elementId, selectorText } = Internal.unpackElementData element
+
+    DebugMode.runIfVerbose! \{} ->
+        Debug.printLine! "Switching context to iFrame: $(selectorText)"
+
+    Effect.switchToFrameByElementId sessionId elementId |> Task.mapErr! WebDriverError
+
+    DebugMode.runIfDebugMode! \{} ->
+        DebugMode.showDebugMessageInBrowser! sessionId "Switched to iFrame $(selectorText)"
+        DebugMode.flashCurrentFrame! sessionId
+        DebugMode.wait!
+
+    browser = Internal.packBrowserData { sessionId }
+    result = callback browser |> Task.result!
+
+    DebugMode.runIfVerbose! \{} ->
+        Debug.printLine! "Switching back to iFrame parent"
+
+    Effect.switchToParentFrame sessionId |> Task.mapErr! WebDriverError
+
+    DebugMode.runIfDebugMode! \{} ->
+        DebugMode.showDebugMessageInBrowser! sessionId "Switched back to iFrame parent"
+        DebugMode.flashCurrentFrame! sessionId
+        DebugMode.wait!
+
+    result |> Task.fromResult

@@ -53,6 +53,8 @@ testCases = [
     test42,
     test43,
     test44,
+    test45,
+    # test45_2,
 ]
 
 test1 = test "findElement and getText" \browser ->
@@ -502,3 +504,38 @@ test44 = test "getRect" \browser ->
     buttonRect.width |> Assert.shouldBe! 139
     buttonRect.x |> Assert.shouldBeEqualTo! 226
     buttonRect.y |> Assert.shouldBeEqualTo! 218.3593754
+
+test45 = test "iframe" \browser ->
+    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/iframe"
+
+    frameEl = browser |> Browser.findElement! (Css "iframe")
+    Element.useIFrame! frameEl \frame ->
+        span = frame |> Browser.findElement! (Css "#span-inside-frame")
+        span |> Assert.elementShouldHaveText "This is inside an iFrame"
+
+    outsideSpan = browser |> Browser.findElement! (Css "#span-outside-frame")
+    outsideSpan |> Assert.elementShouldHaveText! "Outside frame"
+
+    Element.useIFrame! frameEl \frame ->
+        span = frame |> Browser.findElement! (Css "#span-inside-frame")
+        span |> Assert.elementShouldHaveText "This is inside an iFrame"
+
+# TODO compiler error
+# test45_2 = test "iframe with error" \browser ->
+#     browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/iframe"
+#
+#     frameEl = browser |> Browser.findElement! (Css "iframe")
+#     res =
+#         frameEl
+#             |> Element.useIFrame \_frame ->
+#                 Assert.failWith "this failed"
+#             |> Task.result!
+#
+#     res |> Assert.shouldBe! (Err (AssertionError "this failed"))
+#
+#     outsideSpan = browser |> Browser.findElement! (Css "#span-outside-frame")
+#     outsideSpan |> Assert.elementShouldHaveText! "Outside frame"
+#
+#     Element.useIFrame! frameEl \frame ->
+#         span = frame |> Browser.findElement! (Css "#span-inside-frame")
+#         span |> Assert.elementShouldHaveText "This is inside an iFrame"

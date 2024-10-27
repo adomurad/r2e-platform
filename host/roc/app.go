@@ -469,6 +469,26 @@ func roc_fx_browserNavigateTo(sessionId, url *RocStr) C.struct_ResultVoidStr {
 	return createRocResultStr(RocOk, "")
 }
 
+//export roc_fx_switchToFrameByElementId
+func roc_fx_switchToFrameByElementId(sessionId, elementId *RocStr) C.struct_ResultVoidStr {
+	err := webdriver.SwitchToFrameByElementId(sessionId.String(), elementId.String())
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	return createRocResultStr(RocOk, "")
+}
+
+//export roc_fx_switchToParentFrame
+func roc_fx_switchToParentFrame(sessionId *RocStr) C.struct_ResultVoidStr {
+	err := webdriver.SwitchToParenFrame(sessionId.String())
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	return createRocResultStr(RocOk, "")
+}
+
 //export roc_fx_alertAccept
 func roc_fx_alertAccept(sessionId *RocStr) C.struct_ResultVoidStr {
 	err := webdriver.AlertAccept(sessionId.String())
