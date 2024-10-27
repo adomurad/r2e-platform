@@ -13,7 +13,7 @@
 ##
 ## Copy this code to a `test.roc` file:
 ## ```
-## app [testCases, config] { r2e: platform "https://github.com/adomurad/r2e-platform/releases/download/0.7.0/UgbQfTkxDhILeSG6gfN8Lp--LII2usU_cO8RVCm4szk.tar.br" }
+## app [testCases, config] { r2e: platform "https://github.com/adomurad/r2e-platform/releases/download/0.8.0/o-YITMnvpJZg-zxL2xKiCxBFlJzlEoEwdRY5a39WFZ0.tar.br" }
 ##
 ## import r2e.Test exposing [test]
 ## import r2e.Config
@@ -130,7 +130,7 @@
 ## Each R2E test program defines a `config` for the platform to setup the whole test run.
 ##
 ## ```
-## app [testCases, config] { r2e: platform "https://github.com/adomurad/r2e-platform/releases/download/0.7.0/UgbQfTkxDhILeSG6gfN8Lp--LII2usU_cO8RVCm4szk.tar.br" }
+## app [testCases, config] { r2e: platform "https://github.com/adomurad/r2e-platform/releases/download/0.8.0/o-YITMnvpJZg-zxL2xKiCxBFlJzlEoEwdRY5a39WFZ0.tar.br" }
 ##
 ## import r2e.Test exposing [test]
 ## import r2e.Config

@@ -1,4 +1,4 @@
-app [testCases, config] { r2e: platform "https://github.com/adomurad/r2e-platform/releases/download/0.6.0/7vFDzZ7T9Thdkgwhl3jRVJyQBNUPm1tDIqeEc5RhRnI.tar.br" }
+app [testCases, config] { r2e: platform "https://github.com/adomurad/r2e-platform/releases/download/0.8.0/o-YITMnvpJZg-zxL2xKiCxBFlJzlEoEwdRY5a39WFZ0.tar.br" }
 
 import r2e.Test exposing [test]
 import r2e.Config
