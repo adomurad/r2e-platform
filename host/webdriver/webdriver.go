@@ -252,6 +252,22 @@ func BrowserGetScreenshot(sessionId string) (string, error) {
 	return response.Value, nil
 }
 
+type GetPageSource_Response struct {
+	Value string `json:"value"`
+}
+
+func GetPageSource(sessionId string) (string, error) {
+	requestUrl := fmt.Sprintf("%s/session/%s/source", baseUrl, sessionId)
+
+	var response GetPageSource_Response
+	err := makeHttpRequest("GET", requestUrl, nil, &response)
+	if err != nil {
+		return "", err
+	}
+
+	return response.Value, nil
+}
+
 type ExecuteJs_Response struct {
 	Value interface{} `json:"value"`
 }

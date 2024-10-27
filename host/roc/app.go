@@ -791,6 +791,16 @@ func roc_fx_elementIsDisplayed(sessionId, elementId *RocStr) C.struct_ResultVoid
 	}
 }
 
+//export roc_fx_getPageSource
+func roc_fx_getPageSource(sessionId *RocStr) C.struct_ResultVoidStr {
+	sourceHtml, err := webdriver.GetPageSource(sessionId.String())
+	if err != nil {
+		return createRocResultStr(RocErr, err.Error())
+	}
+
+	return createRocResultStr(RocOk, sourceHtml)
+}
+
 //export roc_fx_getTimeMilis
 func roc_fx_getTimeMilis() C.struct_ResultI64Str {
 	now := time.Now().UnixMilli()

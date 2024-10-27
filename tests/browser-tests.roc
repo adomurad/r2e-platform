@@ -38,6 +38,7 @@ testCases = [
     test28,
     test29,
     test30,
+    test31,
 ]
 
 test1 = test "navigation" \browser ->
@@ -365,3 +366,9 @@ test30 = test "sendTextToAlert" \browser ->
 
     browser |> Browser.sendTextToAlert! "response"
     browser |> Browser.acceptAlert!
+
+test31 = test "getPageHtml" \browser ->
+    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
+
+    html = browser |> Browser.getPageHtml!
+    html |> Assert.shouldContainText "<h1 class=\"heading\" data-testid=\"header\">Wait for elements</h1>"

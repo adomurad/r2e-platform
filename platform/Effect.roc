@@ -62,6 +62,7 @@ hosted Effect
         browserFullScreen,
         executeJs,
         getEnv,
+        getPageSource,
     ]
     imports []
 
@@ -191,3 +192,5 @@ elementGetCss : Str, Str, Str -> Task Str Str
 elementGetRect : Str, Str -> Task (List F64) Str
 
 getEnv : Str -> Task Str Str
+
+getPageSource : Str -> Task Str Str

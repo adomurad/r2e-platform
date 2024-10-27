@@ -36,6 +36,7 @@ module [
     dismissAlert,
     sendTextToAlert,
     getAlertText,
+    getPageHtml,
 ]
 
 import Effect
@@ -952,3 +953,18 @@ dismissAlert = \browser ->
 
     DebugMode.runIfDebugMode! \{} ->
         DebugMode.wait!
+
+## Get the serialized DOM as HTML `Str`.
+##
+## ```
+## html = browser |> Browser.getPageHtml!
+## html |> Assert.shouldContainText "<h1>Header</h1>"
+## ```
+getPageHtml : Browser -> Task Str [WebDriverError Str]
+getPageHtml = \browser ->
+    { sessionId } = Internal.unpackBrowserData browser
+
+    DebugMode.runIfVerbose! \{} ->
+        Debug.printLine! "Getting page HTML"
+
+    Effect.getPageSource sessionId |> Task.mapErr WebDriverError
