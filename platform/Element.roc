@@ -1,26 +1,26 @@
 ## `Element` module contains function to interact with `Elements`
 ## found in the `Browser`.
 module [
-    click,
-    getText,
-    getValue,
-    inputText,
-    clear,
-    isSelected,
-    isVisible,
-    getProperty,
-    getAttribute,
-    getAttributeOrEmpty,
-    getPropertyOrEmpty,
-    getTagName,
-    getCssProperty,
-    getRect,
+    click!,
+    getText!,
+    getValue!,
+    inputText!,
+    clear!,
+    isSelected!,
+    isVisible!,
+    getProperty!,
+    getAttribute!,
+    getAttributeOrEmpty!,
+    getPropertyOrEmpty!,
+    getTagName!,
+    getCssProperty!,
+    getRect!,
     Locator,
-    findElement,
-    findElements,
-    findSingleElement,
-    tryFindElement,
-    useIFrame,
+    findElement!,
+    findElements!,
+    findSingleElement!,
+    tryFindElement!,
+    useIFrame!,
 ]
 
 import Internal exposing [Element]
@@ -36,26 +36,29 @@ import DebugMode
 ##
 ## ```
 ## # find button element
-## button = browser |> Browser.findElement! (Css "#submit-button")
+## button = browser |> Browser.findElement! (Css "#submit-button") |> try
 ## # click the button
-## button |> Element.click!
+## button |> Element.click! |> try
 ## ```
-click : Element -> Task {} [WebDriverError Str, ElementNotFound Str]
-click = \element ->
+click! : Element => Result {} [WebDriverError Str, ElementNotFound Str]
+click! = \element ->
     { sessionId, elementId, locator, selectorText } = Internal.unpackElementData element
 
     DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Trying to click element: $(selectorText)"
 
-    Effect.elementClick sessionId elementId |> Task.mapErr! InternalError.handleElementError
+    Effect.elementClick! sessionId elementId |> Result.mapErr InternalError.handleElementError |> try
 
     DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Element clicked: $(selectorText)"
-
+    #
     DebugMode.runIfDebugMode! \{} ->
-        DebugMode.showDebugMessageInBrowser! sessionId "Click Element $(selectorText)"
-        DebugMode.flashElements! sessionId locator Single
-        DebugMode.wait!
+        DebugMode.showDebugMessageInBrowser! sessionId "Click Element $(selectorText)" |> try
+        DebugMode.flashElements! sessionId locator Single |> try
+        DebugMode.wait! {}
+        Ok {}
+
+    Ok {}
 
 ## Get text of the `Element`.
 ##
@@ -65,18 +68,18 @@ click = \element ->
 ##
 ## ```
 ## # find button element
-## button = browser |> Browser.findElement! (Css "#submit-button")
+## button = browser |> Browser.findElement! (Css "#submit-button") |> try
 ## # get button text
-## buttonText = button |> Element.getText!
+## buttonText = button |> Element.getText! |> try
 ## ```
-getText : Element -> Task Str [WebDriverError Str, ElementNotFound Str]
-getText = \element ->
+getText! : Element => Result Str [WebDriverError Str, ElementNotFound Str]
+getText! = \element ->
     { selectorText } = Internal.unpackElementData element
 
     DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Getting element text: $(selectorText)"
 
-    InternalElement.getText element
+    InternalElement.getText! element
 
 ## Get **value** of the `Element`.
 ##
@@ -87,22 +90,22 @@ getText = \element ->
 ##
 ## ```
 ## # find input element
-## input = browser |> Browser.findElement! (Css "#email-input")
+## input = browser |> Browser.findElement! (Css "#email-input") |> try
 ## # get input value
-## inputValue = input |> Element.getValue!
+## inputValue = input |> Element.getValue! |> try
 ## inputValue |> Assert.shouldBe "my-email@fake-email.com"
 ## ```
 ##
 ## ```
 ## # find input element
-## input = browser |> Browser.findElement! (Css "#age-input")
+## input = browser |> Browser.findElement! (Css "#age-input") |> try
 ## # get input value
-## inputValue = input |> Element.getValue!
+## inputValue = input |> Element.getValue! |> try
 ## inputValue |> Assert.shouldBe 18
 ## ```
-getValue : Element -> Task.Task a [ElementNotFound Str, PropertyTypeError Str, WebDriverError Str] where a implements Decoding
-getValue = \element ->
-    getProperty element "value"
+getValue! : Element => Result a [ElementNotFound Str, PropertyTypeError Str, WebDriverError Str] where a implements Decoding
+getValue! = \element ->
+    getProperty! element "value"
 
 ## Check if `Element` is selected.
 ##
@@ -110,44 +113,44 @@ getValue = \element ->
 ##
 ## ```
 ## # find checkbox element
-## checkbox = browser |> Browser.findElement! (Css "#is-tasty-checkbox")
+## checkbox = browser |> Browser.findElement! (Css "#is-tasty-checkbox") |> try
 ## # get button text
-## isTastyState = checkbox |> Element.isSelected!
+## isTastyState = checkbox |> Element.isSelected! |> try
 ## # asert expected value
-## isTastyState |> Assert.shoulBe! Selected
+## isTastyState |> Assert.shoulBe Selected
 ## ```
-isSelected : Element -> Task [Selected, NotSelected] [WebDriverError Str, ElementNotFound Str]
-isSelected = \element ->
+isSelected! : Element => Result [Selected, NotSelected] [WebDriverError Str, ElementNotFound Str]
+isSelected! = \element ->
     { sessionId, elementId, selectorText } = Internal.unpackElementData element
 
     DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Checking if element is slected: $(selectorText)"
 
-    result = Effect.elementIsSelected sessionId elementId |> Task.mapErr! InternalError.handleElementError
+    result = Effect.elementIsSelected! sessionId elementId |> Result.mapErr InternalError.handleElementError |> try
 
     if result == "true" then
-        Task.ok Selected
+        Ok Selected
     else
-        Task.ok NotSelected
+        Ok NotSelected
 
 ## Check if `Element` is visible in the `Browser`.
 ##
 ## ```
 ## # find error message element
-## errorMsg = browser |> Browser.findElement! (Css "#error-msg")
+## errorMsg = browser |> Browser.findElement! (Css "#error-msg") |> try
 ## # get button text
-## isVisible = checkbox |> Element.isVisible!
+## isVisible = checkbox |> Element.isVisible! |> try
 ## # assert expected value
-## isVisible |> Assert.shoulBe! Visible
+## isVisible |> Assert.shoulBe Visible
 ## ```
-isVisible : Element -> Task [Visible, NotVisible] [WebDriverError Str, ElementNotFound Str]
-isVisible = \element ->
+isVisible! : Element => Result [Visible, NotVisible] [WebDriverError Str, ElementNotFound Str]
+isVisible! = \element ->
     { selectorText } = Internal.unpackElementData element
 
     DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Checking if element is visible: $(selectorText)"
 
-    InternalElement.isVisible element
+    InternalElement.isVisible! element
 
 ## Get **attribute** of an `Element`.
 ##
@@ -157,43 +160,42 @@ isVisible = \element ->
 ##
 ## ```
 ## # find input element
-## input = browser |> Browser.findElement! (Css "#email-input")
+## input = browser |> Browser.findElement! (Css "#email-input") |> try
 ## # get input type
-## inputType = input |> Element.getAttribute! "type"
+## inputType = input |> Element.getAttribute! "type" |> try
 ## ```
-getAttribute : Element, Str -> Task Str [WebDriverError Str, ElementNotFound Str]
-getAttribute = \element, attributeName ->
+getAttribute! : Element, Str => Result Str [WebDriverError Str, ElementNotFound Str]
+getAttribute! = \element, attributeName ->
     { sessionId, elementId, selectorText } = Internal.unpackElementData element
 
     DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Getting attribute \"$(attributeName)\" for element: $(selectorText)"
 
-    result = Effect.elementGetAttribute sessionId elementId attributeName |> Task.mapErr! InternalError.handleElementError
-    result
+    Effect.elementGetAttribute! sessionId elementId attributeName |> Result.mapErr InternalError.handleElementError
 
 ## Get **attribute** of an `Element`.
 ##
 ## **Attributes** are values you can see in the HTML DOM, like *<input class"test" type="password" />*
 ##
 ## ```
-## checkboxType = checkbox |> Element.getAttributeOrEmpty! "type"
+## checkboxType = checkbox |> Element.getAttributeOrEmpty! "type" |> try
 ## when checkboxType is
 ##     Ok type -> type |> Assert.shouldBe "checkbox"
 ##     Err Empty -> Assert.failWith "should not be empty"
 ## ```
-getAttributeOrEmpty : Element, Str -> Task (Result Str [Empty]) [WebDriverError Str, ElementNotFound Str]
-getAttributeOrEmpty = \element, attributeName ->
+getAttributeOrEmpty! : Element, Str => Result (Result Str [Empty]) [WebDriverError Str, ElementNotFound Str]
+getAttributeOrEmpty! = \element, attributeName ->
     { sessionId, elementId, selectorText } = Internal.unpackElementData element
 
     DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Getting attribute \"$(attributeName)\" for element: $(selectorText)"
 
-    result = Effect.elementGetAttribute sessionId elementId attributeName |> Task.mapErr! InternalError.handleElementError
+    result = Effect.elementGetAttribute! sessionId elementId attributeName |> Result.mapErr InternalError.handleElementError |> try
 
     if result == "" then
-        Task.ok (Err Empty)
+        Ok (Err Empty)
     else
-        Task.ok (Ok result)
+        Ok (Ok result)
 
 ## Get **property** of an `Element`.
 ##
@@ -209,36 +211,36 @@ getAttributeOrEmpty = \element, attributeName ->
 ##
 ## ```
 ## # get input value
-## inputValue = input |> Element.getProperty! "value"
+## inputValue = input |> Element.getProperty! "value" |> try
 ## # expect to have value "email@emails.com"
 ## inputValue |> Assert.shouldBe "email@emails.com"
 ## ```
 ##
 ## Bool:
 ## ```
-## isChecked = nameInput |> Element.getProperty! "checked"
+## isChecked = nameInput |> Element.getProperty! "checked" |> try
 ## isChecked |> Assert.shouldBe Bool.false
 ## ```
 ##
 ## Bool as Str:
 ## ```
-## isChecked = nameInput |> Element.getProperty! "checked"
+## isChecked = nameInput |> Element.getProperty! "checked" |> try
 ## isChecked |> Assert.shouldBe "false"
 ## ```
 ##
 ## Num:
 ## ```
-## clientHeight = nameInput |> Element.getProperty! "clientHeight"
+## clientHeight = nameInput |> Element.getProperty! "clientHeight" |> try
 ## clientHeight |> Assert.shouldBe 17
 ## ```
-getProperty : Internal.Element, Str -> Task a [ElementNotFound Str, PropertyTypeError Str, WebDriverError Str] where a implements Decoding
-getProperty = \element, propertyName ->
+getProperty! : Internal.Element, Str => Result a [ElementNotFound Str, PropertyTypeError Str, WebDriverError Str] where a implements Decoding
+getProperty! = \element, propertyName ->
     { selectorText } = Internal.unpackElementData element
 
     DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Getting property \"$(propertyName)\" for element: $(selectorText)"
 
-    InternalElement.getProperty element propertyName
+    InternalElement.getProperty! element propertyName
 
 ## Get **property** of an `Element`.
 ##
@@ -251,33 +253,33 @@ getProperty = \element, propertyName ->
 ##
 ## ```
 ## # get input value
-## inputValue = input |> Element.getPropertyOrEmpty! "value"
+## inputValue = input |> Element.getPropertyOrEmpty! "value" |> try
 ## # expect to have value "email@emails.com"
 ## inputType |> Assert.shouldBe (Ok "email@emails.com")
 ## ```
 ##
 ## ```
-## isChecked = nameInput |> Element.getProperty! "checked"
+## isChecked = nameInput |> Element.getProperty! "checked" |> try
 ## when isChecked is
 ##     Ok value -> value |> Assert.shouldBe Bool.false
 ##     Err Empty -> Assert.failWith "input should have a checked prop"
 ## ```
 ##
 ## ```
-## clientHeight = nameInput |> Element.getProperty! "clientHeight"
+## clientHeight = nameInput |> Element.getProperty! "clientHeight" |> try
 ## clientHeight |> Assert.shouldBe (Ok 17)
 ## ```
-getPropertyOrEmpty : Element, Str -> Task (Result a [Empty]) [WebDriverError Str, ElementNotFound Str, PropertyTypeError Str] where a implements Decoding
-getPropertyOrEmpty = \element, propertyName ->
+getPropertyOrEmpty! : Element, Str => Result (Result a [Empty]) [WebDriverError Str, ElementNotFound Str, PropertyTypeError Str] where a implements Decoding
+getPropertyOrEmpty! = \element, propertyName ->
     { sessionId, elementId, selectorText } = Internal.unpackElementData element
 
     DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Getting property \"$(propertyName)\" for element: $(selectorText)"
 
-    resultStr = Effect.elementGetProperty sessionId elementId propertyName |> Task.mapErr! InternalError.handleElementError
+    resultStr = Effect.elementGetProperty! sessionId elementId propertyName |> Result.mapErr InternalError.handleElementError |> try
 
     if resultStr == "" then
-        Task.ok (Err Empty)
+        Ok (Err Empty)
     else
         resultUtf8 = resultStr |> Str.toUtf8
 
@@ -285,16 +287,16 @@ getPropertyOrEmpty = \element, propertyName ->
         decoded = Decode.fromBytes resultUtf8 PropertyDecoder.utf8
 
         when decoded is
-            Ok val -> Task.ok (Ok val)
-            Err _ -> Task.err (PropertyTypeError "could not cast property \"$(propertyName)\" with value \"$(resultStr)\" to expected type")
+            Ok val -> Ok (Ok val)
+            Err _ -> Err (PropertyTypeError "could not cast property \"$(propertyName)\" with value \"$(resultStr)\" to expected type")
 
 ## Send a `Str` to a `Element` (e.g. put text into an input).
 ##
 ## ```
 ## # find email input element
-## emailInput = browser |> Browser.findElement! (Css "#email")
+## emailInput = browser |> Browser.findElement! (Css "#email") |> try
 ## # input an email into the email input
-## emailInput |> Element.sendKeys! "my.fake.email@fake-email.com"
+## emailInput |> Element.sendKeys! "my.fake.email@fake-email.com" |> try
 ## ```
 ##
 ## Special key sequences:
@@ -303,52 +305,59 @@ getPropertyOrEmpty = \element, propertyName ->
 ##
 ## ```
 ## # find search input element
-## searchInput = browser |> Browser.findElement! (Css "#search")
+## searchInput = browser |> Browser.findElement! (Css "#search") |> try
 ## # input text and submit
-## searchInput |> Element.sendKeys! "roc lang{enter}"
+## searchInput |> Element.sendKeys! "roc lang{enter}" |> try
 ## ```
-inputText : Element, Str -> Task.Task {} [WebDriverError Str, ElementNotFound Str]
-inputText = \element, str ->
+inputText! : Element, Str => Result {} [WebDriverError Str, ElementNotFound Str]
+inputText! = \element, str ->
     { sessionId, elementId, selectorText, locator } = Internal.unpackElementData element
 
     DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Sending text \"$(str)\" to element: $(selectorText)"
 
-    Effect.elementSendKeys sessionId elementId str
-        |> Task.mapErr! InternalError.handleElementError
+    Effect.elementSendKeys! sessionId elementId str
+    |> Result.mapErr InternalError.handleElementError
+    |> try
 
     DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Element received text: $(selectorText)"
 
     DebugMode.runIfDebugMode! \{} ->
-        DebugMode.showDebugMessageInBrowser! sessionId "Send Text $(selectorText)"
-        DebugMode.flashElements! sessionId locator Single
-        DebugMode.wait!
+        DebugMode.showDebugMessageInBrowser! sessionId "Send Text $(selectorText)" |> try
+        DebugMode.flashElements! sessionId locator Single |> try
+        DebugMode.wait! {}
+        Ok {}
+
+    Ok {}
 
 ## Clear an editable or resetable `Element`.
 ##
 ## ```
 ## # find button element
-## input = browser |> Browser.findElement! (Css "#email-input")
+## input = browser |> Browser.findElement! (Css "#email-input") |> try
 ## # click the button
-## input |> Element.clear!
+## input |> Element.clear! |> try
 ## ```
-clear : Internal.Element -> Task.Task {} [WebDriverError Str, ElementNotFound Str]
-clear = \element ->
+clear! : Internal.Element => Result {} [WebDriverError Str, ElementNotFound Str]
+clear! = \element ->
     { sessionId, elementId, selectorText, locator } = Internal.unpackElementData element
 
     DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Clearing element: $(selectorText)"
 
-    Effect.elementClear sessionId elementId |> Task.mapErr! InternalError.handleElementError
+    Effect.elementClear! sessionId elementId |> Result.mapErr InternalError.handleElementError |> try
 
     DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Element cleared: $(selectorText)"
 
     DebugMode.runIfDebugMode! \{} ->
-        DebugMode.showDebugMessageInBrowser! sessionId "Clear Element $(selectorText)"
-        DebugMode.flashElements! sessionId locator Single
-        DebugMode.wait!
+        DebugMode.showDebugMessageInBrowser! sessionId "Clear Element $(selectorText)" |> try
+        DebugMode.flashElements! sessionId locator Single |> try
+        DebugMode.wait! {}
+        Ok {}
+
+    Ok {}
 
 ## Supported locator strategies
 ##
@@ -373,20 +382,20 @@ Locator : Locator.Locator
 ##
 ## ```
 ## # find the html element with a css selector "#my-id"
-## button = element |> Element.findElement! (Css "#my-id")
+## button = element |> Element.findElement! (Css "#my-id") |> try
 ## ```
 ##
 ## ```
 ## # find the html element with a css selector ".my-class"
-## button = element |> Element.findElement! (Css ".my-class")
+## button = element |> Element.findElement! (Css ".my-class") |> try
 ## ```
 ##
 ## ```
 ## # find the html element with an attribute [data-testid="my-element"]
-## button = element |> Element.findElement! (TestId "my-element")
+## button = element |> Element.findElement! (TestId "my-element") |> try
 ## ```
-findElement : Element, Locator -> Task Element [WebDriverError Str, ElementNotFound Str]
-findElement = \element, locator ->
+findElement! : Element, Locator => Result Element [WebDriverError Str, ElementNotFound Str]
+findElement! = \element, locator ->
     { sessionId, elementId } = Internal.unpackElementData element
     (using, value) = Locator.getLocator locator
 
@@ -395,17 +404,18 @@ findElement = \element, locator ->
     DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Searching for element: $(selectorText)"
 
-    newElementId = Effect.elementFindElement sessionId elementId using value |> Task.mapErr! InternalError.handleElementError
+    newElementId = Effect.elementFindElement! sessionId elementId using value |> Result.mapErr InternalError.handleElementError |> try
 
     DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Found element: $(selectorText)"
 
     DebugMode.runIfDebugMode! \{} ->
-        DebugMode.showDebugMessageInBrowser! sessionId "Find Element $(selectorText)"
-        DebugMode.flashElements! sessionId locator Single
-        DebugMode.wait!
+        DebugMode.showDebugMessageInBrowser! sessionId "Find Element $(selectorText)" |> try
+        DebugMode.flashElements! sessionId locator Single |> try
+        DebugMode.wait! {}
+        Ok {}
 
-    Internal.packElementData { sessionId, elementId: newElementId, selectorText, locator } |> Task.ok
+    Internal.packElementData { sessionId, elementId: newElementId, selectorText, locator } |> Ok
 
 ## Find an `Element` inside the tree of another `Element` in the `Browser`.
 ##
@@ -418,22 +428,22 @@ findElement = \element, locator ->
 ## See supported locators at `Locator`.
 ##
 ## ```
-## maybeButton = element |> Element.tryFindElement! (Css "#submit-button")
+## maybeButton = element |> Element.tryFindElement! (Css "#submit-button") |> try
 ##
 ## when maybeButton is
 ##     NotFound -> Stdout.line! "Button not found"
 ##     Found el ->
-##         buttonText = el |> Element.getText!
+##         buttonText = el |> Element.getText! |> try
 ##         Stdout.line! "Button found with text: $(buttonText)"
 ## ```
-tryFindElement : Element, Locator -> Task [Found Element, NotFound] [WebDriverError Str, ElementNotFound Str]
-tryFindElement = \element, locator ->
-    findElement element locator
-    |> Task.map Found
-    |> Task.onErr \err ->
+tryFindElement! : Element, Locator => Result [Found Element, NotFound] [WebDriverError Str, ElementNotFound Str]
+tryFindElement! = \element, locator ->
+    findElement! element locator
+    |> Result.map Found
+    |> Result.onErr \err ->
         when err is
-            ElementNotFound _ -> Task.ok NotFound
-            other -> Task.err other
+            ElementNotFound _ -> Ok NotFound
+            other -> Err other
 
 ## Find an `Element` inside the tree of another `Element` in the `Browser`.
 ##
@@ -445,26 +455,25 @@ tryFindElement = \element, locator ->
 ## See supported locators at `Locator`.
 ##
 ## ```
-## button = element |> Element.findSingleElement! (Css "#submit-button")
+## button = element |> Element.findSingleElement! (Css "#submit-button") |> try
 ## ```
-findSingleElement : Element, Locator -> Task Element [AssertionError Str, ElementNotFound Str, WebDriverError Str]
-findSingleElement = \element, locator ->
+findSingleElement! : Element, Locator => Result Element [AssertionError Str, ElementNotFound Str, WebDriverError Str]
+findSingleElement! = \element, locator ->
     { selectorText: parentElementSelectorText } = Internal.unpackElementData element
-    elements = findElements! element locator
+    elements = findElements! element locator |> try
     when elements |> List.len is
         0 ->
             (_, value) = Locator.getLocator locator
-            Task.err (ElementNotFound "element with selector $(value) was not found in element $(parentElementSelectorText)")
+            Err (ElementNotFound "element with selector $(value) was not found in element $(parentElementSelectorText)")
 
         1 ->
             elements
             |> List.first
             |> Result.onErr \_ -> crash "just checked - there is 1 element in the list"
-            |> Task.fromResult
 
         n ->
             (_, value) = Locator.getLocator locator
-            Task.err (AssertionError "expected to find only 1 element with selector \"$(value)\", but found $(n |> Num.toStr)")
+            Err (AssertionError "expected to find only 1 element with selector \"$(value)\", but found $(n |> Num.toStr)")
 
 ## Find all `Elements` inside the tree of another `Element` in the `Browser`.
 ##
@@ -474,11 +483,11 @@ findSingleElement = \element, locator ->
 ##
 ## ```
 ## # find all <li> elements in #my-list in the DOM tree of **element**
-## listItems = element |> Element.findElements! (Css "#my-list li")
+## listItems = element |> Element.findElements! (Css "#my-list li") |> try
 ## ```
 ##
-findElements : Element, Locator -> Task (List Element) [WebDriverError Str, ElementNotFound Str]
-findElements = \element, locator ->
+findElements! : Element, Locator => Result (List Element) [WebDriverError Str, ElementNotFound Str]
+findElements! = \element, locator ->
     { sessionId, elementId: parentElementId } = Internal.unpackElementData element
     (using, value) = Locator.getLocator locator
 
@@ -487,7 +496,7 @@ findElements = \element, locator ->
     DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Searching for elements: $(selectorText)"
 
-    result = Effect.elementFindElements sessionId parentElementId using value |> Task.mapErr InternalError.handleElementError |> Task.result!
+    result = Effect.elementFindElements! sessionId parentElementId using value |> Result.mapErr InternalError.handleElementError
 
     when result is
         Ok elementIds ->
@@ -496,57 +505,58 @@ findElements = \element, locator ->
 
             DebugMode.runIfDebugMode! \{} ->
                 if elementIds |> List.isEmpty then
-                    Task.ok {}
+                    Ok {}
                 else
-                    DebugMode.showDebugMessageInBrowser! sessionId "Find Elements $(selectorText)"
-                    DebugMode.flashElements! sessionId locator All
-                    DebugMode.wait!
+                    DebugMode.showDebugMessageInBrowser! sessionId "Find Elements $(selectorText)" |> try
+                    DebugMode.flashElements! sessionId locator All |> try
+                    DebugMode.wait! {}
+                    Ok {}
 
             elementIds
             |> List.map \elementId ->
                 Internal.packElementData { sessionId, elementId, selectorText, locator }
-            |> Task.ok
+            |> Ok
 
-        Err (ElementNotFound _) -> Task.ok []
-        Err err -> Task.err err
+        Err (ElementNotFound _) -> Ok []
+        Err err -> Err err
 
 ## Get the HTML tag name of an `Element`.
 ##
 ## ```
 ## # find input element
-## input = browser |> Browser.findElement! (Css "#email-input")
+## input = browser |> Browser.findElement! (Css "#email-input") |> try
 ## # get input tag name
-## tagName = input |> Element.getTagName!
+## tagName = input |> Element.getTagName! |> try
 ## # tag name should be "input"
 ## tagName |> Assert.shouldBe "input"
 ## ```
-getTagName : Element -> Task Str [WebDriverError Str, ElementNotFound Str]
-getTagName = \element ->
+getTagName! : Element => Result Str [WebDriverError Str, ElementNotFound Str]
+getTagName! = \element ->
     { sessionId, elementId, selectorText } = Internal.unpackElementData element
 
     DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Getting tag name for element: $(selectorText)"
 
-    Effect.elementGetTag sessionId elementId |> Task.mapErr InternalError.handleElementError
+    Effect.elementGetTag! sessionId elementId |> Result.mapErr InternalError.handleElementError
 
 ## Get a **css property** of an `Element`.
 ##
 ## ```
 ## # find input element
-## input = browser |> Browser.findElement! (Css "#email-input")
+## input = browser |> Browser.findElement! (Css "#email-input") |> try
 ## # get input type
-## inputBorder = input |> Element.getCssProperty! "border"
+## inputBorder = input |> Element.getCssProperty! "border" |> try
 ## # assert
 ## inputBorder |> Assert.shouldBe "2px solid rgb(0, 0, 0)"
 ## ```
-getCssProperty : Element, Str -> Task Str [WebDriverError Str, ElementNotFound Str]
-getCssProperty = \element, cssProperty ->
+getCssProperty! : Element, Str => Result Str [WebDriverError Str, ElementNotFound Str]
+getCssProperty! = \element, cssProperty ->
     { sessionId, elementId, selectorText } = Internal.unpackElementData element
 
     DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Getting CSS property \"$(cssProperty)\" for element: $(selectorText)"
 
-    Effect.elementGetCss sessionId elementId cssProperty |> Task.mapErr InternalError.handleElementError
+    Effect.elementGetCss! sessionId elementId cssProperty |> Result.mapErr InternalError.handleElementError
 
 ElementRect : {
     x : F64,
@@ -559,28 +569,28 @@ ElementRect : {
 ##
 ## ```
 ## # find input element
-## input = browser |> Browser.findElement! (Css "#email-input")
+## input = browser |> Browser.findElement! (Css "#email-input") |> try
 ## # get input tag name
-## rect = input |> Element.getRect!
+## rect = input |> Element.getRect! |> try
 ## # assert the rect
-## rect.height |> Assert.shouldBe! 51
-## rect.width |> Assert.shouldBe! 139
-## rect.x |> Assert.shouldBeEqualTo! 226.1243566
-## rect.y |> Assert.shouldBeEqualTo! 218.3593754
+## rect.height |> Assert.shouldBe 51 |> try
+## rect.width |> Assert.shouldBe 139 |> try
+## rect.x |> Assert.shouldBeEqualTo 226.1243566 |> try
+## rect.y |> Assert.shouldBeEqualTo 218.3593754
 ## ```
-getRect : Element -> Task ElementRect [WebDriverError Str, ElementNotFound Str]
-getRect = \element ->
+getRect! : Element => Result ElementRect [WebDriverError Str, ElementNotFound Str]
+getRect! = \element ->
     { sessionId, elementId, selectorText } = Internal.unpackElementData element
 
     DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Getting the rect for element: $(selectorText)"
 
-    Effect.elementGetRect sessionId elementId
-    |> Task.map \list ->
+    Effect.elementGetRect! sessionId elementId
+    |> Result.map \list ->
         when list is
             [xVal, yVal, widthVal, heightVal] -> { x: xVal, y: yVal, width: widthVal |> Num.round, height: heightVal |> Num.round }
             _ -> crash "the contract with host should not fail"
-    |> Task.mapErr InternalError.handleElementError
+    |> Result.mapErr InternalError.handleElementError
 
 ## Switch the context to an iFrame.
 ##
@@ -588,37 +598,39 @@ getRect = \element ->
 ## with the page inside an iFrame.
 ##
 ## ```
-## frameEl = browser |> Browser.findElement! (Css "iframe")
+## frameEl = browser |> Browser.findElement! (Css "iframe") |> try
 ##
 ## Element.useIFrame! frameEl \frame ->
-##     span = frame |> Browser.findElement! (Css "#span-inside-frame")
-##     span |> Assert.elementShouldHaveText "This is inside an iFrame"
+##     span = frame |> Browser.findElement! (Css "#span-inside-frame") |> try
+##     span |> Assert.elementShouldHaveText! "This is inside an iFrame" |> try
 ## ```
-useIFrame : Element, (Internal.Browser -> Task {} _) -> Task {} _
-useIFrame = \element, callback ->
+useIFrame! : Element, (Internal.Browser => Result {} _) => Result {} _
+useIFrame! = \element, callback! ->
     { sessionId, elementId, selectorText } = Internal.unpackElementData element
 
     DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Switching context to iFrame: $(selectorText)"
 
-    Effect.switchToFrameByElementId sessionId elementId |> Task.mapErr! WebDriverError
+    Effect.switchToFrameByElementId! sessionId elementId |> Result.mapErr WebDriverError |> try
 
     DebugMode.runIfDebugMode! \{} ->
-        DebugMode.showDebugMessageInBrowser! sessionId "Switched to iFrame $(selectorText)"
-        DebugMode.flashCurrentFrame! sessionId
-        DebugMode.wait!
+        DebugMode.showDebugMessageInBrowser! sessionId "Switched to iFrame $(selectorText)" |> try
+        DebugMode.flashCurrentFrame! sessionId |> try
+        DebugMode.wait! {}
+        Ok {}
 
     browser = Internal.packBrowserData { sessionId }
-    result = callback browser |> Task.result!
+    result = callback! browser
 
     DebugMode.runIfVerbose! \{} ->
         Debug.printLine! "Switching back to iFrame parent"
 
-    Effect.switchToParentFrame sessionId |> Task.mapErr! WebDriverError
+    Effect.switchToParentFrame! sessionId |> Result.mapErr WebDriverError |> try
 
     DebugMode.runIfDebugMode! \{} ->
-        DebugMode.showDebugMessageInBrowser! sessionId "Switched back to iFrame parent"
-        DebugMode.flashCurrentFrame! sessionId
-        DebugMode.wait!
+        DebugMode.showDebugMessageInBrowser! sessionId "Switched back to iFrame parent" |> try
+        DebugMode.flashCurrentFrame! sessionId |> try
+        DebugMode.wait! {}
+        Ok {}
 
-    result |> Task.fromResult
+    result
