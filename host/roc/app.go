@@ -95,10 +95,7 @@ func Main(cliOptions Options) int {
 	capturePtr := roc_alloc(size, 0)
 	defer roc_dealloc(capturePtr, 0)
 
-	C.roc__mainForHost_1_exposed_generic(capturePtr)
-
-	var result C.struct_ResultVoidI64
-	C.roc__mainForHost_0_caller(nil, capturePtr, &result)
+	result := C.roc__mainForHost_1_exposed()
 
 	// TODO - error handling
 	err = driversetup.HandleCleanup(cmd)
@@ -107,92 +104,69 @@ func Main(cliOptions Options) int {
 		return 1
 	}
 
-	switch result.disciminant {
-	case 1: // Ok
-		return 0
-	case 0: // Err
-		return (*(*int)(unsafe.Pointer(&result.payload)))
-	default:
-		panic("invalid disciminat")
-	}
+	return (*(*int)(unsafe.Pointer(&result)))
 }
 
 //export roc_fx_setTimeouts
-func roc_fx_setTimeouts(assertTimeout, pageTimeout, scriptTimeout, implicitTimeout uint64) C.struct_ResultVoidStr {
+func roc_fx_setTimeouts(assertTimeout, pageTimeout, scriptTimeout, implicitTimeout uint64) {
 	optionsFromUserApp.AssertTimeout = assertTimeout
 	optionsFromUserApp.PageLoadTimeout = pageTimeout
 	optionsFromUserApp.ScriptExecutionTimeout = scriptTimeout
 	optionsFromUserApp.ElementImplicitTimeout = implicitTimeout
-
-	return createRocResultStr(RocOk, "")
 }
 
 //export roc_fx_setAssertTimeoutOverride
-func roc_fx_setAssertTimeoutOverride(timeout uint64) C.struct_ResultVoidStr {
+func roc_fx_setAssertTimeoutOverride(timeout uint64) {
 	testOverrides.AssertTimeout = &timeout
-
-	return createRocResultStr(RocOk, "")
 }
 
 //export roc_fx_setPageLoadTimeoutOverride
-func roc_fx_setPageLoadTimeoutOverride(timeout uint64) C.struct_ResultVoidStr {
+func roc_fx_setPageLoadTimeoutOverride(timeout uint64) {
 	testOverrides.PageLoadTimeout = &timeout
-
-	return createRocResultStr(RocOk, "")
 }
 
 //export roc_fx_setScriptTimeoutOverride
-func roc_fx_setScriptTimeoutOverride(timeout uint64) C.struct_ResultVoidStr {
+func roc_fx_setScriptTimeoutOverride(timeout uint64) {
 	testOverrides.ScriptExecutionTimeout = &timeout
-
-	return createRocResultStr(RocOk, "")
 }
 
 //export roc_fx_setImplicitTimeoutOverride
-func roc_fx_setImplicitTimeoutOverride(timeout uint64) C.struct_ResultVoidStr {
+func roc_fx_setImplicitTimeoutOverride(timeout uint64) {
 	testOverrides.ElementImplicitTimeout = &timeout
-
-	return createRocResultStr(RocOk, "")
 }
 
 //export roc_fx_resetTestOverrides
-func roc_fx_resetTestOverrides() C.struct_ResultVoidStr {
+func roc_fx_resetTestOverrides() {
 	testOverrides = TestOverrides{}
-
-	return createRocResultStr(RocOk, "")
 }
 
 //export roc_fx_setWindowSize
-func roc_fx_setWindowSize(size *RocStr) C.struct_ResultVoidStr {
+func roc_fx_setWindowSize(size *RocStr) {
 	// make sure to make a copy of the str - this memory might be realocated
 	bytesCopy := make([]byte, len(size.String()))
 	copy(bytesCopy, []byte(size.String()))
 	sizeCopy := string(bytesCopy)
 	optionsFromUserApp.WindowSize = sizeCopy
-
-	return createRocResultStr(RocOk, "")
 }
 
 //export roc_fx_setWindowSizeOverride
-func roc_fx_setWindowSizeOverride(size *RocStr) C.struct_ResultVoidStr {
+func roc_fx_setWindowSizeOverride(size *RocStr) {
 	// make sure to make a copy of the str - this memory might be realocated
 	bytesCopy := make([]byte, len(size.String()))
 	copy(bytesCopy, []byte(size.String()))
 	sizeCopy := string(bytesCopy)
 	testOverrides.WindowSize = &sizeCopy
-
-	return createRocResultStr(RocOk, "")
 }
 
 //export roc_fx_getAssertTimeout
-func roc_fx_getAssertTimeout() C.struct_ResultU64Str {
+func roc_fx_getAssertTimeout() uint64 {
 	assertTimeout := optionsFromUserApp.AssertTimeout
 
 	if testOverrides.AssertTimeout != nil {
 		assertTimeout = *testOverrides.AssertTimeout
 	}
 
-	return createRocResultU64(RocOk, assertTimeout, "")
+	return assertTimeout
 }
 
 var testLogBucket = make([]string, 0)
@@ -207,41 +181,38 @@ func addLogToBucket(message string) {
 }
 
 //export roc_fx_resetTestLogBucket
-func roc_fx_resetTestLogBucket() C.struct_ResultVoidStr {
+func roc_fx_resetTestLogBucket() {
 	testLogBucket = make([]string, 0)
-	return createRocResultStr(RocOk, "")
 }
 
 //export roc_fx_getLogsFromBucket
-func roc_fx_getLogsFromBucket() C.struct_ResultListStr {
+func roc_fx_getLogsFromBucket() C.struct_RocList {
 	logs := testLogBucket
-	return createRocResult_ListStr_Str(RocOk, logs, "")
+	return createRocListStr(logs)
 }
 
 //export roc_fx_getTestNameFilter
-func roc_fx_getTestNameFilter() C.struct_ResultVoidStr {
-	return createRocResultStr(RocOk, options.TestNameFilter)
+func roc_fx_getTestNameFilter() C.struct_RocStr {
+	return createRocStr(options.TestNameFilter)
 }
 
 //export roc_fx_stdoutLine
-func roc_fx_stdoutLine(msg *RocStr) C.struct_ResultVoidStr {
+func roc_fx_stdoutLine(msg *RocStr) {
 	fmt.Println(msg)
 	addLogToBucket(msg.String())
-	return createRocResultStr(RocOk, "")
 }
 
 //export roc_fx_stdinLine
-func roc_fx_stdinLine() C.struct_ResultVoidStr {
+func roc_fx_stdinLine() C.struct_RocStr {
 	var input string
 	fmt.Scanln(&input)
 
-	return createRocResultStr(RocOk, input)
+	return createRocStr(input)
 }
 
 //export roc_fx_wait
-func roc_fx_wait(timeout int64) C.struct_ResultVoidStr {
+func roc_fx_wait(timeout int64) {
 	time.Sleep(time.Duration(time.Duration(timeout) * time.Millisecond))
-	return createRocResultStr(RocOk, "")
 }
 
 //export roc_fx_startSession
@@ -832,29 +803,30 @@ func roc_fx_getPageSource(sessionId *RocStr) C.struct_ResultVoidStr {
 }
 
 //export roc_fx_getTimeMilis
-func roc_fx_getTimeMilis() C.struct_ResultI64Str {
+func roc_fx_getTimeMilis() int64 {
 	now := time.Now().UnixMilli()
 
-	// return createRocResultI64(RocErr, 0, "upsi")
-	return createRocResultI64(RocOk, now, "")
+	return now
 }
 
 //export roc_fx_isDebugMode
-func roc_fx_isDebugMode() C.struct_ResultI64Str {
+func roc_fx_isDebugMode() int64 {
 	isDebugModeInt := 0
 	if options.DebugMode {
 		isDebugModeInt = 1
 	}
-	return createRocResultI64(RocOk, int64(isDebugModeInt), "")
+
+	return int64(isDebugModeInt)
 }
 
 //export roc_fx_isVerbose
-func roc_fx_isVerbose() C.struct_ResultI64Str {
+func roc_fx_isVerbose() int64 {
 	isVerboseInt := 0
 	if options.Verbose {
 		isVerboseInt = 1
 	}
-	return createRocResultI64(RocOk, int64(isVerboseInt), "")
+
+	return int64(isVerboseInt)
 }
 
 //export roc_fx_createDirIfNotExist
@@ -878,10 +850,10 @@ func roc_fx_fileWriteUtf8(path, content *RocStr) C.struct_ResultVoidStr {
 }
 
 //export roc_fx_getEnv
-func roc_fx_getEnv(name *RocStr) C.struct_ResultVoidStr {
+func roc_fx_getEnv(name *RocStr) C.struct_RocStr {
 	value := os.Getenv(name.String())
 
-	return createRocResultStr(RocOk, value)
+	return createRocStr(value)
 }
 
 type RocResultType int
@@ -902,6 +874,12 @@ func createRocResultStr(resultType RocResultType, str string) C.struct_ResultVoi
 	*(*C.struct_RocStr)(payloadPtr) = rocStr.C()
 
 	return result
+}
+
+func createRocStr(str string) C.struct_RocStr {
+	rocStr := NewRocStr(str)
+
+	return rocStr.C()
 }
 
 func createRocResult_ListAny_Str[T any](resultType RocResultType, rocList *RocList[T], error string) C.struct_ResultListStr {
@@ -941,6 +919,17 @@ func createRocResult_ListStr_Str(resultType RocResultType, strList []string, err
 	}
 
 	return result
+}
+
+func createRocListStr(strList []string) C.struct_RocList {
+
+	listOfRocStr := make([]RocStr, len(strList))
+	for i, str := range strList {
+		listOfRocStr[i] = NewRocStr(str)
+	}
+	rocList := NewRocList(listOfRocStr)
+	return rocList.C()
+
 }
 
 func createRocResult_ListI64_Str(resultType RocResultType, intList []int64, error string) C.struct_ResultListStr {

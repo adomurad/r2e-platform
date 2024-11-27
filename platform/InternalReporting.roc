@@ -1,5 +1,5 @@
 ## `Report` module contains test reporters.
-module [runReporters, ReporterCallback, ReporterDefinition, TestRunResult, TestRunMetadata]
+module [runReporters!, ReporterCallback, ReporterDefinition, TestRunResult, TestRunMetadata]
 
 import Fs
 
@@ -23,36 +23,41 @@ ReporterDefinition err : {
     callback : ReporterCallback err,
 } where err implements Inspect
 
-runReporters : List (ReporterDefinition err), List (TestRunResult err), Str, U64 -> Task {} _
-runReporters = \reporters, results, outDir, duration ->
+runReporters! : List (ReporterDefinition err), List (TestRunResult err), Str, U64 => Result {} _
+runReporters! = \reporters, results, outDir, duration ->
     reporters
-    |> Task.forEach \reporter ->
-        reporter |> runReporter results outDir duration
+    |> forEach! \reporter ->
+        reporter |> runReporter! results outDir duration
 
-runReporter : ReporterDefinition err, List (TestRunResult err), Str, U64 -> Task {} _
-runReporter = \reporter, results, outDir, duration ->
-    Fs.createDirIfNotExist! outDir
+forEach! = \list, callback! ->
+    when list is
+        [] -> Ok {}
+        [el, .. as rest] ->
+            callback! el |> try
+            forEach! rest callback!
+
+runReporter! : ReporterDefinition err, List (TestRunResult err), Str, U64 => Result {} _
+runReporter! = \reporter, results, outDir, duration ->
+    Fs.createDirIfNotExist! outDir |> try
 
     cb = reporter.callback
     readyFiles = cb results { duration }
     readyFiles
-        |> Task.forEach! \{ filePath, content } ->
-            reporterDirName = reporter.name |> Str.replaceEach "/" "_"
-            reporterDir = joinPath outDir reporterDirName
-            finalPath = joinPath reporterDir filePath
-            createDirForFilePath! finalPath
-            Fs.writeUtf8! finalPath content
-
-    Task.ok {}
+    |> forEach! \{ filePath, content } ->
+        reporterDirName = reporter.name |> Str.replaceEach "/" "_"
+        reporterDir = joinPath outDir reporterDirName
+        finalPath = joinPath reporterDir filePath
+        createDirForFilePath! finalPath |> try
+        Fs.writeUtf8! finalPath content
 
 joinPath = \path, filename ->
     sanitizedPath = path |> removeTrailing "/"
 
     "$(sanitizedPath)/$(filename)"
 
-createDirForFilePath = \path ->
+createDirForFilePath! = \path ->
     # TODO gracefully handle this error
-    { before } = path |> Str.splitLast "/" |> Task.fromResult!
+    { before } = path |> Str.splitLast "/" |> try
 
     Fs.createDirIfNotExist! "$(before)/"
 

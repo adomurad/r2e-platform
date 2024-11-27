@@ -13,10 +13,10 @@ testCases = [
 ]
 
 test1 = test "getEnv" \browser ->
-    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
+    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting" |> try
 
     empty = Env.get! "FAKE_ENV_FOR_SURE_EMPTY"
-    empty |> Assert.shouldBe! ""
+    empty |> Assert.shouldBe "" |> try
 
     env = Env.get! "THIS_ENV_SHOULD_NOT_BE_EMPTY"
-    env |> Assert.shouldBe! "secret_value"
+    env |> Assert.shouldBe "secret_value"

@@ -1,202 +1,201 @@
-# this module will be replaced when effect interpreters are implemented
 hosted Effect
     exposes [
-        setTimeouts,
-        setScriptTimeoutOverride,
-        setAssertTimeoutOverride,
-        setPageLoadTimeoutOverride,
-        setImplicitTimeoutOverride,
-        resetTestOverrides,
-        setWindowSize,
-        setWindowSizeOverride,
-        getAssertTimeout,
-        stdoutLine,
-        stdinLine,
-        wait,
-        startSession,
-        deleteSession,
-        browserNavigateTo,
-        browserFindElement,
-        browserFindElements,
-        elementClick,
-        getTimeMilis,
-        isDebugMode,
-        isVerbose,
-        resetTestLogBucket,
-        getLogsFromBucket,
-        getTestNameFilter,
-        createDirIfNotExist,
-        fileWriteUtf8,
-        browserGetScreenshot,
-        addCookie,
-        getCookie,
-        getAllCookies,
-        deleteCookie,
-        deleteAllCookies,
-        alertDismiss,
-        alertSendText,
-        alertGetText,
-        alertAccept,
+        setTimeouts!,
+        setScriptTimeoutOverride!,
+        setAssertTimeoutOverride!,
+        setPageLoadTimeoutOverride!,
+        setImplicitTimeoutOverride!,
+        resetTestOverrides!,
+        setWindowSize!,
+        setWindowSizeOverride!,
+        getAssertTimeout!,
+        stdoutLine!,
+        stdinLine!,
+        wait!,
+        startSession!,
+        deleteSession!,
+        browserNavigateTo!,
+        browserFindElement!,
+        browserFindElements!,
+        elementClick!,
+        getTimeMilis!,
+        isDebugMode!,
+        isVerbose!,
+        resetTestLogBucket!,
+        getLogsFromBucket!,
+        getTestNameFilter!,
+        createDirIfNotExist!,
+        fileWriteUtf8!,
+        browserGetScreenshot!,
+        addCookie!,
+        getCookie!,
+        getAllCookies!,
+        deleteCookie!,
+        deleteAllCookies!,
+        alertDismiss!,
+        alertSendText!,
+        alertGetText!,
+        alertAccept!,
         # browserGetPdf,
-        elementGetText,
-        elementIsSelected,
-        elementIsDisplayed,
-        elementGetAttribute,
-        elementGetProperty,
-        elementSendKeys,
-        elementClear,
-        elementFindElement,
-        elementFindElements,
-        elementGetCss,
-        elementGetTag,
-        elementGetRect,
-        browserSetWindowRect,
-        browserGetWindowRect,
-        browserGetTitle,
-        browserGetUrl,
-        browserReload,
-        browserNavigateBack,
-        browserNavigateForward,
-        browserMaximize,
-        browserMinimize,
-        browserFullScreen,
-        executeJs,
-        getEnv,
-        getPageSource,
-        switchToFrameByElementId,
-        switchToParentFrame,
+        elementGetText!,
+        elementIsSelected!,
+        elementIsDisplayed!,
+        elementGetAttribute!,
+        elementGetProperty!,
+        elementSendKeys!,
+        elementClear!,
+        elementFindElement!,
+        elementFindElements!,
+        elementGetCss!,
+        elementGetTag!,
+        elementGetRect!,
+        browserSetWindowRect!,
+        browserGetWindowRect!,
+        browserGetTitle!,
+        browserGetUrl!,
+        browserReload!,
+        browserNavigateBack!,
+        browserNavigateForward!,
+        browserMaximize!,
+        browserMinimize!,
+        browserFullScreen!,
+        executeJs!,
+        getEnv!,
+        getPageSource!,
+        switchToFrameByElementId!,
+        switchToParentFrame!,
     ]
     imports []
 
 # effects that are provided by the host
-setTimeouts : U64, U64, U64, U64 -> Task {} Str
+setTimeouts! : U64, U64, U64, U64 => {}
 
-setAssertTimeoutOverride : U64 -> Task {} Str
+setAssertTimeoutOverride! : U64 => {}
 
-setPageLoadTimeoutOverride : U64 -> Task {} Str
+setPageLoadTimeoutOverride! : U64 => {}
 
-setScriptTimeoutOverride : U64 -> Task {} Str
+setScriptTimeoutOverride! : U64 => {}
 
-setImplicitTimeoutOverride : U64 -> Task {} Str
+setImplicitTimeoutOverride! : U64 => {}
 
-resetTestOverrides : {} -> Task {} Str
+resetTestOverrides! : {} => {}
 
-setWindowSize : Str -> Task {} Str
+setWindowSize! : Str => {}
 
-setWindowSizeOverride : Str -> Task {} Str
+setWindowSizeOverride! : Str => {}
 
-getAssertTimeout : {} -> Task I64 Str
+getAssertTimeout! : {} => U64
 
-stdoutLine : Str -> Task {} Str
+stdoutLine! : Str => {}
 
-stdinLine : {} -> Task Str Str
+stdinLine! : {} => Str
 
-wait : U64 -> Task {} Str
+wait! : U64 => {}
 
-getTimeMilis : {} -> Task I64 Str
+getTimeMilis! : {} => I64
 
-isDebugMode : {} -> Task I64 Str
+isDebugMode! : {} => I64
 
-isVerbose : {} -> Task I64 Str
+isVerbose! : {} => I64
 
-resetTestLogBucket : {} -> Task {} Str
+resetTestLogBucket! : {} => {}
 
-getLogsFromBucket : {} -> Task (List Str) Str
+getLogsFromBucket! : {} => List Str
 
-getTestNameFilter : {} -> Task Str Str
+getTestNameFilter! : {} => Str
 
 # file system
-createDirIfNotExist : Str -> Task {} Str
+createDirIfNotExist! : Str => Result {} Str
 
-fileWriteUtf8 : Str, Str -> Task {} Str
+fileWriteUtf8! : Str, Str => Result {} Str
 
 # driver effects
-startSession : {} -> Task Str Str
+startSession! : {} => Result Str Str
 
-deleteSession : Str -> Task {} Str
+deleteSession! : Str => Result {} Str
 
 # browser effects
-browserNavigateTo : Str, Str -> Task {} Str
+browserNavigateTo! : Str, Str => Result {} Str
 
-browserGetTitle : Str -> Task Str Str
+browserGetTitle! : Str => Result Str Str
 
-browserGetUrl : Str -> Task Str Str
+browserGetUrl! : Str => Result Str Str
 
-browserFindElement : Str, Str, Str -> Task Str Str
+browserFindElement! : Str, Str, Str => Result Str Str
 
-browserFindElements : Str, Str, Str -> Task (List Str) Str
+browserFindElements! : Str, Str, Str => Result (List Str) Str
 
-browserSetWindowRect : Str, I64, I64, I64, I64, I64 -> Task (List I64) Str
+browserSetWindowRect! : Str, I64, I64, I64, I64, I64 => Result (List I64) Str
 
-browserGetWindowRect : Str -> Task (List I64) Str
+browserGetWindowRect! : Str => Result (List I64) Str
 
-browserGetScreenshot : Str -> Task Str Str
+browserGetScreenshot! : Str => Result Str Str
 
 # browserGetPdf : Str, F64, F64, F64, F64, F64, F64, F64, Str, I64, I64, List Str -> Task Str Str
 
-browserNavigateBack : Str -> Task {} Str
+browserNavigateBack! : Str => Result {} Str
 
-browserNavigateForward : Str -> Task {} Str
+browserNavigateForward! : Str => Result {} Str
 
-browserReload : Str -> Task {} Str
+browserReload! : Str => Result {} Str
 
-browserMaximize : Str -> Task (List I64) Str
+browserMaximize! : Str => Result (List I64) Str
 
-browserMinimize : Str -> Task (List I64) Str
+browserMinimize! : Str => Result (List I64) Str
 
-browserFullScreen : Str -> Task (List I64) Str
+browserFullScreen! : Str => Result (List I64) Str
 
-executeJs : Str, Str, Str -> Task Str Str
+executeJs! : Str, Str, Str => Result Str Str
 
-addCookie : Str, Str, Str, Str, Str, Str, I64, I64, I64 -> Task {} Str
+addCookie! : Str, Str, Str, Str, Str, Str, I64, I64, I64 => Result {} Str
 
-deleteCookie : Str, Str -> Task {} Str
+deleteCookie! : Str, Str => Result {} Str
 
-deleteAllCookies : Str -> Task {} Str
+deleteAllCookies! : Str => Result {} Str
 
-getCookie : Str, Str -> Task (List Str) Str
+getCookie! : Str, Str => Result (List Str) Str
 
-getAllCookies : Str -> Task (List (List Str)) Str
+getAllCookies! : Str => Result (List (List Str)) Str
 
-alertAccept : Str -> Task {} Str
+alertAccept! : Str => Result {} Str
 
-alertDismiss : Str -> Task {} Str
+alertDismiss! : Str => Result {} Str
 
-alertSendText : Str, Str -> Task {} Str
+alertSendText! : Str, Str => Result {} Str
 
-alertGetText : Str -> Task Str Str
+alertGetText! : Str => Result Str Str
 
 # element effects
-elementClick : Str, Str -> Task {} Str
+elementClick! : Str, Str => Result {} Str
 
-elementSendKeys : Str, Str, Str -> Task {} Str
+elementSendKeys! : Str, Str, Str => Result {} Str
 
-elementClear : Str, Str -> Task {} Str
+elementClear! : Str, Str => Result {} Str
 
-elementGetText : Str, Str -> Task Str Str
+elementGetText! : Str, Str => Result Str Str
 
-elementIsSelected : Str, Str -> Task Str Str
+elementIsSelected! : Str, Str => Result Str Str
 
-elementIsDisplayed : Str, Str -> Task Str Str
+elementIsDisplayed! : Str, Str => Result Str Str
 
-elementGetAttribute : Str, Str, Str -> Task Str Str
+elementGetAttribute! : Str, Str, Str => Result Str Str
 
-elementGetProperty : Str, Str, Str -> Task Str Str
+elementGetProperty! : Str, Str, Str => Result Str Str
 
-elementFindElement : Str, Str, Str, Str -> Task Str Str
+elementFindElement! : Str, Str, Str, Str => Result Str Str
 
-elementFindElements : Str, Str, Str, Str -> Task (List Str) Str
+elementFindElements! : Str, Str, Str, Str => Result (List Str) Str
 
-elementGetTag : Str, Str -> Task Str Str
+elementGetTag! : Str, Str => Result Str Str
 
-elementGetCss : Str, Str, Str -> Task Str Str
+elementGetCss! : Str, Str, Str => Result Str Str
 
-elementGetRect : Str, Str -> Task (List F64) Str
+elementGetRect! : Str, Str => Result (List F64) Str
 
-getEnv : Str -> Task Str Str
+getEnv! : Str => Str
 
-getPageSource : Str -> Task Str Str
+getPageSource! : Str => Result Str Str
 
-switchToFrameByElementId : Str, Str -> Task {} Str
+switchToFrameByElementId! : Str, Str => Result {} Str
 
-switchToParentFrame : Str -> Task {} Str
+switchToParentFrame! : Str => Result {} Str

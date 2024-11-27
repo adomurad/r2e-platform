@@ -1,55 +1,49 @@
-module [runIfDebugMode, flashElements, flashCurrentFrame, wait, showDebugMessageInBrowser, runIfVerbose]
+module [runIfDebugMode!, flashElements!, flashCurrentFrame!, wait!, showDebugMessageInBrowser!, runIfVerbose!]
 
 import Effect
 import Common.ExecuteJs as ExecuteJs
 import Common.Locator exposing [Locator]
 import Internal
 
-isDebugMode : Task Bool []
-isDebugMode =
-    Effect.isDebugMode {}
-    |> Task.map \num ->
-        when num is
-            1 -> Bool.true
-            _ -> Bool.false
-    |> Task.mapErr \_ -> crash "isDebugMode should never crash"
+isDebugMode! : {} => Bool
+isDebugMode! = \{} ->
+    when Effect.isDebugMode! {} is
+        1 -> Bool.true
+        _ -> Bool.false
 
-isVerbose : Task Bool []
-isVerbose =
-    Effect.isVerbose {}
-    |> Task.map \num ->
-        when num is
-            1 -> Bool.true
-            _ -> Bool.false
-    |> Task.mapErr \_ -> crash "isVerbose should never crash"
+isVerbose! : {} => Bool
+isVerbose! = \{} ->
+    when Effect.isVerbose! {} is
+        1 -> Bool.true
+        _ -> Bool.false
 
 debugModeWaitTime = 1500
 
-wait = Effect.wait debugModeWaitTime |> Task.mapErr \_ -> crash "sleep should not fail"
+wait! = \{} -> Effect.wait! debugModeWaitTime
 
-runIfVerbose : ({} -> Task ok err) -> Task {} []
-runIfVerbose = \task ->
-    hasVerboseFlag = isVerbose!
-    hasDebugFlag = isDebugMode!
+runIfVerbose! : ({} => _) => {}
+runIfVerbose! = \task! ->
+    hasVerboseFlag = isVerbose! {}
+    hasDebugFlag = isDebugMode! {}
 
     if hasVerboseFlag || hasDebugFlag then
-        _ = task {} |> Task.result!
-        Task.ok {}
+        _ = task! {}
+        {}
     else
-        Task.ok {}
+        {}
 
-runIfDebugMode : ({} -> Task ok err) -> Task {} []
-runIfDebugMode = \task ->
-    isDebug = isDebugMode!
+runIfDebugMode! : ({} => _) => {}
+runIfDebugMode! = \task! ->
+    isDebug = isDebugMode! {}
 
     if isDebug then
-        _ = task {} |> Task.result!
-        Task.ok {}
+        _ = task! {}
+        {}
     else
-        Task.ok {}
+        {}
 
-flashElements : Str, Locator, [All, Single] -> Task {} [JsReturnTypeError Str, WebDriverError Str]
-flashElements = \sessionId, locator, quantity ->
+flashElements! : Str, Locator, [All, Single] => Result {} [JsReturnTypeError Str, WebDriverError Str]
+flashElements! = \sessionId, locator, quantity ->
     # TODO better tests
     blinkScript =
         """
@@ -87,12 +81,12 @@ flashElements = \sessionId, locator, quantity ->
     browser = Internal.packBrowserData { sessionId }
 
     _res : Str
-    _res = browser |> ExecuteJs.executeJs! js
+    _res = browser |> ExecuteJs.executeJs! js |> try
 
-    Task.ok {}
+    Ok {}
 
-flashCurrentFrame : Str -> Task {} [JsReturnTypeError Str, WebDriverError Str]
-flashCurrentFrame = \sessionId ->
+flashCurrentFrame! : Str => Result {} [JsReturnTypeError Str, WebDriverError Str]
+flashCurrentFrame! = \sessionId ->
     # TODO better tests
     blinkScript =
         """
@@ -132,9 +126,9 @@ flashCurrentFrame = \sessionId ->
     browser = Internal.packBrowserData { sessionId }
 
     _res : Str
-    _res = browser |> ExecuteJs.executeJs! blinkScript
+    _res = browser |> ExecuteJs.executeJs! blinkScript |> try
 
-    Task.ok {}
+    Ok {}
 
 locatorToScriptExecution : Locator, [Single, All] -> Str
 locatorToScriptExecution = \locator, quantity ->
@@ -224,8 +218,8 @@ locatorToScriptExecution = \locator, quantity ->
                     }
                     """
 
-showDebugMessageInBrowser : Str, Str -> Task {} [WebDriverError Str, JsReturnTypeError Str]
-showDebugMessageInBrowser = \sessionId, message ->
+showDebugMessageInBrowser! : Str, Str => Result {} [WebDriverError Str, JsReturnTypeError Str]
+showDebugMessageInBrowser! = \sessionId, message ->
     browser = Internal.packBrowserData { sessionId }
 
     js =
@@ -276,6 +270,6 @@ showDebugMessageInBrowser = \sessionId, message ->
     args = [String message]
 
     _res : Str
-    _res = browser |> ExecuteJs.executeJsWithArgs! js args
+    _res = browser |> ExecuteJs.executeJsWithArgs! js args |> try
 
-    Task.ok {}
+    Ok {}
