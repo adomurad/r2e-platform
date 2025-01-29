@@ -14,6 +14,6 @@ import Effect
 ##  env |> Assert.shouldBe "secret_value" |> try
 ## ```
 get! : Str => Str
-get! = \name ->
-    Effect.getEnv! name
+get! = |name|
+    Effect.get_env!(name)
 

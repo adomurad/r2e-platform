@@ -91,11 +91,11 @@ func Main(cliOptions Options) int {
 		return 1
 	}
 
-	size := C.roc__mainForHost_1_exposed_size()
+	size := C.roc__main_for_host_1_exposed_size()
 	capturePtr := roc_alloc(size, 0)
 	defer roc_dealloc(capturePtr, 0)
 
-	result := C.roc__mainForHost_1_exposed()
+	result := C.roc__main_for_host_1_exposed()
 
 	// TODO - error handling
 	err = driversetup.HandleCleanup(cmd)
@@ -107,41 +107,41 @@ func Main(cliOptions Options) int {
 	return (*(*int)(unsafe.Pointer(&result)))
 }
 
-//export roc_fx_setTimeouts
-func roc_fx_setTimeouts(assertTimeout, pageTimeout, scriptTimeout, implicitTimeout uint64) {
+//export roc_fx_set_timeouts
+func roc_fx_set_timeouts(assertTimeout, pageTimeout, scriptTimeout, implicitTimeout uint64) {
 	optionsFromUserApp.AssertTimeout = assertTimeout
 	optionsFromUserApp.PageLoadTimeout = pageTimeout
 	optionsFromUserApp.ScriptExecutionTimeout = scriptTimeout
 	optionsFromUserApp.ElementImplicitTimeout = implicitTimeout
 }
 
-//export roc_fx_setAssertTimeoutOverride
-func roc_fx_setAssertTimeoutOverride(timeout uint64) {
+//export roc_fx_set_assert_timeout_override
+func roc_fx_set_assert_timeout_override(timeout uint64) {
 	testOverrides.AssertTimeout = &timeout
 }
 
-//export roc_fx_setPageLoadTimeoutOverride
-func roc_fx_setPageLoadTimeoutOverride(timeout uint64) {
+//export roc_fx_set_page_load_timeout_override
+func roc_fx_set_page_load_timeout_override(timeout uint64) {
 	testOverrides.PageLoadTimeout = &timeout
 }
 
-//export roc_fx_setScriptTimeoutOverride
-func roc_fx_setScriptTimeoutOverride(timeout uint64) {
+//export roc_fx_set_script_timeout_override
+func roc_fx_set_script_timeout_override(timeout uint64) {
 	testOverrides.ScriptExecutionTimeout = &timeout
 }
 
-//export roc_fx_setImplicitTimeoutOverride
-func roc_fx_setImplicitTimeoutOverride(timeout uint64) {
+//export roc_fx_set_implicit_timeout_override
+func roc_fx_set_implicit_timeout_override(timeout uint64) {
 	testOverrides.ElementImplicitTimeout = &timeout
 }
 
-//export roc_fx_resetTestOverrides
-func roc_fx_resetTestOverrides() {
+//export roc_fx_reset_test_overrides
+func roc_fx_reset_test_overrides() {
 	testOverrides = TestOverrides{}
 }
 
-//export roc_fx_setWindowSize
-func roc_fx_setWindowSize(size *RocStr) {
+//export roc_fx_set_window_size
+func roc_fx_set_window_size(size *RocStr) {
 	// make sure to make a copy of the str - this memory might be realocated
 	bytesCopy := make([]byte, len(size.String()))
 	copy(bytesCopy, []byte(size.String()))
@@ -149,8 +149,8 @@ func roc_fx_setWindowSize(size *RocStr) {
 	optionsFromUserApp.WindowSize = sizeCopy
 }
 
-//export roc_fx_setWindowSizeOverride
-func roc_fx_setWindowSizeOverride(size *RocStr) {
+//export roc_fx_set_window_size_override
+func roc_fx_set_window_size_override(size *RocStr) {
 	// make sure to make a copy of the str - this memory might be realocated
 	bytesCopy := make([]byte, len(size.String()))
 	copy(bytesCopy, []byte(size.String()))
@@ -158,8 +158,8 @@ func roc_fx_setWindowSizeOverride(size *RocStr) {
 	testOverrides.WindowSize = &sizeCopy
 }
 
-//export roc_fx_getAssertTimeout
-func roc_fx_getAssertTimeout() uint64 {
+//export roc_fx_get_assert_timeout
+func roc_fx_get_assert_timeout() uint64 {
 	assertTimeout := optionsFromUserApp.AssertTimeout
 
 	if testOverrides.AssertTimeout != nil {
@@ -180,30 +180,30 @@ func addLogToBucket(message string) {
 	testLogBucket = append(testLogBucket, messageCopy)
 }
 
-//export roc_fx_resetTestLogBucket
-func roc_fx_resetTestLogBucket() {
+//export roc_fx_reset_test_log_bucket
+func roc_fx_reset_test_log_bucket() {
 	testLogBucket = make([]string, 0)
 }
 
-//export roc_fx_getLogsFromBucket
-func roc_fx_getLogsFromBucket() C.struct_RocList {
+//export roc_fx_get_logs_from_bucket
+func roc_fx_get_logs_from_bucket() C.struct_RocList {
 	logs := testLogBucket
 	return createRocListStr(logs)
 }
 
-//export roc_fx_getTestNameFilter
-func roc_fx_getTestNameFilter() C.struct_RocStr {
+//export roc_fx_get_test_name_filter
+func roc_fx_get_test_name_filter() C.struct_RocStr {
 	return createRocStr(options.TestNameFilter)
 }
 
-//export roc_fx_stdoutLine
-func roc_fx_stdoutLine(msg *RocStr) {
+//export roc_fx_stdout_line
+func roc_fx_stdout_line(msg *RocStr) {
 	fmt.Println(msg)
 	addLogToBucket(msg.String())
 }
 
-//export roc_fx_stdinLine
-func roc_fx_stdinLine() C.struct_RocStr {
+//export roc_fx_stdin_line
+func roc_fx_stdin_line() C.struct_RocStr {
 	var input string
 	fmt.Scanln(&input)
 
@@ -215,8 +215,8 @@ func roc_fx_wait(timeout int64) {
 	time.Sleep(time.Duration(time.Duration(timeout) * time.Millisecond))
 }
 
-//export roc_fx_startSession
-func roc_fx_startSession() C.struct_ResultVoidStr {
+//export roc_fx_start_session
+func roc_fx_start_session() C.struct_ResultVoidStr {
 	serverOptions := webdriver.SessionOptions{
 		Headless:        options.Headless,
 		WindowSize:      optionsFromUserApp.WindowSize,
@@ -250,8 +250,8 @@ func roc_fx_startSession() C.struct_ResultVoidStr {
 	}
 }
 
-//export roc_fx_deleteSession
-func roc_fx_deleteSession(sessionId *RocStr) C.struct_ResultVoidStr {
+//export roc_fx_delete_session
+func roc_fx_delete_session(sessionId *RocStr) C.struct_ResultVoidStr {
 	err := webdriver.DeleteSession(sessionId.String())
 	if err != nil {
 		return createRocResultStr(RocErr, err.Error())
@@ -260,8 +260,8 @@ func roc_fx_deleteSession(sessionId *RocStr) C.struct_ResultVoidStr {
 	}
 }
 
-//export roc_fx_browserGetScreenshot
-func roc_fx_browserGetScreenshot(sessionId *RocStr) C.struct_ResultVoidStr {
+//export roc_fx_browser_get_screenshot
+func roc_fx_browser_get_screenshot(sessionId *RocStr) C.struct_ResultVoidStr {
 	screenshotBase64, err := webdriver.BrowserGetScreenshot(sessionId.String())
 	if err != nil {
 		return createRocResultStr(RocErr, err.Error())
@@ -270,8 +270,8 @@ func roc_fx_browserGetScreenshot(sessionId *RocStr) C.struct_ResultVoidStr {
 	}
 }
 
-//export roc_fx_executeJs
-func roc_fx_executeJs(sessionId, jsString, argsStr *RocStr) C.struct_ResultVoidStr {
+//export roc_fx_execute_js
+func roc_fx_execute_js(sessionId, jsString, argsStr *RocStr) C.struct_ResultVoidStr {
 	result, err := webdriver.ExecuteJs(sessionId.String(), jsString.String(), argsStr.String())
 	if err != nil {
 		return createRocResultStr(RocErr, err.Error())
@@ -324,8 +324,8 @@ func roc_fx_executeJs(sessionId, jsString, argsStr *RocStr) C.struct_ResultVoidS
 // 	}
 // }
 
-//export roc_fx_browserSetWindowRect
-func roc_fx_browserSetWindowRect(sessionId *RocStr, disciminant, x, y, width, height int64) C.struct_ResultListStr {
+//export roc_fx_browser_set_window_rect
+func roc_fx_browser_set_window_rect(sessionId *RocStr, disciminant, x, y, width, height int64) C.struct_ResultListStr {
 	rect := webdriver.WindowRect{}
 
 	switch disciminant {
@@ -353,8 +353,8 @@ func roc_fx_browserSetWindowRect(sessionId *RocStr, disciminant, x, y, width, he
 	}
 }
 
-//export roc_fx_browserGetWindowRect
-func roc_fx_browserGetWindowRect(sessionId *RocStr) C.struct_ResultListStr {
+//export roc_fx_browser_get_window_rect
+func roc_fx_browser_get_window_rect(sessionId *RocStr) C.struct_ResultListStr {
 	newRect, err := webdriver.GetWindowRect(sessionId.String())
 	if err != nil {
 		return createRocResult_ListI64_Str(RocErr, nil, err.Error())
@@ -364,8 +364,8 @@ func roc_fx_browserGetWindowRect(sessionId *RocStr) C.struct_ResultListStr {
 	}
 }
 
-//export roc_fx_elementGetRect
-func roc_fx_elementGetRect(sessionId, elementId *RocStr) C.struct_ResultListStr {
+//export roc_fx_element_get_rect
+func roc_fx_element_get_rect(sessionId, elementId *RocStr) C.struct_ResultListStr {
 	newRect, err := webdriver.GetElementRect(sessionId.String(), elementId.String())
 	if err != nil {
 		return createRocResult_ListI64_Str(RocErr, nil, err.Error())
@@ -377,8 +377,8 @@ func roc_fx_elementGetRect(sessionId, elementId *RocStr) C.struct_ResultListStr 
 	}
 }
 
-//export roc_fx_browserMaximize
-func roc_fx_browserMaximize(sessionId *RocStr) C.struct_ResultListStr {
+//export roc_fx_browser_maximize
+func roc_fx_browser_maximize(sessionId *RocStr) C.struct_ResultListStr {
 	newRect, err := webdriver.Maximize(sessionId.String())
 	if err != nil {
 		return createRocResult_ListI64_Str(RocErr, nil, err.Error())
@@ -388,8 +388,8 @@ func roc_fx_browserMaximize(sessionId *RocStr) C.struct_ResultListStr {
 	}
 }
 
-//export roc_fx_browserMinimize
-func roc_fx_browserMinimize(sessionId *RocStr) C.struct_ResultListStr {
+//export roc_fx_browser_minimize
+func roc_fx_browser_minimize(sessionId *RocStr) C.struct_ResultListStr {
 	newRect, err := webdriver.Minimize(sessionId.String())
 	if err != nil {
 		return createRocResult_ListI64_Str(RocErr, nil, err.Error())
@@ -399,8 +399,8 @@ func roc_fx_browserMinimize(sessionId *RocStr) C.struct_ResultListStr {
 	}
 }
 
-//export roc_fx_browserFullScreen
-func roc_fx_browserFullScreen(sessionId *RocStr) C.struct_ResultListStr {
+//export roc_fx_browser_full_screen
+func roc_fx_browser_full_screen(sessionId *RocStr) C.struct_ResultListStr {
 	newRect, err := webdriver.FullScreen(sessionId.String())
 	if err != nil {
 		return createRocResult_ListI64_Str(RocErr, nil, err.Error())
@@ -410,8 +410,8 @@ func roc_fx_browserFullScreen(sessionId *RocStr) C.struct_ResultListStr {
 	}
 }
 
-//export roc_fx_browserNavigateBack
-func roc_fx_browserNavigateBack(sessionId *RocStr) C.struct_ResultVoidStr {
+//export roc_fx_browser_navigate_back
+func roc_fx_browser_navigate_back(sessionId *RocStr) C.struct_ResultVoidStr {
 	err := webdriver.NavigateBack(sessionId.String())
 	if err != nil {
 		return createRocResultStr(RocErr, err.Error())
@@ -420,8 +420,8 @@ func roc_fx_browserNavigateBack(sessionId *RocStr) C.struct_ResultVoidStr {
 	return createRocResultStr(RocOk, "")
 }
 
-//export roc_fx_browserNavigateForward
-func roc_fx_browserNavigateForward(sessionId *RocStr) C.struct_ResultVoidStr {
+//export roc_fx_browser_navigate_forward
+func roc_fx_browser_navigate_forward(sessionId *RocStr) C.struct_ResultVoidStr {
 	err := webdriver.NavigateForward(sessionId.String())
 	if err != nil {
 		return createRocResultStr(RocErr, err.Error())
@@ -430,8 +430,8 @@ func roc_fx_browserNavigateForward(sessionId *RocStr) C.struct_ResultVoidStr {
 	return createRocResultStr(RocOk, "")
 }
 
-//export roc_fx_browserReload
-func roc_fx_browserReload(sessionId *RocStr) C.struct_ResultVoidStr {
+//export roc_fx_browser_reload
+func roc_fx_browser_reload(sessionId *RocStr) C.struct_ResultVoidStr {
 	err := webdriver.Reload(sessionId.String())
 	if err != nil {
 		return createRocResultStr(RocErr, err.Error())
@@ -440,8 +440,8 @@ func roc_fx_browserReload(sessionId *RocStr) C.struct_ResultVoidStr {
 	return createRocResultStr(RocOk, "")
 }
 
-//export roc_fx_browserNavigateTo
-func roc_fx_browserNavigateTo(sessionId, url *RocStr) C.struct_ResultVoidStr {
+//export roc_fx_browser_navigate_to
+func roc_fx_browser_navigate_to(sessionId, url *RocStr) C.struct_ResultVoidStr {
 	err := webdriver.NavigateTo(sessionId.String(), url.String())
 	if err != nil {
 		return createRocResultStr(RocErr, err.Error())
@@ -450,8 +450,8 @@ func roc_fx_browserNavigateTo(sessionId, url *RocStr) C.struct_ResultVoidStr {
 	return createRocResultStr(RocOk, "")
 }
 
-//export roc_fx_switchToFrameByElementId
-func roc_fx_switchToFrameByElementId(sessionId, elementId *RocStr) C.struct_ResultVoidStr {
+//export roc_fx_switch_to_frame_by_element_id
+func roc_fx_switch_to_frame_by_element_id(sessionId, elementId *RocStr) C.struct_ResultVoidStr {
 	err := webdriver.SwitchToFrameByElementId(sessionId.String(), elementId.String())
 	if err != nil {
 		return createRocResultStr(RocErr, err.Error())
@@ -460,8 +460,8 @@ func roc_fx_switchToFrameByElementId(sessionId, elementId *RocStr) C.struct_Resu
 	return createRocResultStr(RocOk, "")
 }
 
-//export roc_fx_switchToParentFrame
-func roc_fx_switchToParentFrame(sessionId *RocStr) C.struct_ResultVoidStr {
+//export roc_fx_switch_to_parent_frame
+func roc_fx_switch_to_parent_frame(sessionId *RocStr) C.struct_ResultVoidStr {
 	err := webdriver.SwitchToParenFrame(sessionId.String())
 	if err != nil {
 		return createRocResultStr(RocErr, err.Error())
@@ -470,8 +470,8 @@ func roc_fx_switchToParentFrame(sessionId *RocStr) C.struct_ResultVoidStr {
 	return createRocResultStr(RocOk, "")
 }
 
-//export roc_fx_alertAccept
-func roc_fx_alertAccept(sessionId *RocStr) C.struct_ResultVoidStr {
+//export roc_fx_alert_accept
+func roc_fx_alert_accept(sessionId *RocStr) C.struct_ResultVoidStr {
 	err := webdriver.AlertAccept(sessionId.String())
 	if err != nil {
 		return createRocResultStr(RocErr, err.Error())
@@ -480,8 +480,8 @@ func roc_fx_alertAccept(sessionId *RocStr) C.struct_ResultVoidStr {
 	return createRocResultStr(RocOk, "")
 }
 
-//export roc_fx_alertDismiss
-func roc_fx_alertDismiss(sessionId *RocStr) C.struct_ResultVoidStr {
+//export roc_fx_alert_dismiss
+func roc_fx_alert_dismiss(sessionId *RocStr) C.struct_ResultVoidStr {
 	err := webdriver.AlertDismiss(sessionId.String())
 	if err != nil {
 		return createRocResultStr(RocErr, err.Error())
@@ -490,8 +490,8 @@ func roc_fx_alertDismiss(sessionId *RocStr) C.struct_ResultVoidStr {
 	return createRocResultStr(RocOk, "")
 }
 
-//export roc_fx_alertGetText
-func roc_fx_alertGetText(sessionId *RocStr) C.struct_ResultVoidStr {
+//export roc_fx_alert_get_text
+func roc_fx_alert_get_text(sessionId *RocStr) C.struct_ResultVoidStr {
 	text, err := webdriver.AlertGetText(sessionId.String())
 	if err != nil {
 		return createRocResultStr(RocErr, err.Error())
@@ -500,8 +500,8 @@ func roc_fx_alertGetText(sessionId *RocStr) C.struct_ResultVoidStr {
 	return createRocResultStr(RocOk, text)
 }
 
-//export roc_fx_alertSendText
-func roc_fx_alertSendText(sessionId, text *RocStr) C.struct_ResultVoidStr {
+//export roc_fx_alert_send_text
+func roc_fx_alert_send_text(sessionId, text *RocStr) C.struct_ResultVoidStr {
 	err := webdriver.AlertSendText(sessionId.String(), text.String())
 	if err != nil {
 		return createRocResultStr(RocErr, err.Error())
@@ -510,8 +510,8 @@ func roc_fx_alertSendText(sessionId, text *RocStr) C.struct_ResultVoidStr {
 	return createRocResultStr(RocOk, "")
 }
 
-//export roc_fx_browserFindElement
-func roc_fx_browserFindElement(sessionId, using, value *RocStr) C.struct_ResultVoidStr {
+//export roc_fx_browser_find_element
+func roc_fx_browser_find_element(sessionId, using, value *RocStr) C.struct_ResultVoidStr {
 	elementId, err := webdriver.FindElement(sessionId.String(), using.String(), value.String())
 	// if notFoundError, ok := err.(*webdriver.WebDriverNotFoundError); ok {
 	//    return createRocResultStr(RocErr, fmt.Sprintf("WebDriverNotFoundError::"))
@@ -533,8 +533,8 @@ func roc_fx_browserFindElements(sessionId, using, value *RocStr) C.struct_Result
 	return createRocResult_ListStr_Str(RocOk, elementIds, "")
 }
 
-//export roc_fx_elementFindElement
-func roc_fx_elementFindElement(sessionId, parentElementId, using, value *RocStr) C.struct_ResultVoidStr {
+//export roc_fx_element_find_element
+func roc_fx_element_find_element(sessionId, parentElementId, using, value *RocStr) C.struct_ResultVoidStr {
 	elementId, err := webdriver.FindElementInElement(sessionId.String(), parentElementId.String(), using.String(), value.String())
 	if err != nil {
 		return createRocResultStr(RocErr, err.Error())
@@ -543,8 +543,8 @@ func roc_fx_elementFindElement(sessionId, parentElementId, using, value *RocStr)
 	return createRocResultStr(RocOk, elementId)
 }
 
-//export roc_fx_elementFindElements
-func roc_fx_elementFindElements(sessionId, parentElementId, using, value *RocStr) C.struct_ResultListStr {
+//export roc_fx_element_find_elements
+func roc_fx_element_find_elements(sessionId, parentElementId, using, value *RocStr) C.struct_ResultListStr {
 	elementIds, err := webdriver.FindElementsInElement(sessionId.String(), parentElementId.String(), using.String(), value.String())
 	if err != nil {
 		return createRocResult_ListStr_Str(RocErr, nil, err.Error())
@@ -553,8 +553,8 @@ func roc_fx_elementFindElements(sessionId, parentElementId, using, value *RocStr
 	return createRocResult_ListStr_Str(RocOk, elementIds, "")
 }
 
-//export roc_fx_browserGetTitle
-func roc_fx_browserGetTitle(sessionId *RocStr) C.struct_ResultVoidStr {
+//export roc_fx_browser_get_title
+func roc_fx_browser_get_title(sessionId *RocStr) C.struct_ResultVoidStr {
 	title, err := webdriver.GetBrowserTitle(sessionId.String())
 	if err != nil {
 		return createRocResultStr(RocErr, err.Error())
@@ -563,8 +563,8 @@ func roc_fx_browserGetTitle(sessionId *RocStr) C.struct_ResultVoidStr {
 	return createRocResultStr(RocOk, title)
 }
 
-//export roc_fx_browserGetUrl
-func roc_fx_browserGetUrl(sessionId *RocStr) C.struct_ResultVoidStr {
+//export roc_fx_browser_get_url
+func roc_fx_browser_get_url(sessionId *RocStr) C.struct_ResultVoidStr {
 	title, err := webdriver.GetBrowserUrl(sessionId.String())
 	if err != nil {
 		return createRocResultStr(RocErr, err.Error())
@@ -573,8 +573,8 @@ func roc_fx_browserGetUrl(sessionId *RocStr) C.struct_ResultVoidStr {
 	return createRocResultStr(RocOk, title)
 }
 
-//export roc_fx_addCookie
-func roc_fx_addCookie(sessionId, name, value, domain, path, sameSite *RocStr, httpOnly, secure, expiry int64) C.struct_ResultVoidStr {
+//export roc_fx_add_cookie
+func roc_fx_add_cookie(sessionId, name, value, domain, path, sameSite *RocStr, httpOnly, secure, expiry int64) C.struct_ResultVoidStr {
 	httpOnlyBool := false
 	if httpOnly == 1 {
 		httpOnlyBool = true
@@ -610,8 +610,8 @@ func roc_fx_addCookie(sessionId, name, value, domain, path, sameSite *RocStr, ht
 	return createRocResultStr(RocOk, "")
 }
 
-//export roc_fx_deleteCookie
-func roc_fx_deleteCookie(sessionId, name *RocStr) C.struct_ResultVoidStr {
+//export roc_fx_delete_cookie
+func roc_fx_delete_cookie(sessionId, name *RocStr) C.struct_ResultVoidStr {
 	err := webdriver.DeleteCookie(sessionId.String(), name.String())
 	if err != nil {
 		return createRocResultStr(RocErr, err.Error())
@@ -620,8 +620,8 @@ func roc_fx_deleteCookie(sessionId, name *RocStr) C.struct_ResultVoidStr {
 	return createRocResultStr(RocOk, "")
 }
 
-//export roc_fx_deleteAllCookies
-func roc_fx_deleteAllCookies(sessionId *RocStr) C.struct_ResultVoidStr {
+//export roc_fx_delete_all_cookies
+func roc_fx_delete_all_cookies(sessionId *RocStr) C.struct_ResultVoidStr {
 	err := webdriver.DeleteAllCookies(sessionId.String())
 	if err != nil {
 		return createRocResultStr(RocErr, err.Error())
@@ -630,8 +630,8 @@ func roc_fx_deleteAllCookies(sessionId *RocStr) C.struct_ResultVoidStr {
 	return createRocResultStr(RocOk, "")
 }
 
-//export roc_fx_getCookie
-func roc_fx_getCookie(sessionId, name *RocStr) C.struct_ResultListStr {
+//export roc_fx_get_cookie
+func roc_fx_get_cookie(sessionId, name *RocStr) C.struct_ResultListStr {
 	cookie, err := webdriver.GetCookie(sessionId.String(), name.String())
 	if err != nil {
 		return createRocResult_ListAny_Str[any](RocErr, nil, err.Error())
@@ -642,8 +642,8 @@ func roc_fx_getCookie(sessionId, name *RocStr) C.struct_ResultListStr {
 	return createRocResult_ListAny_Str(RocOk, &rocCookie, "")
 }
 
-//export roc_fx_getAllCookies
-func roc_fx_getAllCookies(sessionId *RocStr) C.struct_ResultListStr {
+//export roc_fx_get_all_cookies
+func roc_fx_get_all_cookies(sessionId *RocStr) C.struct_ResultListStr {
 	cookies, err := webdriver.GetAllCookies(sessionId.String())
 	if err != nil {
 		return createRocResult_ListAny_Str[any](RocErr, nil, err.Error())
@@ -680,8 +680,8 @@ func cookieToRocList(cookie webdriver.Cookie) RocList[RocStr] {
 	)
 }
 
-//export roc_fx_elementClick
-func roc_fx_elementClick(sessionId, elementId *RocStr) C.struct_ResultVoidStr {
+//export roc_fx_element_click
+func roc_fx_element_click(sessionId, elementId *RocStr) C.struct_ResultVoidStr {
 	err := webdriver.ClickElement(sessionId.String(), elementId.String())
 	if err != nil {
 		return createRocResultStr(RocErr, err.Error())
@@ -690,8 +690,8 @@ func roc_fx_elementClick(sessionId, elementId *RocStr) C.struct_ResultVoidStr {
 	return createRocResultStr(RocOk, "")
 }
 
-//export roc_fx_elementSendKeys
-func roc_fx_elementSendKeys(sessionId, elementId, text *RocStr) C.struct_ResultVoidStr {
+//export roc_fx_element_send_keys
+func roc_fx_element_send_keys(sessionId, elementId, text *RocStr) C.struct_ResultVoidStr {
 	err := webdriver.ElementSendKeys(sessionId.String(), elementId.String(), text.String())
 	if err != nil {
 		return createRocResultStr(RocErr, err.Error())
@@ -700,8 +700,8 @@ func roc_fx_elementSendKeys(sessionId, elementId, text *RocStr) C.struct_ResultV
 	return createRocResultStr(RocOk, "")
 }
 
-//export roc_fx_elementClear
-func roc_fx_elementClear(sessionId, elementId *RocStr) C.struct_ResultVoidStr {
+//export roc_fx_element_clear
+func roc_fx_element_clear(sessionId, elementId *RocStr) C.struct_ResultVoidStr {
 	err := webdriver.ClearElement(sessionId.String(), elementId.String())
 	if err != nil {
 		return createRocResultStr(RocErr, err.Error())
@@ -710,8 +710,8 @@ func roc_fx_elementClear(sessionId, elementId *RocStr) C.struct_ResultVoidStr {
 	return createRocResultStr(RocOk, "")
 }
 
-//export roc_fx_elementGetText
-func roc_fx_elementGetText(sessionId, elementId *RocStr) C.struct_ResultVoidStr {
+//export roc_fx_element_get_text
+func roc_fx_element_get_text(sessionId, elementId *RocStr) C.struct_ResultVoidStr {
 	text, err := webdriver.GetElementText(sessionId.String(), elementId.String())
 	if err != nil {
 		return createRocResultStr(RocErr, err.Error())
@@ -720,8 +720,8 @@ func roc_fx_elementGetText(sessionId, elementId *RocStr) C.struct_ResultVoidStr 
 	return createRocResultStr(RocOk, text)
 }
 
-//export roc_fx_elementGetTag
-func roc_fx_elementGetTag(sessionId, elementId *RocStr) C.struct_ResultVoidStr {
+//export roc_fx_element_get_tag
+func roc_fx_element_get_tag(sessionId, elementId *RocStr) C.struct_ResultVoidStr {
 	text, err := webdriver.GetElementTag(sessionId.String(), elementId.String())
 	if err != nil {
 		return createRocResultStr(RocErr, err.Error())
@@ -730,8 +730,8 @@ func roc_fx_elementGetTag(sessionId, elementId *RocStr) C.struct_ResultVoidStr {
 	return createRocResultStr(RocOk, text)
 }
 
-//export roc_fx_elementGetCss
-func roc_fx_elementGetCss(sessionId, elementId, prop *RocStr) C.struct_ResultVoidStr {
+//export roc_fx_element_get_css
+func roc_fx_element_get_css(sessionId, elementId, prop *RocStr) C.struct_ResultVoidStr {
 	text, err := webdriver.GetElementCss(sessionId.String(), elementId.String(), prop.String())
 	if err != nil {
 		return createRocResultStr(RocErr, err.Error())
@@ -740,8 +740,8 @@ func roc_fx_elementGetCss(sessionId, elementId, prop *RocStr) C.struct_ResultVoi
 	return createRocResultStr(RocOk, text)
 }
 
-//export roc_fx_elementGetAttribute
-func roc_fx_elementGetAttribute(sessionId, elementId, attributeName *RocStr) C.struct_ResultVoidStr {
+//export roc_fx_element_get_attribute
+func roc_fx_element_get_attribute(sessionId, elementId, attributeName *RocStr) C.struct_ResultVoidStr {
 	text, err := webdriver.GetElementAttribute(sessionId.String(), elementId.String(), attributeName.String())
 	if err != nil {
 		return createRocResultStr(RocErr, err.Error())
@@ -750,8 +750,8 @@ func roc_fx_elementGetAttribute(sessionId, elementId, attributeName *RocStr) C.s
 	return createRocResultStr(RocOk, text)
 }
 
-//export roc_fx_elementGetProperty
-func roc_fx_elementGetProperty(sessionId, elementId, propertyName *RocStr) C.struct_ResultVoidStr {
+//export roc_fx_element_get_property
+func roc_fx_element_get_property(sessionId, elementId, propertyName *RocStr) C.struct_ResultVoidStr {
 	encodedStr, err := webdriver.GetElementProperty(sessionId.String(), elementId.String(), propertyName.String())
 	if err != nil {
 		return createRocResultStr(RocErr, err.Error())
@@ -760,8 +760,8 @@ func roc_fx_elementGetProperty(sessionId, elementId, propertyName *RocStr) C.str
 	return createRocResultStr(RocOk, encodedStr)
 }
 
-//export roc_fx_elementIsSelected
-func roc_fx_elementIsSelected(sessionId, elementId *RocStr) C.struct_ResultVoidStr {
+//export roc_fx_element_is_selected
+func roc_fx_element_is_selected(sessionId, elementId *RocStr) C.struct_ResultVoidStr {
 	isSelected, err := webdriver.IsElementSelected(sessionId.String(), elementId.String())
 	if err != nil {
 		return createRocResultStr(RocErr, err.Error())
@@ -776,8 +776,8 @@ func roc_fx_elementIsSelected(sessionId, elementId *RocStr) C.struct_ResultVoidS
 	}
 }
 
-//export roc_fx_elementIsDisplayed
-func roc_fx_elementIsDisplayed(sessionId, elementId *RocStr) C.struct_ResultVoidStr {
+//export roc_fx_element_is_displayed
+func roc_fx_element_is_displayed(sessionId, elementId *RocStr) C.struct_ResultVoidStr {
 	isDisplayed, err := webdriver.IsElementDisplayed(sessionId.String(), elementId.String())
 	if err != nil {
 		return createRocResultStr(RocErr, err.Error())
@@ -792,8 +792,8 @@ func roc_fx_elementIsDisplayed(sessionId, elementId *RocStr) C.struct_ResultVoid
 	}
 }
 
-//export roc_fx_getPageSource
-func roc_fx_getPageSource(sessionId *RocStr) C.struct_ResultVoidStr {
+//export roc_fx_get_page_source
+func roc_fx_get_page_source(sessionId *RocStr) C.struct_ResultVoidStr {
 	sourceHtml, err := webdriver.GetPageSource(sessionId.String())
 	if err != nil {
 		return createRocResultStr(RocErr, err.Error())
@@ -802,15 +802,15 @@ func roc_fx_getPageSource(sessionId *RocStr) C.struct_ResultVoidStr {
 	return createRocResultStr(RocOk, sourceHtml)
 }
 
-//export roc_fx_getTimeMilis
-func roc_fx_getTimeMilis() int64 {
+//export roc_fx_get_time_milis
+func roc_fx_get_time_milis() int64 {
 	now := time.Now().UnixMilli()
 
 	return now
 }
 
-//export roc_fx_isDebugMode
-func roc_fx_isDebugMode() int64 {
+//export roc_fx_is_debug_mode
+func roc_fx_is_debug_mode() int64 {
 	isDebugModeInt := 0
 	if options.DebugMode {
 		isDebugModeInt = 1
@@ -819,8 +819,8 @@ func roc_fx_isDebugMode() int64 {
 	return int64(isDebugModeInt)
 }
 
-//export roc_fx_isVerbose
-func roc_fx_isVerbose() int64 {
+//export roc_fx_is_verbose
+func roc_fx_is_verbose() int64 {
 	isVerboseInt := 0
 	if options.Verbose {
 		isVerboseInt = 1
@@ -829,8 +829,8 @@ func roc_fx_isVerbose() int64 {
 	return int64(isVerboseInt)
 }
 
-//export roc_fx_createDirIfNotExist
-func roc_fx_createDirIfNotExist(path *RocStr) C.struct_ResultVoidStr {
+//export roc_fx_create_dir_if_not_exist
+func roc_fx_create_dir_if_not_exist(path *RocStr) C.struct_ResultVoidStr {
 	err := os.MkdirAll(filepath.Dir(path.String()), os.ModePerm)
 	if err != nil {
 		return createRocResultStr(RocErr, err.Error())
@@ -839,8 +839,8 @@ func roc_fx_createDirIfNotExist(path *RocStr) C.struct_ResultVoidStr {
 	return createRocResultStr(RocOk, "")
 }
 
-//export roc_fx_fileWriteUtf8
-func roc_fx_fileWriteUtf8(path, content *RocStr) C.struct_ResultVoidStr {
+//export roc_fx_file_write_utf8
+func roc_fx_file_write_utf8(path, content *RocStr) C.struct_ResultVoidStr {
 	err := os.WriteFile(path.String(), []byte(content.String()), os.ModePerm)
 	if err != nil {
 		return createRocResultStr(RocErr, err.Error())
@@ -849,8 +849,8 @@ func roc_fx_fileWriteUtf8(path, content *RocStr) C.struct_ResultVoidStr {
 	return createRocResultStr(RocOk, "")
 }
 
-//export roc_fx_getEnv
-func roc_fx_getEnv(name *RocStr) C.struct_RocStr {
+//export roc_fx_get_env
+func roc_fx_get_env(name *RocStr) C.struct_RocStr {
 	value := os.Getenv(name.String())
 
 	return createRocStr(value)

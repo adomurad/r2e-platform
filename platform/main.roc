@@ -1,5 +1,5 @@
 platform ""
-    requires {} { testCases : List _, config : Config.R2EConfiguration _ }
+    requires {} { test_cases : List _, config : Config.R2EConfiguration _ }
     exposes [
         Tutorial,
         Test,
@@ -15,21 +15,23 @@ platform ""
     ]
     packages {}
     imports [InternalTest, Config, Utils]
-    provides [mainForHost!]
+    provides [main_for_host!]
 
-mainForHost! : {} => I32
-mainForHost! = \{} ->
-    Utils.setTimeouts! {
-        assertTimeout: config.assertTimeout,
-        pageLoadTimeout: config.pageLoadTimeout,
-        scriptExecutionTimeout: config.scriptExecutionTimeout,
-        elementImplicitTimeout: config.elementImplicitTimeout,
-    }
-    Utils.setWindowSize! config.windowSize
+main_for_host! : {} => I32
+main_for_host! = |{}|
+    Utils.set_timeouts!(
+        {
+            assert_timeout: config.assert_timeout,
+            page_load_timeout: config.page_load_timeout,
+            script_execution_timeout: config.script_execution_timeout,
+            element_implicit_timeout: config.element_implicit_timeout,
+        },
+    )
+    Utils.set_window_size!(config.window_size)
 
-    when testCases |> InternalTest.runTests! config is
-        Ok {} ->
+    when test_cases |> InternalTest.run_tests!(config) is
+        Ok({}) ->
             0
 
-        Err _ ->
+        Err(_) ->
             1

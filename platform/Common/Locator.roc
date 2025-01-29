@@ -1,4 +1,4 @@
-module [Locator, getLocator]
+module [Locator, get_locator]
 
 ## Supported locator strategies
 ##
@@ -20,13 +20,13 @@ Locator : [
     PartialLinkText Str,
 ]
 
-getLocator : Locator -> (Str, Str)
-getLocator = \locator ->
+get_locator : Locator -> (Str, Str)
+get_locator = |locator|
     when locator is
-        Css cssSelector -> ("css selector", cssSelector)
+        Css(css_selector) -> ("css selector", css_selector)
         # TODO - script injection
-        TestId id -> ("css selector", "[data-testid=\"$(id)\"]")
-        LinkText text -> ("link text", text)
-        PartialLinkText text -> ("partial link text", text)
+        TestId(id) -> ("css selector", "[data-testid=\"${id}\"]")
+        LinkText(text) -> ("link text", text)
+        PartialLinkText(text) -> ("partial link text", text)
         # Tag tag -> ("tag name", tag)
-        XPath path -> ("xpath", path)
+        XPath(path) -> ("xpath", path)

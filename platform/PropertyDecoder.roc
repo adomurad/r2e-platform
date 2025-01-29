@@ -9,445 +9,484 @@ module [
 ElementProperty := {}
     implements [
         DecoderFormatting {
-            u8: decodeU8,
-            u16: decodeU16,
-            u32: decodeU32,
-            u64: decodeU64,
-            u128: decodeU128,
-            i8: decodeI8,
-            i16: decodeI16,
-            i32: decodeI32,
-            i64: decodeI64,
-            i128: decodeI128,
-            f32: decodeF32,
-            f64: decodeF64,
-            dec: decodeDec,
-            bool: decodeBool,
-            string: decodeString,
-            list: decodeList,
-            record: decodeRecord,
-            tuple: decodeTuple,
+            u8: decode_u8,
+            u16: decode_u16,
+            u32: decode_u32,
+            u64: decode_u64,
+            u128: decode_u128,
+            i8: decode_i8,
+            i16: decode_i16,
+            i32: decode_i32,
+            i64: decode_i64,
+            i128: decode_i128,
+            f32: decode_f32,
+            f64: decode_f64,
+            dec: decode_dec,
+            bool: decode_bool,
+            string: decode_string,
+            list: decode_list,
+            record: decode_record,
+            tuple: decode_tuple,
         },
     ]
 
-utf8 = @ElementProperty {}
+utf8 = @ElementProperty({})
 
-decodeU8 = Decode.custom \bytes, @ElementProperty {} ->
-    if bytes |> List.isEmpty then
-        { result: Ok 0, rest: [] }
-    else
-        result =
-            bytes
-            |> Str.fromUtf8
-            |> Result.try Str.toU8
-            |> Result.mapErr \_ -> TooShort
+decode_u8 = Decode.custom(
+    |bytes, @ElementProperty({})|
+        if bytes |> List.is_empty then
+            { result: Ok(0), rest: [] }
+        else
+            result =
+                bytes
+                |> Str.from_utf8
+                |> Result.try(Str.to_u8)
+                |> Result.map_err(|_| TooShort)
 
-        { result, rest: [] }
+            { result, rest: [] },
+)
 
 # Test decode of U8
 expect
-    actual = Str.toUtf8 "255" |> Decode.fromBytes utf8
-    actual == Ok 255u8
+    actual = Str.to_utf8("255") |> Decode.from_bytes(utf8)
+    actual == Ok(255u8)
 
 # Test decode of U8 for empty string
 expect
-    actual = Str.toUtf8 "" |> Decode.fromBytes utf8
-    actual == Ok 0u8
+    actual = Str.to_utf8("") |> Decode.from_bytes(utf8)
+    actual == Ok(0u8)
 
-decodeU16 = Decode.custom \bytes, @ElementProperty {} ->
-    if bytes |> List.isEmpty then
-        { result: Ok 0, rest: [] }
-    else
-        result =
-            bytes
-            |> Str.fromUtf8
-            |> Result.try Str.toU16
-            |> Result.mapErr \_ -> TooShort
+decode_u16 = Decode.custom(
+    |bytes, @ElementProperty({})|
+        if bytes |> List.is_empty then
+            { result: Ok(0), rest: [] }
+        else
+            result =
+                bytes
+                |> Str.from_utf8
+                |> Result.try(Str.to_u16)
+                |> Result.map_err(|_| TooShort)
 
-        { result, rest: [] }
+            { result, rest: [] },
+)
 
 # Test decode of U16
 expect
-    actual = Str.toUtf8 "65535" |> Decode.fromBytes utf8
-    actual == Ok 65_535u16
+    actual = Str.to_utf8("65535") |> Decode.from_bytes(utf8)
+    actual == Ok(65_535u16)
 
 # Test decode of U16 for empty string
 expect
-    actual = Str.toUtf8 "" |> Decode.fromBytes utf8
-    actual == Ok 0u16
+    actual = Str.to_utf8("") |> Decode.from_bytes(utf8)
+    actual == Ok(0u16)
 
-decodeU32 = Decode.custom \bytes, @ElementProperty {} ->
+decode_u32 = Decode.custom(
+    |bytes, @ElementProperty({})|
 
-    if bytes |> List.isEmpty then
-        { result: Ok 0, rest: [] }
-    else
-        result =
-            bytes
-            |> Str.fromUtf8
-            |> Result.try Str.toU32
-            |> Result.mapErr \_ -> TooShort
+        if bytes |> List.is_empty then
+            { result: Ok(0), rest: [] }
+        else
+            result =
+                bytes
+                |> Str.from_utf8
+                |> Result.try(Str.to_u32)
+                |> Result.map_err(|_| TooShort)
 
-        { result, rest: [] }
+            { result, rest: [] },
+)
 
 # Test decode of U32
 expect
-    actual = Str.toUtf8 "4000000000" |> Decode.fromBytes utf8
-    actual == Ok 4_000_000_000u32
+    actual = Str.to_utf8("4000000000") |> Decode.from_bytes(utf8)
+    actual == Ok(4_000_000_000u32)
 
-decodeU64 = Decode.custom \bytes, @ElementProperty {} ->
+decode_u64 = Decode.custom(
+    |bytes, @ElementProperty({})|
 
-    if bytes |> List.isEmpty then
-        { result: Ok 0, rest: [] }
-    else
-        result =
-            bytes
-            |> Str.fromUtf8
-            |> Result.try Str.toU64
-            |> Result.mapErr \_ -> TooShort
+        if bytes |> List.is_empty then
+            { result: Ok(0), rest: [] }
+        else
+            result =
+                bytes
+                |> Str.from_utf8
+                |> Result.try(Str.to_u64)
+                |> Result.map_err(|_| TooShort)
 
-        { result, rest: [] }
+            { result, rest: [] },
+)
 
 # Test decode of U64
 expect
-    actual = Str.toUtf8 "18446744073709551614" |> Decode.fromBytes utf8
-    actual == Ok 18_446_744_073_709_551_614u64
+    actual = Str.to_utf8("18446744073709551614") |> Decode.from_bytes(utf8)
+    actual == Ok(18_446_744_073_709_551_614u64)
 
-decodeU128 = Decode.custom \bytes, @ElementProperty {} ->
+decode_u128 = Decode.custom(
+    |bytes, @ElementProperty({})|
 
-    if bytes |> List.isEmpty then
-        { result: Ok 0, rest: [] }
-    else
-        result =
-            bytes
-            |> Str.fromUtf8
-            |> Result.try Str.toU128
-            |> Result.mapErr \_ -> TooShort
+        if bytes |> List.is_empty then
+            { result: Ok(0), rest: [] }
+        else
+            result =
+                bytes
+                |> Str.from_utf8
+                |> Result.try(Str.to_u128)
+                |> Result.map_err(|_| TooShort)
 
-        { result, rest: [] }
+            { result, rest: [] },
+)
 
 # Test decode of U128
 expect
-    actual = Str.toUtf8 "1234567" |> Decode.fromBytesPartial utf8
-    actual.result == Ok 1234567u128
+    actual = Str.to_utf8("1234567") |> Decode.from_bytes_partial(utf8)
+    actual.result == Ok(1234567u128)
 
-decodeI8 = Decode.custom \bytes, @ElementProperty {} ->
+decode_i8 = Decode.custom(
+    |bytes, @ElementProperty({})|
 
-    if bytes |> List.isEmpty then
-        { result: Ok 0, rest: [] }
-    else
-        result =
-            bytes
-            |> Str.fromUtf8
-            |> Result.try Str.toI8
-            |> Result.mapErr \_ -> TooShort
+        if bytes |> List.is_empty then
+            { result: Ok(0), rest: [] }
+        else
+            result =
+                bytes
+                |> Str.from_utf8
+                |> Result.try(Str.to_i8)
+                |> Result.map_err(|_| TooShort)
 
-        { result, rest: [] }
+            { result, rest: [] },
+)
 
 # Test decode of I8
 expect
-    actual = Str.toUtf8 "-125" |> Decode.fromBytesPartial utf8
-    actual.result == Ok -125i8
+    actual = Str.to_utf8("-125") |> Decode.from_bytes_partial(utf8)
+    actual.result == Ok(-125i8)
 
-decodeI16 = Decode.custom \bytes, @ElementProperty {} ->
+decode_i16 = Decode.custom(
+    |bytes, @ElementProperty({})|
 
-    if bytes |> List.isEmpty then
-        { result: Ok 0, rest: [] }
-    else
-        result =
-            bytes
-            |> Str.fromUtf8
-            |> Result.try Str.toI16
-            |> Result.mapErr \_ -> TooShort
+        if bytes |> List.is_empty then
+            { result: Ok(0), rest: [] }
+        else
+            result =
+                bytes
+                |> Str.from_utf8
+                |> Result.try(Str.to_i16)
+                |> Result.map_err(|_| TooShort)
 
-        { result, rest: [] }
+            { result, rest: [] },
+)
 
 # Test decode of I16
 expect
-    actual = Str.toUtf8 "-32768" |> Decode.fromBytesPartial utf8
-    actual.result == Ok -32_768i16
+    actual = Str.to_utf8("-32768") |> Decode.from_bytes_partial(utf8)
+    actual.result == Ok(-32_768i16)
 
-decodeI32 = Decode.custom \bytes, @ElementProperty {} ->
+decode_i32 = Decode.custom(
+    |bytes, @ElementProperty({})|
 
-    if bytes |> List.isEmpty then
-        { result: Ok 0, rest: [] }
-    else
-        result =
-            bytes
-            |> Str.fromUtf8
-            |> Result.try Str.toI32
-            |> Result.mapErr \_ -> TooShort
+        if bytes |> List.is_empty then
+            { result: Ok(0), rest: [] }
+        else
+            result =
+                bytes
+                |> Str.from_utf8
+                |> Result.try(Str.to_i32)
+                |> Result.map_err(|_| TooShort)
 
-        { result, rest: [] }
+            { result, rest: [] },
+)
 
 # Test decode of I32
 expect
-    actual = Str.toUtf8 "-2147483648" |> Decode.fromBytesPartial utf8
-    actual.result == Ok -2_147_483_648i32
+    actual = Str.to_utf8("-2147483648") |> Decode.from_bytes_partial(utf8)
+    actual.result == Ok(-2_147_483_648i32)
 
-decodeI64 = Decode.custom \bytes, @ElementProperty {} ->
+decode_i64 = Decode.custom(
+    |bytes, @ElementProperty({})|
 
-    if bytes |> List.isEmpty then
-        { result: Ok 0, rest: [] }
-    else
-        result =
-            bytes
-            |> Str.fromUtf8
-            |> Result.try Str.toI64
-            |> Result.mapErr \_ -> TooShort
+        if bytes |> List.is_empty then
+            { result: Ok(0), rest: [] }
+        else
+            result =
+                bytes
+                |> Str.from_utf8
+                |> Result.try(Str.to_i64)
+                |> Result.map_err(|_| TooShort)
 
-        { result, rest: [] }
+            { result, rest: [] },
+)
 
 # Test decode of I64
 expect
-    actual = Str.toUtf8 "-9223372036854775808" |> Decode.fromBytesPartial utf8
-    actual.result == Ok -9_223_372_036_854_775_808i64
+    actual = Str.to_utf8("-9223372036854775808") |> Decode.from_bytes_partial(utf8)
+    actual.result == Ok(-9_223_372_036_854_775_808i64)
 
-decodeI128 = Decode.custom \bytes, @ElementProperty {} ->
+decode_i128 = Decode.custom(
+    |bytes, @ElementProperty({})|
 
-    if bytes |> List.isEmpty then
-        { result: Ok 0, rest: [] }
-    else
-        result =
-            bytes
-            |> Str.fromUtf8
-            |> Result.try Str.toI128
-            |> Result.mapErr \_ -> TooShort
+        if bytes |> List.is_empty then
+            { result: Ok(0), rest: [] }
+        else
+            result =
+                bytes
+                |> Str.from_utf8
+                |> Result.try(Str.to_i128)
+                |> Result.map_err(|_| TooShort)
 
-        { result, rest: [] }
+            { result, rest: [] },
+)
 
-decodeF32 = Decode.custom \bytes, @ElementProperty {} ->
+decode_f32 = Decode.custom(
+    |bytes, @ElementProperty({})|
 
-    if bytes |> List.isEmpty then
-        { result: Ok 0, rest: [] }
-    else
-        result =
-            bytes
-            |> Str.fromUtf8
-            |> Result.try Str.toF32
-            |> Result.mapErr \_ -> TooShort
+        if bytes |> List.is_empty then
+            { result: Ok(0), rest: [] }
+        else
+            result =
+                bytes
+                |> Str.from_utf8
+                |> Result.try(Str.to_f32)
+                |> Result.map_err(|_| TooShort)
 
-        { result, rest: [] }
+            { result, rest: [] },
+)
 
 # Test decode of F32
 expect
     actual : DecodeResult F32
-    actual = Str.toUtf8 "12.34e-5" |> Decode.fromBytesPartial utf8
-    numStr = actual.result |> Result.map Num.toStr
+    actual = Str.to_utf8("12.34e-5") |> Decode.from_bytes_partial(utf8)
+    num_str = actual.result |> Result.map_ok(Num.to_str)
 
-    Result.withDefault numStr "" == "0.00012339999375399202"
+    Result.with_default(num_str, "") == "0.00012339999375399202"
 
-decodeF64 = Decode.custom \bytes, @ElementProperty {} ->
+decode_f64 = Decode.custom(
+    |bytes, @ElementProperty({})|
 
-    if bytes |> List.isEmpty then
-        { result: Ok 0, rest: [] }
-    else
-        result =
-            bytes
-            |> Str.fromUtf8
-            |> Result.try Str.toF64
-            |> Result.mapErr \_ -> TooShort
+        if bytes |> List.is_empty then
+            { result: Ok(0), rest: [] }
+        else
+            result =
+                bytes
+                |> Str.from_utf8
+                |> Result.try(Str.to_f64)
+                |> Result.map_err(|_| TooShort)
 
-        { result, rest: [] }
+            { result, rest: [] },
+)
 
 # Test decode of F64
 expect
     actual : DecodeResult F64
-    actual = Str.toUtf8 "12.34e-5" |> Decode.fromBytesPartial utf8
-    numStr = actual.result |> Result.map Num.toStr
+    actual = Str.to_utf8("12.34e-5") |> Decode.from_bytes_partial(utf8)
+    num_str = actual.result |> Result.map_ok(Num.to_str)
 
-    Result.withDefault numStr "" == "0.0001234"
+    Result.with_default(num_str, "") == "0.0001234"
 
-decodeDec = Decode.custom \bytes, @ElementProperty {} ->
+decode_dec = Decode.custom(
+    |bytes, @ElementProperty({})|
 
-    if bytes |> List.isEmpty then
-        { result: Ok 0, rest: [] }
-    else
-        result =
-            bytes
-            |> Str.fromUtf8
-            |> Result.try Str.toDec
-            |> Result.mapErr \_ -> TooShort
+        if bytes |> List.is_empty then
+            { result: Ok(0), rest: [] }
+        else
+            result =
+                bytes
+                |> Str.from_utf8
+                |> Result.try(Str.to_dec)
+                |> Result.map_err(|_| TooShort)
 
-        { result, rest: [] }
+            { result, rest: [] },
+)
 
 # Test decode of Dec
 expect
     actual : DecodeResult Dec
-    actual = Str.toUtf8 "12.0034" |> Decode.fromBytesPartial utf8
+    actual = Str.to_utf8("12.0034") |> Decode.from_bytes_partial(utf8)
 
-    actual.result == Ok 12.0034dec
+    actual.result == Ok(12.0034dec)
 
-decodeBool = Decode.custom \bytes, @ElementProperty {} ->
-    when bytes is
-        [] -> { result: Ok Bool.false, rest: [] }
-        ['f', 'a', 'l', 's', 'e'] -> { result: Ok Bool.false, rest: [] }
-        ['t', 'r', 'u', 'e'] -> { result: Ok Bool.true, rest: [] }
-        _ -> { result: Err TooShort, rest: bytes }
+decode_bool = Decode.custom(
+    |bytes, @ElementProperty({})|
+        when bytes is
+            [] -> { result: Ok(Bool.false), rest: [] }
+            ['f', 'a', 'l', 's', 'e'] -> { result: Ok(Bool.false), rest: [] }
+            ['t', 'r', 'u', 'e'] -> { result: Ok(Bool.true), rest: [] }
+            _ -> { result: Err(TooShort), rest: bytes },
+)
 
 # Test decode of Bool
 expect
-    actual = "true" |> Str.toUtf8 |> Decode.fromBytesPartial utf8
-    expected = Ok Bool.true
+    actual = "true" |> Str.to_utf8 |> Decode.from_bytes_partial(utf8)
+    expected = Ok(Bool.true)
     actual.result == expected
 
 # Test decode of Bool
 expect
-    actual = "false" |> Str.toUtf8 |> Decode.fromBytesPartial utf8
-    expected = Ok Bool.false
+    actual = "false" |> Str.to_utf8 |> Decode.from_bytes_partial(utf8)
+    expected = Ok(Bool.false)
     actual.result == expected
 
 # Test decode of Bool when empty string
 expect
-    actual = "" |> Str.toUtf8 |> Decode.fromBytesPartial utf8
-    expected = Ok Bool.false
+    actual = "" |> Str.to_utf8 |> Decode.from_bytes_partial(utf8)
+    expected = Ok(Bool.false)
     actual.result == expected
 
-decodeTuple : state, (state, U64 -> [Next (Decoder state ElementProperty), TooLong]), (state -> [Err DecodeError, Ok val]) -> Decoder val ElementProperty
-decodeTuple = \_initialState, _stepElem, _finalizer -> Decode.custom \initialBytes, _jsonFmt ->
-        { result: Err TooShort, rest: initialBytes }
+decode_tuple : state, (state, U64 -> [Next (Decoder state ElementProperty), TooLong]), (state -> [Err DecodeError, Ok val]) -> Decoder val ElementProperty
+decode_tuple = |_initialState, _stepElem, _finalizer|
+    Decode.custom(
+        |initial_bytes, _jsonFmt|
+            { result: Err(TooShort), rest: initial_bytes },
+    )
 
 expect
-    actual = "0.0" |> Str.toUtf8 |> Decode.fromBytes utf8
-    expected = Ok 0.0dec
+    actual = "0.0" |> Str.to_utf8 |> Decode.from_bytes(utf8)
+    expected = Ok(0.0dec)
     actual == expected
 
 expect
-    actual = "0" |> Str.toUtf8 |> Decode.fromBytes utf8
-    expected = Ok 0u8
+    actual = "0" |> Str.to_utf8 |> Decode.from_bytes(utf8)
+    expected = Ok(0u8)
     actual == expected
 
 expect
     actual : DecodeResult U64
-    actual = "-.1" |> Str.toUtf8 |> Decode.fromBytesPartial utf8
-    actual.result == Err TooShort
+    actual = "-.1" |> Str.to_utf8 |> Decode.from_bytes_partial(utf8)
+    actual.result == Err(TooShort)
 
 expect
     actual : DecodeResult Dec
-    actual = "72" |> Str.toUtf8 |> Decode.fromBytesPartial utf8
-    expected = Ok 72dec
+    actual = "72" |> Str.to_utf8 |> Decode.from_bytes_partial(utf8)
+    expected = Ok(72dec)
     actual.result == expected
 
 expect
     actual : DecodeResult Dec
-    actual = "-0" |> Str.toUtf8 |> Decode.fromBytesPartial utf8
-    expected = Ok 0dec
+    actual = "-0" |> Str.to_utf8 |> Decode.from_bytes_partial(utf8)
+    expected = Ok(0dec)
     actual.result == expected
 
 expect
     actual : DecodeResult Dec
-    actual = "-7" |> Str.toUtf8 |> Decode.fromBytesPartial utf8
-    expected = Ok -7dec
+    actual = "-7" |> Str.to_utf8 |> Decode.from_bytes_partial(utf8)
+    expected = Ok(-7dec)
     actual.result == expected
 
 expect
     actual : DecodeResult Dec
-    actual = "-0" |> Str.toUtf8 |> Decode.fromBytesPartial utf8
-    expected = { result: Ok 0dec, rest: [] }
+    actual = "-0" |> Str.to_utf8 |> Decode.from_bytes_partial(utf8)
+    expected = { result: Ok(0dec), rest: [] }
     actual == expected
 
 expect
     actual : DecodeResult Dec
-    actual = "123456789000" |> Str.toUtf8 |> Decode.fromBytesPartial utf8
-    expected = { result: Ok 123456789000dec, rest: [] }
+    actual = "123456789000" |> Str.to_utf8 |> Decode.from_bytes_partial(utf8)
+    expected = { result: Ok(123456789000dec), rest: [] }
     actual == expected
 
 expect
     actual : DecodeResult Dec
-    actual = "-12.03" |> Str.toUtf8 |> Decode.fromBytesPartial utf8
-    expected = Ok -12.03
+    actual = "-12.03" |> Str.to_utf8 |> Decode.from_bytes_partial(utf8)
+    expected = Ok(-12.03)
     actual.result == expected
 
 expect
     actual : DecodeResult U64
-    actual = "-12." |> Str.toUtf8 |> Decode.fromBytesPartial utf8
-    expected = Err TooShort
+    actual = "-12." |> Str.to_utf8 |> Decode.from_bytes_partial(utf8)
+    expected = Err(TooShort)
     actual.result == expected
 
 expect
     actual : DecodeResult U64
-    actual = "01.1" |> Str.toUtf8 |> Decode.fromBytesPartial utf8
-    expected = Err TooShort
+    actual = "01.1" |> Str.to_utf8 |> Decode.from_bytes_partial(utf8)
+    expected = Err(TooShort)
     actual.result == expected
 
 expect
     actual : DecodeResult U64
-    actual = ".0" |> Str.toUtf8 |> Decode.fromBytesPartial utf8
-    expected = Err TooShort
+    actual = ".0" |> Str.to_utf8 |> Decode.from_bytes_partial(utf8)
+    expected = Err(TooShort)
     actual.result == expected
 
 expect
     actual : DecodeResult U64
-    actual = "1.e1" |> Str.toUtf8 |> Decode.fromBytesPartial utf8
-    expected = Err TooShort
+    actual = "1.e1" |> Str.to_utf8 |> Decode.from_bytes_partial(utf8)
+    expected = Err(TooShort)
     actual.result == expected
 
 expect
     actual : DecodeResult U64
-    actual = "-1.2E" |> Str.toUtf8 |> Decode.fromBytesPartial utf8
-    expected = Err TooShort
+    actual = "-1.2E" |> Str.to_utf8 |> Decode.from_bytes_partial(utf8)
+    expected = Err(TooShort)
     actual.result == expected
 
 expect
     actual : DecodeResult U64
-    actual = "0.1e+" |> Str.toUtf8 |> Decode.fromBytesPartial utf8
-    expected = Err TooShort
+    actual = "0.1e+" |> Str.to_utf8 |> Decode.from_bytes_partial(utf8)
+    expected = Err(TooShort)
     actual.result == expected
 
 expect
     actual : DecodeResult U64
-    actual = "-03" |> Str.toUtf8 |> Decode.fromBytesPartial utf8
-    expected = Err TooShort
+    actual = "-03" |> Str.to_utf8 |> Decode.from_bytes_partial(utf8)
+    expected = Err(TooShort)
     actual.result == expected
 
-decodeString = Decode.custom \bytes, @ElementProperty {} ->
+decode_string = Decode.custom(
+    |bytes, @ElementProperty({})|
 
-    # { taken: strBytes, rest } = takeJsonString bytes
-    strBytes = bytes
+        # { taken: strBytes, rest } = takeJsonString bytes
+        str_bytes = bytes
 
-    # if List.isEmpty strBytes then
-    #     { result: Err TooShort, rest: bytes }
-    # else
-    result = strBytes |> Str.fromUtf8
+        # if List.isEmpty strBytes then
+        #     { result: Err TooShort, rest: bytes }
+        # else
+        result = str_bytes |> Str.from_utf8
 
-    when result is
-        Ok str ->
-            { result: Ok str, rest: [] }
+        when result is
+            Ok(str) ->
+                { result: Ok(str), rest: [] }
 
-        Err _ ->
-            { result: Err TooShort, rest: bytes }
+            Err(_) ->
+                { result: Err(TooShort), rest: bytes },
+)
 
 # Test decode simple string
 expect
-    input = "hello" |> Str.toUtf8
-    actual = Decode.fromBytesPartial input utf8
-    expected = Ok "hello"
+    input = "hello" |> Str.to_utf8
+    actual = Decode.from_bytes_partial(input, utf8)
+    expected = Ok("hello")
 
     actual.result == expected
 
 # Test decode simple empty string
 expect
-    input = "" |> Str.toUtf8
-    actual = Decode.fromBytesPartial input utf8
-    expected = Ok ""
+    input = "" |> Str.to_utf8
+    actual = Decode.from_bytes_partial(input, utf8)
+    expected = Ok("")
 
     actual.result == expected
 
 # Test decode simple string with quotes
 expect
-    input = "\"hello\", " |> Str.toUtf8
-    actual = Decode.fromBytesPartial input utf8
-    expected = Ok "\"hello\", "
+    input = "\"hello\", " |> Str.to_utf8
+    actual = Decode.from_bytes_partial(input, utf8)
+    expected = Ok("\"hello\", ")
 
     actual.result == expected
 
 # JSON ARRAYS ------------------------------------------------------------------
 
-decodeList : Decoder elem ElementProperty -> Decoder (List elem) ElementProperty
-decodeList = \_elemDecoder -> Decode.custom \bytes, _jsonFmt ->
-        { result: Err TooShort, rest: bytes }
+decode_list : Decoder elem ElementProperty -> Decoder (List elem) ElementProperty
+decode_list = |_elemDecoder|
+    Decode.custom(
+        |bytes, _jsonFmt|
+            { result: Err(TooShort), rest: bytes },
+    )
 
 # JSON OBJECTS -----------------------------------------------------------------
-decodeRecord : state, (state, Str -> [Keep (Decoder state ElementProperty), Skip]), (state, ElementProperty -> [Err DecodeError, Ok val]) -> Decoder val ElementProperty
-decodeRecord = \_initialState, _stepField, _finalizer -> Decode.custom \bytes, @ElementProperty {} ->
+decode_record : state, (state, Str -> [Keep (Decoder state ElementProperty), Skip]), (state, ElementProperty -> [Err DecodeError, Ok val]) -> Decoder val ElementProperty
+decode_record = |_initialState, _stepField, _finalizer|
+    Decode.custom(
+        |bytes, @ElementProperty({})|
 
-        { result: Err TooShort, rest: bytes }
+            { result: Err(TooShort), rest: bytes },
+    )

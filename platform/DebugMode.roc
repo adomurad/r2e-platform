@@ -1,51 +1,51 @@
-module [runIfDebugMode!, flashElements!, flashCurrentFrame!, wait!, showDebugMessageInBrowser!, runIfVerbose!]
+module [run_if_debug_mode!, flash_elements!, flash_current_frame!, wait!, show_debug_message_in_browser!, run_if_verbose!]
 
 import Effect
 import Common.ExecuteJs as ExecuteJs
 import Common.Locator exposing [Locator]
 import Internal
 
-isDebugMode! : {} => Bool
-isDebugMode! = \{} ->
-    when Effect.isDebugMode! {} is
+is_debug_mode! : {} => Bool
+is_debug_mode! = |{}|
+    when Effect.is_debug_mode!({}) is
         1 -> Bool.true
         _ -> Bool.false
 
-isVerbose! : {} => Bool
-isVerbose! = \{} ->
-    when Effect.isVerbose! {} is
+is_verbose! : {} => Bool
+is_verbose! = |{}|
+    when Effect.is_verbose!({}) is
         1 -> Bool.true
         _ -> Bool.false
 
-debugModeWaitTime = 1500
+debug_mode_wait_time = 1500
 
-wait! = \{} -> Effect.wait! debugModeWaitTime
+wait! = |{}| Effect.wait!(debug_mode_wait_time)
 
-runIfVerbose! : ({} => _) => {}
-runIfVerbose! = \task! ->
-    hasVerboseFlag = isVerbose! {}
-    hasDebugFlag = isDebugMode! {}
+run_if_verbose! : ({} => _) => {}
+run_if_verbose! = |task!|
+    has_verbose_flag = is_verbose!({})
+    has_debug_flag = is_debug_mode!({})
 
-    if hasVerboseFlag || hasDebugFlag then
-        _ = task! {}
+    if has_verbose_flag or has_debug_flag then
+        _ = task!({})
         {}
     else
         {}
 
-runIfDebugMode! : ({} => _) => {}
-runIfDebugMode! = \task! ->
-    isDebug = isDebugMode! {}
+run_if_debug_mode! : ({} => _) => {}
+run_if_debug_mode! = |task!|
+    is_debug = is_debug_mode!({})
 
-    if isDebug then
-        _ = task! {}
+    if is_debug then
+        _ = task!({})
         {}
     else
         {}
 
-flashElements! : Str, Locator, [All, Single] => Result {} [JsReturnTypeError Str, WebDriverError Str]
-flashElements! = \sessionId, locator, quantity ->
+flash_elements! : Str, Locator, [All, Single] => Result {} [JsReturnTypeError Str, WebDriverError Str]
+flash_elements! = |session_id, locator, quantity|
     # TODO better tests
-    blinkScript =
+    blink_script =
         """
         if (!document.getElementById('r2e-blink')) {
           const style = document.createElement('style');
@@ -73,22 +73,22 @@ flashElements! = \sessionId, locator, quantity ->
         }
         """
 
-    elementScript = locatorToScriptExecution locator quantity
-    executeElementScript = ";(()=>{$(elementScript)})();"
+    element_script = locator_to_script_execution(locator, quantity)
+    execute_element_script = ";(()=>{${element_script}})();"
 
-    js = Str.concat blinkScript executeElementScript
+    js = Str.concat(blink_script, execute_element_script)
 
-    browser = Internal.packBrowserData { sessionId }
+    browser = Internal.pack_browser_data({ session_id })
 
     _res : Str
-    _res = browser |> ExecuteJs.executeJs! js |> try
+    _res = browser |> ExecuteJs.execute_js!(js) |> try
 
-    Ok {}
+    Ok({})
 
-flashCurrentFrame! : Str => Result {} [JsReturnTypeError Str, WebDriverError Str]
-flashCurrentFrame! = \sessionId ->
+flash_current_frame! : Str => Result {} [JsReturnTypeError Str, WebDriverError Str]
+flash_current_frame! = |session_id|
     # TODO better tests
-    blinkScript =
+    blink_script =
         """
         if (!document.getElementById('r2e-blink-frame')) {
           const style = document.createElement('style');
@@ -123,75 +123,75 @@ flashCurrentFrame! = \sessionId ->
         r2eFlashFrame();
         """
 
-    browser = Internal.packBrowserData { sessionId }
+    browser = Internal.pack_browser_data({ session_id })
 
     _res : Str
-    _res = browser |> ExecuteJs.executeJs! blinkScript |> try
+    _res = browser |> ExecuteJs.execute_js!(blink_script) |> try
 
-    Ok {}
+    Ok({})
 
-locatorToScriptExecution : Locator, [Single, All] -> Str
-locatorToScriptExecution = \locator, quantity ->
+locator_to_script_execution : Locator, [Single, All] -> Str
+locator_to_script_execution = |locator, quantity|
     when quantity is
         Single ->
             when locator is
-                Css str ->
+                Css(str) ->
                     """
-                    let el = document.querySelector("$(str)");
+                    let el = document.querySelector("${str}");
                     window.r2eFlash(el);
                     """
 
-                TestId str ->
+                TestId(str) ->
                     """
-                    let el = document.querySelector('[data-testid="$(str)"]');
+                    let el = document.querySelector('[data-testid="${str}"]');
                     window.r2eFlash(el);
                     """
 
-                XPath str ->
+                XPath(str) ->
                     """
-                    let xpath = "$(str)";
+                    let xpath = "${str}";
                     let result = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
                     let el = result.singleNodeValue;
                     window.r2eFlash(el);
                     """
 
-                LinkText str ->
+                LinkText(str) ->
                     """
                     let links = document.querySelectorAll('a');
-                    let elements = Array.from(links).filter(link => link.textContent.trim() === "$(str)");
+                    let elements = Array.from(links).filter(link => link.textContent.trim() === "${str}");
                     let el = elements[0]
                     window.r2eFlash(el);
                     """
 
-                PartialLinkText str ->
+                PartialLinkText(str) ->
                     """
                     let links = document.querySelectorAll('a');
-                    let elements = Array.from(links).filter(link => link.textContent.includes("$(str)"));
+                    let elements = Array.from(links).filter(link => link.textContent.includes("${str}"));
                     let el = elements[0]
                     window.r2eFlash(el);
                     """
 
         All ->
             when locator is
-                Css str ->
+                Css(str) ->
                     """
-                    let elements = document.querySelectorAll("$(str)");
+                    let elements = document.querySelectorAll("${str}");
                     for (let el of elements) {
                         window.r2eFlash(el);
                     }
                     """
 
-                TestId str ->
+                TestId(str) ->
                     """
-                    let elements = document.querySelectorAll('[data-testid="$(str)"]');
+                    let elements = document.querySelectorAll('[data-testid="${str}"]');
                     for (let el of elements) {
                         window.r2eFlash(el);
                     }
                     """
 
-                XPath str ->
+                XPath(str) ->
                     """
-                    let xpath = "$(str)";
+                    let xpath = "${str}";
                     let result = document.evaluate(xpath, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 
                     for (let i = 0; i < result.snapshotLength; i++) {
@@ -200,27 +200,27 @@ locatorToScriptExecution = \locator, quantity ->
                     }
                     """
 
-                LinkText str ->
+                LinkText(str) ->
                     """
                     let links = document.querySelectorAll('a');
-                    let elements = Array.from(links).filter(link => link.textContent.trim() === "$(str)");
+                    let elements = Array.from(links).filter(link => link.textContent.trim() === "${str}");
                     for (let el of elements) {
                         window.r2eFlash(el);
                     }
                     """
 
-                PartialLinkText str ->
+                PartialLinkText(str) ->
                     """
                     let links = document.querySelectorAll('a');
-                    let elements = Array.from(links).filter(link => link.textContent.includes("$(str)"));
+                    let elements = Array.from(links).filter(link => link.textContent.includes("${str}"));
                     for (let el of elements) {
                         window.r2eFlash(el);
                     }
                     """
 
-showDebugMessageInBrowser! : Str, Str => Result {} [WebDriverError Str, JsReturnTypeError Str]
-showDebugMessageInBrowser! = \sessionId, message ->
-    browser = Internal.packBrowserData { sessionId }
+show_debug_message_in_browser! : Str, Str => Result {} [WebDriverError Str, JsReturnTypeError Str]
+show_debug_message_in_browser! = |session_id, message|
+    browser = Internal.pack_browser_data({ session_id })
 
     js =
         """
@@ -267,9 +267,9 @@ showDebugMessageInBrowser! = \sessionId, message ->
         let message = arguments[0];
         showInfoBox(message);  
         """
-    args = [String message]
+    args = [String(message)]
 
     _res : Str
-    _res = browser |> ExecuteJs.executeJsWithArgs! js args |> try
+    _res = browser |> ExecuteJs.execute_js_with_args!(js, args) |> try
 
-    Ok {}
+    Ok({})

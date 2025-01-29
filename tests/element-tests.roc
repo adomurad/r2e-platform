@@ -1,4 +1,4 @@
-app [testCases, config] { r2e: platform "../platform/main.roc" }
+app [test_cases, config] { r2e: platform "../platform/main.roc" }
 
 import r2e.Test exposing [test]
 import r2e.Config
@@ -6,9 +6,9 @@ import r2e.Browser
 import r2e.Element
 import r2e.Assert
 
-config = Config.defaultConfig
+config = Config.default_config
 
-testCases = [
+test_cases = [
     test1,
     test2,
     test3,
@@ -57,154 +57,208 @@ testCases = [
     # test45_2,
 ]
 
-test1 = test "findElement and getText" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/" |> try
-    h1 = browser |> Browser.findElement! (Css "h1") |> try
+test1 = test(
+    "findElement and getText",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/") |> try
+        h1 = browser |> Browser.find_element!(Css("h1")) |> try
 
-    text = h1 |> Element.getText! |> try
+        text = h1 |> Element.get_text! |> try
 
-    text |> Assert.shouldBe "Example"
+        text |> Assert.should_be("Example"),
+)
 
-test2 = test "clickElement and check if selected" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/" |> try
-    checkbox = browser |> Browser.findElement! (TestId "remote-testing-checkbox") |> try
+test2 = test(
+    "clickElement and check if selected",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/") |> try
+        checkbox = browser |> Browser.find_element!(TestId("remote-testing-checkbox")) |> try
 
-    isSelected = checkbox |> Element.isSelected! |> try
-    isSelected |> Assert.shouldBe NotSelected |> try
+        is_selected = checkbox |> Element.is_selected! |> try
+        is_selected |> Assert.should_be(NotSelected) |> try
 
-    checkbox |> Element.click! |> try
+        checkbox |> Element.click! |> try
 
-    isSelected2 = checkbox |> Element.isSelected! |> try
-    isSelected2 |> Assert.shouldBe Selected
+        is_selected2 = checkbox |> Element.is_selected! |> try
+        is_selected2 |> Assert.should_be(Selected),
+)
 
-test3 = test "getAttribute empty" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/" |> try
-    checkbox = browser |> Browser.findElement! (TestId "remote-testing-checkbox") |> try
+test3 = test(
+    "getAttribute empty",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/") |> try
+        checkbox = browser |> Browser.find_element!(TestId("remote-testing-checkbox")) |> try
 
-    emptyValue = checkbox |> Element.getAttribute! "fake-attr" |> try
-    emptyValue |> Assert.shouldBe ""
+        empty_value = checkbox |> Element.get_attribute!("fake-attr") |> try
+        empty_value |> Assert.should_be(""),
+)
 
-test4 = test "getAttribute Str" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/" |> try
-    checkbox = browser |> Browser.findElement! (TestId "remote-testing-checkbox") |> try
+test4 = test(
+    "getAttribute Str",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/") |> try
+        checkbox = browser |> Browser.find_element!(TestId("remote-testing-checkbox")) |> try
 
-    checkboxType = checkbox |> Element.getAttribute! "type" |> try
-    checkboxType |> Assert.shouldBe "checkbox"
+        checkbox_type = checkbox |> Element.get_attribute!("type") |> try
+        checkbox_type |> Assert.should_be("checkbox"),
+)
 
-test5 = test "getAttributeOrEmpty empty" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/" |> try
-    checkbox = browser |> Browser.findElement! (TestId "remote-testing-checkbox") |> try
+test5 = test(
+    "getAttributeOrEmpty empty",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/") |> try
+        checkbox = browser |> Browser.find_element!(TestId("remote-testing-checkbox")) |> try
 
-    emptyValue = checkbox |> Element.getAttributeOrEmpty! "fake-attr" |> try
-    when emptyValue is
-        Ok _ -> Assert.failWith "should not have a value"
-        Err Empty -> Ok {}
+        empty_value = checkbox |> Element.get_attribute_or_empty!("fake-attr") |> try
+        when empty_value is
+            Ok(_) -> Assert.fail_with("should not have a value")
+            Err(Empty) -> Ok({}),
+)
 
-test6 = test "getAttributeOrEmpty Str" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/" |> try
-    checkbox = browser |> Browser.findElement! (TestId "remote-testing-checkbox") |> try
+test6 = test(
+    "getAttributeOrEmpty Str",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/") |> try
+        checkbox = browser |> Browser.find_element!(TestId("remote-testing-checkbox")) |> try
 
-    checkboxType = checkbox |> Element.getAttributeOrEmpty! "type" |> try
-    when checkboxType is
-        Ok type -> type |> Assert.shouldBe "checkbox"
-        Err Empty -> Assert.failWith "should not be empty"
+        checkbox_type = checkbox |> Element.get_attribute_or_empty!("type") |> try
+        when checkbox_type is
+            Ok(type) -> type |> Assert.should_be("checkbox")
+            Err(Empty) -> Assert.fail_with("should not be empty"),
+)
 
-test7 = test "getProperty empty to Str" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/" |> try
-    checkbox = browser |> Browser.findElement! (TestId "remote-testing-checkbox") |> try
+test7 = test(
+    "getProperty empty to Str",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/") |> try
+        checkbox = browser |> Browser.find_element!(TestId("remote-testing-checkbox")) |> try
 
-    emptyValue = checkbox |> Element.getProperty! "fake-prop" |> try
-    emptyValue |> Assert.shouldBe ""
+        empty_value = checkbox |> Element.get_property!("fake-prop") |> try
+        empty_value |> Assert.should_be(""),
+)
 
-test8 = test "getProperty empty to Bool" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/" |> try
-    checkbox = browser |> Browser.findElement! (TestId "remote-testing-checkbox") |> try
+test8 = test(
+    "getProperty empty to Bool",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/") |> try
+        checkbox = browser |> Browser.find_element!(TestId("remote-testing-checkbox")) |> try
 
-    emptyValue = checkbox |> Element.getProperty! "fake-prop" |> try
-    emptyValue |> Assert.shouldBe Bool.false
+        empty_value = checkbox |> Element.get_property!("fake-prop") |> try
+        empty_value |> Assert.should_be(Bool.false),
+)
 
-test9 = test "getProperty empty to I64" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/" |> try
-    checkbox = browser |> Browser.findElement! (TestId "remote-testing-checkbox") |> try
+test9 = test(
+    "getProperty empty to I64",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/") |> try
+        checkbox = browser |> Browser.find_element!(TestId("remote-testing-checkbox")) |> try
 
-    emptyValue = checkbox |> Element.getProperty! "fake-prop" |> try
-    emptyValue |> Assert.shouldBe 0i64
+        empty_value = checkbox |> Element.get_property!("fake-prop") |> try
+        empty_value |> Assert.should_be(0i64),
+)
 
-test10 = test "getProperty empty to U64" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/" |> try
-    checkbox = browser |> Browser.findElement! (TestId "remote-testing-checkbox") |> try
+test10 = test(
+    "getProperty empty to U64",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/") |> try
+        checkbox = browser |> Browser.find_element!(TestId("remote-testing-checkbox")) |> try
 
-    emptyValue = checkbox |> Element.getProperty! "fake-prop" |> try
-    emptyValue |> Assert.shouldBe 0u64
+        empty_value = checkbox |> Element.get_property!("fake-prop") |> try
+        empty_value |> Assert.should_be(0u64),
+)
 
-test11 = test "getProperty empty to F64" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/" |> try
-    checkbox = browser |> Browser.findElement! (TestId "remote-testing-checkbox") |> try
+test11 = test(
+    "getProperty empty to F64",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/") |> try
+        checkbox = browser |> Browser.find_element!(TestId("remote-testing-checkbox")) |> try
 
-    emptyValue = checkbox |> Element.getProperty! "fake-prop" |> try
-    emptyValue |> Assert.shouldBeEqualTo 0f64
+        empty_value = checkbox |> Element.get_property!("fake-prop") |> try
+        empty_value |> Assert.should_be_equal_to(0f64),
+)
 
-test12 = test "getProperty Str" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/" |> try
-    checkbox = browser |> Browser.findElement! (TestId "remote-testing-checkbox") |> try
+test12 = test(
+    "getProperty Str",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/") |> try
+        checkbox = browser |> Browser.find_element!(TestId("remote-testing-checkbox")) |> try
 
-    value = checkbox |> Element.getProperty! "value" |> try
-    value |> Assert.shouldBe "on"
+        value = checkbox |> Element.get_property!("value") |> try
+        value |> Assert.should_be("on"),
+)
 
-test13 = test "getProperty boolean to Str" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/" |> try
-    checkbox = browser |> Browser.findElement! (TestId "remote-testing-checkbox") |> try
+test13 = test(
+    "getProperty boolean to Str",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/") |> try
+        checkbox = browser |> Browser.find_element!(TestId("remote-testing-checkbox")) |> try
 
-    checkbox |> Element.click! |> try
+        checkbox |> Element.click! |> try
 
-    value = checkbox |> Element.getProperty! "checked" |> try
-    value |> Assert.shouldBe "true"
+        value = checkbox |> Element.get_property!("checked") |> try
+        value |> Assert.should_be("true"),
+)
 
-test14 = test "getProperty number to Str" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/" |> try
-    checkbox = browser |> Browser.findElement! (TestId "remote-testing-checkbox") |> try
+test14 = test(
+    "getProperty number to Str",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/") |> try
+        checkbox = browser |> Browser.find_element!(TestId("remote-testing-checkbox")) |> try
 
-    value = checkbox |> Element.getProperty! "clientHeight" |> try
-    value |> Assert.shouldBe "13"
+        value = checkbox |> Element.get_property!("clientHeight") |> try
+        value |> Assert.should_be("13"),
+)
 
-test15 = test "getProperty number to I64" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/" |> try
-    checkbox = browser |> Browser.findElement! (TestId "remote-testing-checkbox") |> try
+test15 = test(
+    "getProperty number to I64",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/") |> try
+        checkbox = browser |> Browser.find_element!(TestId("remote-testing-checkbox")) |> try
 
-    value = checkbox |> Element.getProperty! "clientHeight" |> try
-    value |> Assert.shouldBe 13
+        value = checkbox |> Element.get_property!("clientHeight") |> try
+        value |> Assert.should_be(13),
+)
 
-test16 = test "getProperty number to F64" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/" |> try
-    checkbox = browser |> Browser.findElement! (TestId "remote-testing-checkbox") |> try
+test16 = test(
+    "getProperty number to F64",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/") |> try
+        checkbox = browser |> Browser.find_element!(TestId("remote-testing-checkbox")) |> try
 
-    value = checkbox |> Element.getProperty! "clientHeight" |> try
-    value |> Assert.shouldBeEqualTo 13f64
+        value = checkbox |> Element.get_property!("clientHeight") |> try
+        value |> Assert.should_be_equal_to(13f64),
+)
 
-test17 = test "getProperty Bool" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/" |> try
-    checkbox = browser |> Browser.findElement! (TestId "remote-testing-checkbox") |> try
+test17 = test(
+    "getProperty Bool",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/") |> try
+        checkbox = browser |> Browser.find_element!(TestId("remote-testing-checkbox")) |> try
 
-    checkbox |> Element.click! |> try
+        checkbox |> Element.click! |> try
 
-    value = checkbox |> Element.getProperty! "checked" |> try
-    value |> Assert.shouldBe Bool.true
+        value = checkbox |> Element.get_property!("checked") |> try
+        value |> Assert.should_be(Bool.true),
+)
 
-test18 = test "getProperty number to Bool decoding error" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/" |> try
-    checkbox = browser |> Browser.findElement! (TestId "remote-testing-checkbox") |> try
+test18 = test(
+    "getProperty number to Bool decoding error",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/") |> try
+        checkbox = browser |> Browser.find_element!(TestId("remote-testing-checkbox")) |> try
 
-    checkbox |> Element.click! |> try
+        checkbox |> Element.click! |> try
 
-    result : Result Bool _
-    result = checkbox |> Element.getProperty! "clientHeight"
+        result : Result Bool _
+        result = checkbox |> Element.get_property!("clientHeight")
 
-    when result is
-        Ok _ -> Assert.failWith "shold not be ok"
-        Err (PropertyTypeError err) ->
-            err |> Assert.shouldBe "could not cast property \"clientHeight\" with value \"13\" to expected type"
+        when result is
+            Ok(_) -> Assert.fail_with("shold not be ok")
+            Err(PropertyTypeError(err)) ->
+                err |> Assert.should_be("could not cast property \"clientHeight\" with value \"13\" to expected type")
 
-        Err _ -> Assert.failWith "wrong error tag"
+            Err(_) -> Assert.fail_with("wrong error tag"),
+)
 
 # test19 = test "getPropertyOrEmpty Str" \browser ->
 #     browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/" |> try

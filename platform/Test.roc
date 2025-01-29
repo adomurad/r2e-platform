@@ -1,4 +1,4 @@
-module [test, testWith]
+module [test, test_with]
 
 import InternalTest
 
@@ -39,4 +39,4 @@ test = InternalTest.test
 ##     attempts : [Inherit, Override U64],
 ## }
 ## ```
-testWith = InternalTest.testWith
+test_with = InternalTest.test_with
