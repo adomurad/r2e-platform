@@ -63,9 +63,9 @@ test1_override = Test.test_with(
 test1 = test1_override(
     "assertTimeout test",
     |browser|
-        browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting") |> try
+        browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting")?
 
-        div1 = browser |> Browser.find_element!(Css(".hide-by-opacity")) |> try
+        div1 = browser |> Browser.find_element!(Css(".hide-by-opacity"))?
         res = div1 |> Assert.element_should_be_visible!
         when res is
             Ok(_) -> Assert.fail_with("should fail")
@@ -84,25 +84,25 @@ test1 = test1_override(
 test3 = test(
     "elementImplicitTimeout",
     |browser|
-        browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting") |> try
+        browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting")?
 
-        input1 = browser |> Browser.find_element!(Css("#create-element-input")) |> try
-        input1 |> Element.clear! |> try
-        input1 |> Element.input_text!("1") |> try
+        input1 = browser |> Browser.find_element!(Css("#create-element-input"))?
+        input1 |> Element.clear!?
+        input1 |> Element.input_text!("1")?
 
-        button1 = browser |> Browser.find_element!(Css("#create-element-btn")) |> try
-        button1 |> Element.click! |> try
+        button1 = browser |> Browser.find_element!(Css("#create-element-btn"))?
+        button1 |> Element.click!?
 
-        _ = browser |> Browser.find_element!(Css(".created-el")) |> try
+        _ = browser |> Browser.find_element!(Css(".created-el"))?
 
-        browser |> Browser.reload_page! |> try
+        browser |> Browser.reload_page!?
 
-        input = browser |> Browser.find_element!(Css("#create-element-input")) |> try
-        input |> Element.clear! |> try
-        input |> Element.input_text!("100") |> try
+        input = browser |> Browser.find_element!(Css("#create-element-input"))?
+        input |> Element.clear!?
+        input |> Element.input_text!("100")?
 
-        button = browser |> Browser.find_element!(Css("#create-element-btn")) |> try
-        button |> Element.click! |> try
+        button = browser |> Browser.find_element!(Css("#create-element-btn"))?
+        button |> Element.click!?
 
         res = browser |> Browser.find_element!(Css(".created-el"))
 
@@ -115,7 +115,7 @@ test3 = test(
 test4 = test(
     "scriptExecutionTimeout",
     |browser|
-        browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting") |> try
+        browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting")?
 
         res =
             browser
@@ -139,15 +139,15 @@ test4 = test(
 test5 = test(
     "windowSize",
     |browser|
-        browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting") |> try
+        browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting")?
 
-        { width, height } = browser |> Browser.get_window_rect! |> try
+        { width, height } = browser |> Browser.get_window_rect!?
 
-        width |> Assert.should_be_greater_than(499) |> try
-        width |> Assert.should_be_lesser_than(530) |> try
+        width |> Assert.should_be_greater_than(499)?
+        width |> Assert.should_be_lesser_than(530)?
 
-        height |> Assert.should_be_greater_than(499) |> try
-        height |> Assert.should_be_lesser_than(530) |> try
+        height |> Assert.should_be_greater_than(499)?
+        height |> Assert.should_be_lesser_than(530)?
 
         Ok({}),
 )
@@ -167,15 +167,15 @@ custom_test = Test.test_with(
 test6 = custom_test(
     "windowSize override",
     |browser|
-        browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting") |> try
+        browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting")?
 
-        { width, height } = browser |> Browser.get_window_rect! |> try
+        { width, height } = browser |> Browser.get_window_rect!?
 
-        width |> Assert.should_be_greater_than(1799) |> try
-        width |> Assert.should_be_lesser_than(1830) |> try
+        width |> Assert.should_be_greater_than(1799)?
+        width |> Assert.should_be_lesser_than(1830)?
 
-        height |> Assert.should_be_greater_than(999) |> try
-        height |> Assert.should_be_lesser_than(1030) |> try
+        height |> Assert.should_be_greater_than(999)?
+        height |> Assert.should_be_lesser_than(1030)?
 
         Ok({}),
 )
@@ -183,9 +183,9 @@ test6 = custom_test(
 test7 = custom_test(
     "assertTimeout override",
     |browser|
-        browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting") |> try
+        browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting")?
 
-        div1 = browser |> Browser.find_element!(Css(".hide-by-opacity")) |> try
+        div1 = browser |> Browser.find_element!(Css(".hide-by-opacity"))?
         res = div1 |> Assert.element_should_be_visible!
         when res is
             Ok(_) -> Assert.fail_with("should fail")
@@ -196,7 +196,7 @@ test7 = custom_test(
 test8 = custom_test(
     "scriptExecutionTimeout override",
     |browser|
-        browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting") |> try
+        browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting")?
 
         browser
         |> Browser.execute_js!(
@@ -205,8 +205,7 @@ test8 = custom_test(
                 setTimeout(() => res(), 180)
             })
             """,
-        )
-        |> try
+        )?
 
         res =
             browser

@@ -81,7 +81,7 @@ flash_elements! = |session_id, locator, quantity|
     browser = Internal.pack_browser_data({ session_id })
 
     _res : Str
-    _res = browser |> ExecuteJs.execute_js!(js) |> try
+    _res = browser |> ExecuteJs.execute_js!(js)?
 
     Ok({})
 
@@ -126,7 +126,7 @@ flash_current_frame! = |session_id|
     browser = Internal.pack_browser_data({ session_id })
 
     _res : Str
-    _res = browser |> ExecuteJs.execute_js!(blink_script) |> try
+    _res = browser |> ExecuteJs.execute_js!(blink_script)?
 
     Ok({})
 
@@ -270,6 +270,6 @@ show_debug_message_in_browser! = |session_id, message|
     args = [String(message)]
 
     _res : Str
-    _res = browser |> ExecuteJs.execute_js_with_args!(js, args) |> try
+    _res = browser |> ExecuteJs.execute_js_with_args!(js, args)?
 
     Ok({})

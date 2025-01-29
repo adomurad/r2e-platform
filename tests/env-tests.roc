@@ -15,10 +15,10 @@ test_cases = [
 test1 = test(
     "getEnv",
     |browser|
-        browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting") |> try
+        browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting")?
 
         empty = Env.get!("FAKE_ENV_FOR_SURE_EMPTY")
-        empty |> Assert.should_be("") |> try
+        empty |> Assert.should_be("")?
 
         env = Env.get!("THIS_ENV_SHOULD_NOT_BE_EMPTY")
         env |> Assert.should_be("secret_value"),

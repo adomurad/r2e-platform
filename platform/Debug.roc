@@ -48,12 +48,12 @@ wait_for_enter_key! = |{}|
 ## Can be useful for debugging and trouble shooting.
 ##
 ## ```
-## button |> Debug.showElement! |> try
+## button |> Debug.showElement!?
 ## ```
 show_element! : Element => Result {} [WebDriverError Str, JsReturnTypeError Str]
 show_element! = |element|
     { session_id, locator } = Internal.unpack_element_data(element)
-    DebugMode.flash_elements!(session_id, locator, Single) |> try
+    DebugMode.flash_elements!(session_id, locator, Single)?
 
     wait!(1500)
 
@@ -64,7 +64,7 @@ show_element! = |element|
 ## Can be useful for debugging and trouble shooting.
 ##
 ## ```
-## checkboxes |> Debug.showElements! |> try
+## checkboxes |> Debug.showElements!?
 ## ```
 show_elements! : List Element => Result {} [WebDriverError Str, JsReturnTypeError Str]
 show_elements! = |elements|
@@ -72,7 +72,7 @@ show_elements! = |elements|
         [] -> Ok({})
         [element, ..] ->
             { session_id, locator } = Internal.unpack_element_data(element)
-            DebugMode.flash_elements!(session_id, locator, All) |> try
+            DebugMode.flash_elements!(session_id, locator, All)?
 
             wait!(1500)
 
@@ -83,12 +83,12 @@ show_elements! = |elements|
 ## Can be useful for debugging and trouble shooting.
 ##
 ## ```
-## browser |> Debug.showCurrentFrame! |> try
+## browser |> Debug.showCurrentFrame!?
 ## ```
 show_current_frame! : Browser => Result {} [WebDriverError Str, JsReturnTypeError Str]
 show_current_frame! = |browser|
     { session_id } = Internal.unpack_browser_data(browser)
-    DebugMode.flash_current_frame!(session_id) |> try
+    DebugMode.flash_current_frame!(session_id)?
 
     wait!(1500)
 

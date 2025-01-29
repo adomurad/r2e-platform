@@ -17,17 +17,17 @@ test1 = test(
     "use roc repl",
     |browser|
         # go to roc-lang.org
-        browser |> Browser.navigate_to!("http://roc-lang.org") |> try
+        browser |> Browser.navigate_to!("http://roc-lang.org")?
         # find repl input
-        repl_input = browser |> Browser.find_element!(Css("#source-input")) |> try
+        repl_input = browser |> Browser.find_element!(Css("#source-input"))?
         # wait for the repl to initialize
         Debug.wait!(200)
         # send keys to repl
-        repl_input |> Element.input_text!("0.1+0.2{enter}") |> try
+        repl_input |> Element.input_text!("0.1+0.2{enter}")?
         # find repl output element
-        output_el = browser |> Browser.find_element!(Css(".output")) |> try
+        output_el = browser |> Browser.find_element!(Css(".output"))?
         # get output text
-        output_text = output_el |> Element.get_text! |> try
+        output_text = output_el |> Element.get_text!?
         # assert text - fail for demo purpose
         output_text |> Assert.should_be("0.3000000001 : Frac *"),
 )

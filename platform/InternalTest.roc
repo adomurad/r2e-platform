@@ -74,7 +74,7 @@ test_with = |{ assert_timeout ?? Inherit, page_load_timeout ?? Inherit, script_e
 
 run_tests! : List (TestCase _), R2EConfiguration _ => Result {} _
 run_tests! = |test_cases, config|
-    # Assert.shouldBe 1 1 |> try # suppressing the warning
+    # Assert.shouldBe 1 1? # suppressing the warning
 
     Debug.print_line!("Starting test run...")
 
@@ -112,9 +112,9 @@ run_tests! = |test_cases, config|
     reporters = config.reporters
     out_dir = config.results_dir_name
     # TODO - fail gracefully
-    InternalReporting.run_reporters!(reporters, results, out_dir, duration) |> try
+    InternalReporting.run_reporters!(reporters, results, out_dir, duration)?
 
-    print_result_summary!(results) |> try
+    print_result_summary!(results)?
 
     any_failures = results |> List.any(|{ result }| result |> Result.is_err)
     if
@@ -199,14 +199,14 @@ run_test! = |i, attempt, @TestCase({ name, test_body, config: test_config_overri
     test_case_result
 
 run_test_safe! = |test_body!, config|
-    browser = Browser.open_new_window!({}) |> Result.map_err(ResultWithoutScreenshot) |> try
+    browser = Browser.open_new_window!({}) |> Result.map_err(ResultWithoutScreenshot)?
 
     test_result = test_body!(browser)
 
     should_take_screenshot = (test_result |> Result.is_err) and (config.screenshot_on_fail == Yes)
     screenshot_result = should_take_screenshot |> take_conditional_screenshot!(browser)
 
-    Browser.close_window!(browser) |> Result.map_err(ResultWithoutScreenshot) |> try
+    Browser.close_window!(browser) |> Result.map_err(ResultWithoutScreenshot)?
 
     when test_result is
         Ok({}) -> Ok({})

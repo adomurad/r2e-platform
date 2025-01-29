@@ -36,9 +36,9 @@ import DebugMode
 ##
 ## ```
 ## # find button element
-## button = browser |> Browser.findElement! (Css "#submit-button") |> try
+## button = browser |> Browser.findElement! (Css "#submit-button")?
 ## # click the button
-## button |> Element.click! |> try
+## button |> Element.click!?
 ## ```
 click! : Element => Result {} [WebDriverError Str, ElementNotFound Str]
 click! = |element|
@@ -49,7 +49,7 @@ click! = |element|
             Debug.print_line!("Trying to click element: ${selector_text}"),
     )
 
-    Effect.element_click!(session_id, element_id) |> Result.map_err(InternalError.handle_element_error) |> try
+    Effect.element_click!(session_id, element_id) |> Result.map_err(InternalError.handle_element_error)?
 
     DebugMode.run_if_verbose!(
         |{}|
@@ -58,8 +58,8 @@ click! = |element|
     #
     DebugMode.run_if_debug_mode!(
         |{}|
-            DebugMode.show_debug_message_in_browser!(session_id, "Click Element ${selector_text}") |> try
-            DebugMode.flash_elements!(session_id, locator, Single) |> try
+            DebugMode.show_debug_message_in_browser!(session_id, "Click Element ${selector_text}")?
+            DebugMode.flash_elements!(session_id, locator, Single)?
             DebugMode.wait!({})
             Ok({}),
     )
@@ -74,9 +74,9 @@ click! = |element|
 ##
 ## ```
 ## # find button element
-## button = browser |> Browser.findElement! (Css "#submit-button") |> try
+## button = browser |> Browser.findElement! (Css "#submit-button")?
 ## # get button text
-## buttonText = button |> Element.getText! |> try
+## buttonText = button |> Element.getText!?
 ## ```
 get_text! : Element => Result Str [WebDriverError Str, ElementNotFound Str]
 get_text! = |element|
@@ -98,17 +98,17 @@ get_text! = |element|
 ##
 ## ```
 ## # find input element
-## input = browser |> Browser.findElement! (Css "#email-input") |> try
+## input = browser |> Browser.findElement! (Css "#email-input")?
 ## # get input value
-## inputValue = input |> Element.getValue! |> try
+## inputValue = input |> Element.getValue!?
 ## inputValue |> Assert.shouldBe "my-email@fake-email.com"
 ## ```
 ##
 ## ```
 ## # find input element
-## input = browser |> Browser.findElement! (Css "#age-input") |> try
+## input = browser |> Browser.findElement! (Css "#age-input")?
 ## # get input value
-## inputValue = input |> Element.getValue! |> try
+## inputValue = input |> Element.getValue!?
 ## inputValue |> Assert.shouldBe 18
 ## ```
 get_value! : Element => Result a [ElementNotFound Str, PropertyTypeError Str, WebDriverError Str] where a implements Decoding
@@ -121,9 +121,9 @@ get_value! = |element|
 ##
 ## ```
 ## # find checkbox element
-## checkbox = browser |> Browser.findElement! (Css "#is-tasty-checkbox") |> try
+## checkbox = browser |> Browser.findElement! (Css "#is-tasty-checkbox")?
 ## # get button text
-## isTastyState = checkbox |> Element.isSelected! |> try
+## isTastyState = checkbox |> Element.isSelected!?
 ## # asert expected value
 ## isTastyState |> Assert.shoulBe Selected
 ## ```
@@ -136,7 +136,7 @@ is_selected! = |element|
             Debug.print_line!("Checking if element is slected: ${selector_text}"),
     )
 
-    result = Effect.element_is_selected!(session_id, element_id) |> Result.map_err(InternalError.handle_element_error) |> try
+    result = Effect.element_is_selected!(session_id, element_id) |> Result.map_err(InternalError.handle_element_error)?
 
     if result == "true" then
         Ok(Selected)
@@ -147,9 +147,9 @@ is_selected! = |element|
 ##
 ## ```
 ## # find error message element
-## errorMsg = browser |> Browser.findElement! (Css "#error-msg") |> try
+## errorMsg = browser |> Browser.findElement! (Css "#error-msg")?
 ## # get button text
-## isVisible = checkbox |> Element.isVisible! |> try
+## isVisible = checkbox |> Element.isVisible!?
 ## # assert expected value
 ## isVisible |> Assert.shoulBe Visible
 ## ```
@@ -172,9 +172,9 @@ is_visible! = |element|
 ##
 ## ```
 ## # find input element
-## input = browser |> Browser.findElement! (Css "#email-input") |> try
+## input = browser |> Browser.findElement! (Css "#email-input")?
 ## # get input type
-## inputType = input |> Element.getAttribute! "type" |> try
+## inputType = input |> Element.getAttribute! "type"?
 ## ```
 get_attribute! : Element, Str => Result Str [WebDriverError Str, ElementNotFound Str]
 get_attribute! = |element, attribute_name|
@@ -192,7 +192,7 @@ get_attribute! = |element, attribute_name|
 ## **Attributes** are values you can see in the HTML DOM, like *<input class"test" type="password" />*
 ##
 ## ```
-## checkboxType = checkbox |> Element.getAttributeOrEmpty! "type" |> try
+## checkboxType = checkbox |> Element.getAttributeOrEmpty! "type"?
 ## when checkboxType is
 ##     Ok type -> type |> Assert.shouldBe "checkbox"
 ##     Err Empty -> Assert.failWith "should not be empty"
@@ -206,7 +206,7 @@ get_attribute_or_empty! = |element, attribute_name|
             Debug.print_line!("Getting attribute \"${attribute_name}\" for element: ${selector_text}"),
     )
 
-    result = Effect.element_get_attribute!(session_id, element_id, attribute_name) |> Result.map_err(InternalError.handle_element_error) |> try
+    result = Effect.element_get_attribute!(session_id, element_id, attribute_name) |> Result.map_err(InternalError.handle_element_error)?
 
     if result == "" then
         Ok(Err(Empty))
@@ -227,26 +227,26 @@ get_attribute_or_empty! = |element, attribute_name|
 ##
 ## ```
 ## # get input value
-## inputValue = input |> Element.getProperty! "value" |> try
+## inputValue = input |> Element.getProperty! "value"?
 ## # expect to have value "email@emails.com"
 ## inputValue |> Assert.shouldBe "email@emails.com"
 ## ```
 ##
 ## Bool:
 ## ```
-## isChecked = nameInput |> Element.getProperty! "checked" |> try
+## isChecked = nameInput |> Element.getProperty! "checked"?
 ## isChecked |> Assert.shouldBe Bool.false
 ## ```
 ##
 ## Bool as Str:
 ## ```
-## isChecked = nameInput |> Element.getProperty! "checked" |> try
+## isChecked = nameInput |> Element.getProperty! "checked"?
 ## isChecked |> Assert.shouldBe "false"
 ## ```
 ##
 ## Num:
 ## ```
-## clientHeight = nameInput |> Element.getProperty! "clientHeight" |> try
+## clientHeight = nameInput |> Element.getProperty! "clientHeight"?
 ## clientHeight |> Assert.shouldBe 17
 ## ```
 get_property! : Internal.Element, Str => Result a [ElementNotFound Str, PropertyTypeError Str, WebDriverError Str] where a implements Decoding
@@ -271,20 +271,20 @@ get_property! = |element, property_name|
 ##
 ## ```
 ## # get input value
-## inputValue = input |> Element.getPropertyOrEmpty! "value" |> try
+## inputValue = input |> Element.getPropertyOrEmpty! "value"?
 ## # expect to have value "email@emails.com"
 ## inputType |> Assert.shouldBe (Ok "email@emails.com")
 ## ```
 ##
 ## ```
-## isChecked = nameInput |> Element.getProperty! "checked" |> try
+## isChecked = nameInput |> Element.getProperty! "checked"?
 ## when isChecked is
 ##     Ok value -> value |> Assert.shouldBe Bool.false
 ##     Err Empty -> Assert.failWith "input should have a checked prop"
 ## ```
 ##
 ## ```
-## clientHeight = nameInput |> Element.getProperty! "clientHeight" |> try
+## clientHeight = nameInput |> Element.getProperty! "clientHeight"?
 ## clientHeight |> Assert.shouldBe (Ok 17)
 ## ```
 get_property_or_empty! : Element, Str => Result (Result a [Empty]) [WebDriverError Str, ElementNotFound Str, PropertyTypeError Str] where a implements Decoding
@@ -296,7 +296,7 @@ get_property_or_empty! = |element, property_name|
             Debug.print_line!("Getting property \"${property_name}\" for element: ${selector_text}"),
     )
 
-    result_str = Effect.element_get_property!(session_id, element_id, property_name) |> Result.map_err(InternalError.handle_element_error) |> try
+    result_str = Effect.element_get_property!(session_id, element_id, property_name) |> Result.map_err(InternalError.handle_element_error)?
 
     if result_str == "" then
         Ok(Err(Empty))
@@ -314,9 +314,9 @@ get_property_or_empty! = |element, property_name|
 ##
 ## ```
 ## # find email input element
-## emailInput = browser |> Browser.findElement! (Css "#email") |> try
+## emailInput = browser |> Browser.findElement! (Css "#email")?
 ## # input an email into the email input
-## emailInput |> Element.sendKeys! "my.fake.email@fake-email.com" |> try
+## emailInput |> Element.sendKeys! "my.fake.email@fake-email.com"?
 ## ```
 ##
 ## Special key sequences:
@@ -325,9 +325,9 @@ get_property_or_empty! = |element, property_name|
 ##
 ## ```
 ## # find search input element
-## searchInput = browser |> Browser.findElement! (Css "#search") |> try
+## searchInput = browser |> Browser.findElement! (Css "#search")?
 ## # input text and submit
-## searchInput |> Element.sendKeys! "roc lang{enter}" |> try
+## searchInput |> Element.sendKeys! "roc lang{enter}"?
 ## ```
 input_text! : Element, Str => Result {} [WebDriverError Str, ElementNotFound Str]
 input_text! = |element, str|
@@ -338,9 +338,7 @@ input_text! = |element, str|
             Debug.print_line!("Sending text \"${str}\" to element: ${selector_text}"),
     )
 
-    Effect.element_send_keys!(session_id, element_id, str)
-    |> Result.map_err(InternalError.handle_element_error)
-    |> try
+    Effect.element_send_keys!(session_id, element_id, str) |> Result.map_err(InternalError.handle_element_error)?
 
     DebugMode.run_if_verbose!(
         |{}|
@@ -349,8 +347,8 @@ input_text! = |element, str|
 
     DebugMode.run_if_debug_mode!(
         |{}|
-            DebugMode.show_debug_message_in_browser!(session_id, "Send Text ${selector_text}") |> try
-            DebugMode.flash_elements!(session_id, locator, Single) |> try
+            DebugMode.show_debug_message_in_browser!(session_id, "Send Text ${selector_text}")?
+            DebugMode.flash_elements!(session_id, locator, Single)?
             DebugMode.wait!({})
             Ok({}),
     )
@@ -361,9 +359,9 @@ input_text! = |element, str|
 ##
 ## ```
 ## # find button element
-## input = browser |> Browser.findElement! (Css "#email-input") |> try
+## input = browser |> Browser.findElement! (Css "#email-input")?
 ## # click the button
-## input |> Element.clear! |> try
+## input |> Element.clear!?
 ## ```
 clear! : Internal.Element => Result {} [WebDriverError Str, ElementNotFound Str]
 clear! = |element|
@@ -374,7 +372,7 @@ clear! = |element|
             Debug.print_line!("Clearing element: ${selector_text}"),
     )
 
-    Effect.element_clear!(session_id, element_id) |> Result.map_err(InternalError.handle_element_error) |> try
+    Effect.element_clear!(session_id, element_id) |> Result.map_err(InternalError.handle_element_error)?
 
     DebugMode.run_if_verbose!(
         |{}|
@@ -383,8 +381,8 @@ clear! = |element|
 
     DebugMode.run_if_debug_mode!(
         |{}|
-            DebugMode.show_debug_message_in_browser!(session_id, "Clear Element ${selector_text}") |> try
-            DebugMode.flash_elements!(session_id, locator, Single) |> try
+            DebugMode.show_debug_message_in_browser!(session_id, "Clear Element ${selector_text}")?
+            DebugMode.flash_elements!(session_id, locator, Single)?
             DebugMode.wait!({})
             Ok({}),
     )
@@ -414,17 +412,17 @@ Locator : Locator.Locator
 ##
 ## ```
 ## # find the html element with a css selector "#my-id"
-## button = element |> Element.findElement! (Css "#my-id") |> try
+## button = element |> Element.findElement! (Css "#my-id")?
 ## ```
 ##
 ## ```
 ## # find the html element with a css selector ".my-class"
-## button = element |> Element.findElement! (Css ".my-class") |> try
+## button = element |> Element.findElement! (Css ".my-class")?
 ## ```
 ##
 ## ```
 ## # find the html element with an attribute [data-testid="my-element"]
-## button = element |> Element.findElement! (TestId "my-element") |> try
+## button = element |> Element.findElement! (TestId "my-element")?
 ## ```
 find_element! : Element, Locator => Result Element [WebDriverError Str, ElementNotFound Str]
 find_element! = |element, locator|
@@ -438,7 +436,7 @@ find_element! = |element, locator|
             Debug.print_line!("Searching for element: ${selector_text}"),
     )
 
-    new_element_id = Effect.element_find_element!(session_id, element_id, using, value) |> Result.map_err(InternalError.handle_element_error) |> try
+    new_element_id = Effect.element_find_element!(session_id, element_id, using, value) |> Result.map_err(InternalError.handle_element_error)?
 
     DebugMode.run_if_verbose!(
         |{}|
@@ -447,8 +445,8 @@ find_element! = |element, locator|
 
     DebugMode.run_if_debug_mode!(
         |{}|
-            DebugMode.show_debug_message_in_browser!(session_id, "Find Element ${selector_text}") |> try
-            DebugMode.flash_elements!(session_id, locator, Single) |> try
+            DebugMode.show_debug_message_in_browser!(session_id, "Find Element ${selector_text}")?
+            DebugMode.flash_elements!(session_id, locator, Single)?
             DebugMode.wait!({})
             Ok({}),
     )
@@ -466,12 +464,12 @@ find_element! = |element, locator|
 ## See supported locators at `Locator`.
 ##
 ## ```
-## maybeButton = element |> Element.tryFindElement! (Css "#submit-button") |> try
+## maybeButton = element |> Element.tryFindElement! (Css "#submit-button")?
 ##
 ## when maybeButton is
 ##     NotFound -> Stdout.line! "Button not found"
 ##     Found el ->
-##         buttonText = el |> Element.getText! |> try
+##         buttonText = el |> Element.getText!?
 ##         Stdout.line! "Button found with text: $(buttonText)"
 ## ```
 try_find_element! : Element, Locator => Result [Found Element, NotFound] [WebDriverError Str, ElementNotFound Str]
@@ -495,12 +493,12 @@ try_find_element! = |element, locator|
 ## See supported locators at `Locator`.
 ##
 ## ```
-## button = element |> Element.findSingleElement! (Css "#submit-button") |> try
+## button = element |> Element.findSingleElement! (Css "#submit-button")?
 ## ```
 find_single_element! : Element, Locator => Result Element [AssertionError Str, ElementNotFound Str, WebDriverError Str]
 find_single_element! = |element, locator|
     { selector_text: parent_element_selector_text } = Internal.unpack_element_data(element)
-    elements = find_elements!(element, locator) |> try
+    elements = find_elements!(element, locator)?
     when elements |> List.len is
         0 ->
             (_, value) = Locator.get_locator(locator)
@@ -523,7 +521,7 @@ find_single_element! = |element, locator|
 ##
 ## ```
 ## # find all <li> elements in #my-list in the DOM tree of **element**
-## listItems = element |> Element.findElements! (Css "#my-list li") |> try
+## listItems = element |> Element.findElements! (Css "#my-list li")?
 ## ```
 ##
 find_elements! : Element, Locator => Result (List Element) [WebDriverError Str, ElementNotFound Str]
@@ -552,8 +550,8 @@ find_elements! = |element, locator|
                     if element_ids |> List.is_empty then
                         Ok({})
                     else
-                        DebugMode.show_debug_message_in_browser!(session_id, "Find Elements ${selector_text}") |> try
-                        DebugMode.flash_elements!(session_id, locator, All) |> try
+                        DebugMode.show_debug_message_in_browser!(session_id, "Find Elements ${selector_text}")?
+                        DebugMode.flash_elements!(session_id, locator, All)?
                         DebugMode.wait!({})
                         Ok({}),
             )
@@ -572,9 +570,9 @@ find_elements! = |element, locator|
 ##
 ## ```
 ## # find input element
-## input = browser |> Browser.findElement! (Css "#email-input") |> try
+## input = browser |> Browser.findElement! (Css "#email-input")?
 ## # get input tag name
-## tagName = input |> Element.getTagName! |> try
+## tagName = input |> Element.getTagName!?
 ## # tag name should be "input"
 ## tagName |> Assert.shouldBe "input"
 ## ```
@@ -593,9 +591,9 @@ get_tag_name! = |element|
 ##
 ## ```
 ## # find input element
-## input = browser |> Browser.findElement! (Css "#email-input") |> try
+## input = browser |> Browser.findElement! (Css "#email-input")?
 ## # get input type
-## inputBorder = input |> Element.getCssProperty! "border" |> try
+## inputBorder = input |> Element.getCssProperty! "border"?
 ## # assert
 ## inputBorder |> Assert.shouldBe "2px solid rgb(0, 0, 0)"
 ## ```
@@ -621,13 +619,13 @@ ElementRect : {
 ##
 ## ```
 ## # find input element
-## input = browser |> Browser.findElement! (Css "#email-input") |> try
+## input = browser |> Browser.findElement! (Css "#email-input")?
 ## # get input tag name
-## rect = input |> Element.getRect! |> try
+## rect = input |> Element.getRect!?
 ## # assert the rect
-## rect.height |> Assert.shouldBe 51 |> try
-## rect.width |> Assert.shouldBe 139 |> try
-## rect.x |> Assert.shouldBeEqualTo 226.1243566 |> try
+## rect.height |> Assert.shouldBe 51?
+## rect.width |> Assert.shouldBe 139?
+## rect.x |> Assert.shouldBeEqualTo 226.1243566?
 ## rect.y |> Assert.shouldBeEqualTo 218.3593754
 ## ```
 get_rect! : Element => Result ElementRect [WebDriverError Str, ElementNotFound Str]
@@ -654,11 +652,11 @@ get_rect! = |element|
 ## with the page inside an iFrame.
 ##
 ## ```
-## frameEl = browser |> Browser.findElement! (Css "iframe") |> try
+## frameEl = browser |> Browser.findElement! (Css "iframe")?
 ##
 ## Element.useIFrame! frameEl \frame ->
-##     span = frame |> Browser.findElement! (Css "#span-inside-frame") |> try
-##     span |> Assert.elementShouldHaveText! "This is inside an iFrame" |> try
+##     span = frame |> Browser.findElement! (Css "#span-inside-frame")?
+##     span |> Assert.elementShouldHaveText! "This is inside an iFrame"?
 ## ```
 use_i_frame! : Element, (Internal.Browser => Result {} _) => Result {} _
 use_i_frame! = |element, callback!|
@@ -669,12 +667,12 @@ use_i_frame! = |element, callback!|
             Debug.print_line!("Switching context to iFrame: ${selector_text}"),
     )
 
-    Effect.switch_to_frame_by_element_id!(session_id, element_id) |> Result.map_err(WebDriverError) |> try
+    Effect.switch_to_frame_by_element_id!(session_id, element_id) |> Result.map_err(WebDriverError)?
 
     DebugMode.run_if_debug_mode!(
         |{}|
-            DebugMode.show_debug_message_in_browser!(session_id, "Switched to iFrame ${selector_text}") |> try
-            DebugMode.flash_current_frame!(session_id) |> try
+            DebugMode.show_debug_message_in_browser!(session_id, "Switched to iFrame ${selector_text}")?
+            DebugMode.flash_current_frame!(session_id)?
             DebugMode.wait!({})
             Ok({}),
     )
@@ -687,12 +685,12 @@ use_i_frame! = |element, callback!|
             Debug.print_line!("Switching back to iFrame parent"),
     )
 
-    Effect.switch_to_parent_frame!(session_id) |> Result.map_err(WebDriverError) |> try
+    Effect.switch_to_parent_frame!(session_id) |> Result.map_err(WebDriverError)?
 
     DebugMode.run_if_debug_mode!(
         |{}|
-            DebugMode.show_debug_message_in_browser!(session_id, "Switched back to iFrame parent") |> try
-            DebugMode.flash_current_frame!(session_id) |> try
+            DebugMode.show_debug_message_in_browser!(session_id, "Switched back to iFrame parent")?
+            DebugMode.flash_current_frame!(session_id)?
             DebugMode.wait!({})
             Ok({}),
     )

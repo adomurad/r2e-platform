@@ -27,17 +27,17 @@
 ##
 ## test1 = test "validation message" \browser ->
 ##     # open the test page
-##     browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/" |> try
+##     browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/"?
 ##     # find the test count input by id
-##     testCountInput = browser |> Browser.findElement! (Css "#testCount") |> try
+##     testCountInput = browser |> Browser.findElement! (Css "#testCount")?
 ##     # send text to input
-##     testCountInput |> Element.inputText! "2" |> try
+##     testCountInput |> Element.inputText! "2"?
 ##     # find the submit button
-##     submitButton = browser |> Browser.findElement! (Css "#submit-button") |> try
+##     submitButton = browser |> Browser.findElement! (Css "#submit-button")?
 ##     # click the submit button
-##     submitButton |> Element.click! |> try
+##     submitButton |> Element.click!?
 ##     # find the error message
-##     testCountError = browser |> Browser.findElement! (TestId "testCountError") |> try
+##     testCountError = browser |> Browser.findElement! (TestId "testCountError")?
 ##     # check the error message text
 ##     testCountError |> Assert.elementShouldHaveText! "At least 5 tests are required"
 ## ```
@@ -77,7 +77,7 @@
 ## in the moment of failure.
 ## You can test this by change the assert in the test to:
 ## ```
-## testCountError |> Assert.elementShouldHaveText! "wrong validation message" |> try
+## testCountError |> Assert.elementShouldHaveText! "wrong validation message"?
 ## ```
 ##
 ## The test is self explanatory.
@@ -192,7 +192,7 @@
 ##
 ## test1 = longTest "this is flaky test" \browser ->
 ##     # open the test page
-##     browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/" |> try
+##     browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/"?
 ## ```
 ##
 ## All possible overrides:
@@ -333,11 +333,11 @@
 ## You can use the environment variables in R2E tests.
 ##
 ## ```
-##  empty = Env.get! "FAKE_ENV_FOR_SURE_EMPTY" |> try
-##  empty |> Assert.shouldBe "" |> try
+##  empty = Env.get! "FAKE_ENV_FOR_SURE_EMPTY"?
+##  empty |> Assert.shouldBe ""?
 ##
-##  env = Env.get! "SECRET_ENV_KEY" |> try
-##  env |> Assert.shouldBe! "secret_value" |> try
+##  env = Env.get! "SECRET_ENV_KEY"?
+##  env |> Assert.shouldBe! "secret_value"?
 ## ```
 ##
 ## # Roadmap

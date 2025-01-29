@@ -31,9 +31,9 @@ import InternalElement
 ##
 ## ```
 ## # find button element
-## button = browser |> Browser.findElement! (Css "#submit-button") |> try
+## button = browser |> Browser.findElement! (Css "#submit-button")?
 ## # get button text
-## buttonText = button |> Element.getText! |> try
+## buttonText = button |> Element.getText!?
 ## # assert text
 ## buttonText |> Assert.shouldBe "Roc"
 ## ```
@@ -64,7 +64,7 @@ should_contain_text = |actual, expected|
 ##
 ## ```
 ## # find button element
-## button = browser |> Browser.findElement! (Css "#submit-button") |> try
+## button = browser |> Browser.findElement! (Css "#submit-button")?
 ## # get button text
 ## buttonSize = button |> Element.getProperty! "size"|> try
 ## # assert value
@@ -185,7 +185,7 @@ title_should_be! = |browser, expected|
     try_for!(
         assert_timeout,
         |{}|
-            actual = browser |> Browser.get_title! |> try
+            actual = browser |> Browser.get_title!?
 
             if expected == actual then
                 Ok({})
@@ -207,7 +207,7 @@ fail_with = |msg|
 ##
 ## ```
 ## # find all buttons element
-## buttons = browser |> Browser.findElements! (Css "button") |> try
+## buttons = browser |> Browser.findElements! (Css "button")?
 ## # assert that there are 3 buttons
 ## buttons |> Assert.shouldHaveLength 3
 ## ```
@@ -241,7 +241,7 @@ pluralize = |count, singular, plural|
 ##
 ## ```
 ## # find button element
-## button = browser |> Browser.findElement! (Css "#submit-button") |> try
+## button = browser |> Browser.findElement! (Css "#submit-button")?
 ## # check if button has text "Submit"
 ## button |> Assert.elementShouldHaveText! "Submit"
 ## ```
@@ -259,7 +259,7 @@ element_should_have_text! = |element, expected_text|
     try_for!(
         assert_timeout,
         |{}|
-            element_text = InternalElement.get_text!(element) |> try
+            element_text = InternalElement.get_text!(element)?
 
             if expected_text == element_text then
                 Ok({})
@@ -297,7 +297,7 @@ loop! = |callback!|
 ##
 ## ```
 ## # find input element
-## input = browser |> Browser.findElement! (Css "#username-input") |> try
+## input = browser |> Browser.findElement! (Css "#username-input")?
 ## # check if input has value "fake-username"
 ## input |> Assert.elementShouldHaveValue! "fake-username"
 ## ```
@@ -315,7 +315,7 @@ element_should_have_value! = |element, expected_value|
     try_for!(
         assert_timeout,
         |{}|
-            element_value = element |> InternalElement.get_property!("value") |> try
+            element_value = element |> InternalElement.get_property!("value")?
 
             if expected_value == element_value then
                 Ok({})
@@ -330,7 +330,7 @@ element_should_have_value! = |element, expected_value|
 ##
 ## ```
 ## # find error message element
-## errorMsg = browser |> Browser.findElement! (Css ".error-msg") |> try
+## errorMsg = browser |> Browser.findElement! (Css ".error-msg")?
 ## # check if the error message element is visible
 ## errorMsg |> Assert.elementShouldBeVisible!
 ## ```
@@ -348,7 +348,7 @@ element_should_be_visible! = |element|
     try_for!(
         assert_timeout,
         |{}|
-            is_visible = element |> InternalElement.is_visible! |> try
+            is_visible = element |> InternalElement.is_visible!?
 
             when is_visible is
                 Visible -> Ok({})

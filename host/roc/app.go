@@ -523,8 +523,8 @@ func roc_fx_browser_find_element(sessionId, using, value *RocStr) C.struct_Resul
 	return createRocResultStr(RocOk, elementId)
 }
 
-//export roc_fx_browserFindElements
-func roc_fx_browserFindElements(sessionId, using, value *RocStr) C.struct_ResultListStr {
+//export roc_fx_browser_find_elements
+func roc_fx_browser_find_elements(sessionId, using, value *RocStr) C.struct_ResultListStr {
 	elementIds, err := webdriver.FindElements(sessionId.String(), using.String(), value.String())
 	if err != nil {
 		return createRocResult_ListStr_Str(RocErr, nil, err.Error())
