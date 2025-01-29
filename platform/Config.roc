@@ -28,31 +28,31 @@ R2EConfiguration test_error : {
 ##
 ## The defaults:
 ##
-## **resultsDirName** - *"testResults"*
+## **results_dir_name** - *"testResults"*
 ##
 ## **reporters** - *[BasicHtmlReporter.reporter]*
 ##
-## **assertTimeout** - *3s*
+## **assert_timeout** - *3s*
 ##
-## **pageLoadTimeout** - *10s*
+## **page_load_timeout** - *10s*
 ##
-## **scriptExecutionTimeout** - *10s*
+## **script_execution_timeout** - *10s*
 ##
-## **elementImplicitTimeout** - *5s*
+## **element_implicit_timeout** - *5s*
 ##
-## **windowSize** - *Size 1024 768*
+## **window_size** - *Size 1024 768*
 ##
-## **screenshotOnFail** - *Yes*
+## **screenshot_on_fail** - *Yes*
 ##
 ## **attempts** - *2*
 ##
 ## ```
-## app [testCases, config] { r2e: platform "..." }
+## app [test_cases, config] { r2e: platform "..." }
 ##
 ## import r2e.Test exposing [test]
 ## import r2e.Config
 ##
-## config = Config.defaultConfig
+## config = Config.default_config
 ##
 ## testCases = [
 ##     test1,
@@ -74,11 +74,11 @@ default_config = {
 ## The default test configuration with overrides.
 ##
 ## ```
-## config = Config.defaultConfigWith {
-##     resultsDirName: "my-results",
-##     reporters: [BasicHtmlReporter.reporter, myJsonReporter],
-##     assertTimeout: 5_000,
-## }
+## config = Config.default_config_with({
+##     results_dir_name: "my-results",
+##     reporters: [BasicHtmlReporter.reporter, my_json_reporter],
+##     assert_timeout: 5_000,
+## })
 ## ```
 default_config_with :
     {

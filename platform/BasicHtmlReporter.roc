@@ -11,7 +11,7 @@ import Error
 ## Reporter.
 ##
 ## ```
-## reporters = [basicHtmlReporter.reporter]
+## reporters = [BasicHtmlReporter.reporter]
 ## ```
 reporter = Reporting.create_reporter(
     "basicHtmlReporter",

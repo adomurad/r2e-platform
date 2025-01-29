@@ -1,7 +1,7 @@
 ## `Assert` module contains assertion functions to check properties of` Elements`
 ## and data extracted from the browser.
 ##
-## All assert functions return a `Task` with the `[AssertionError Str]` error.
+## All assert functions return a `Result` with the `[AssertionError Str]` error.
 module [
     should_be,
     should_be_equal_to,
@@ -31,11 +31,11 @@ import InternalElement
 ##
 ## ```
 ## # find button element
-## button = browser |> Browser.findElement! (Css "#submit-button")?
+## button = browser |> Browser.find_element!(Css "#submit-button")?
 ## # get button text
-## buttonText = button |> Element.getText!?
+## buttonText = button |> Element.get_text!()?
 ## # assert text
-## buttonText |> Assert.shouldBe "Roc"
+## buttonText |> Assert.should_be("Roc")
 ## ```
 should_be : a, a -> Result {} [AssertionError Str] where a implements Eq & Inspect
 should_be = |actual, expected|
@@ -49,7 +49,7 @@ should_be = |actual, expected|
 ## Checks if the value of __actual__ contains the `Str` __expected__.
 ##
 ## ```
-## "github" |> Assert.shouldContainText "git"
+## "github" |> Assert.should_contain_text("git")
 ## ```
 should_contain_text : Str, Str -> Result {} [AssertionError Str]
 should_contain_text = |actual, expected|
@@ -64,11 +64,11 @@ should_contain_text = |actual, expected|
 ##
 ## ```
 ## # find button element
-## button = browser |> Browser.findElement! (Css "#submit-button")?
+## button = browser |> Browser.find_element!(Css "#submit-button")?
 ## # get button text
-## buttonSize = button |> Element.getProperty! "size"|> try
+## buttonSize = button |> Element.get_property!("size")?
 ## # assert value
-## buttonSize |> Assert.shouldBeEqualTo 20f64
+## buttonSize |> Assert.should_be_equal_to(20f64)
 ## ```
 should_be_equal_to : Frac a, Frac a -> Result {} [AssertionError Str]
 should_be_equal_to = |actual, expected|
@@ -82,7 +82,7 @@ should_be_equal_to = |actual, expected|
 ## Checks if the __actual__ `Num` is grater than the __expected__.
 ##
 ## ```
-## 3 |> Assert.shouldBeGreaterThan 2
+## 3 |> Assert.should_be_greater_than(2)
 ## ```
 should_be_greater_than : Num a, Num a -> Result {} [AssertionError Str] where a implements Bool.Eq
 should_be_greater_than = |actual, expected|
@@ -96,7 +96,7 @@ should_be_greater_than = |actual, expected|
 ## Checks if the __actual__ `Num` is grater or equal than the __expected__.
 ##
 ## ```
-## 3 |> Assert.shouldBeGreaterOrEqualTo 2
+## 3 |> Assert.should_be_greater_or_equal_to(2)
 ## ```
 should_be_greater_or_equal_to : Num a, Num a -> Result {} [AssertionError Str] where a implements Bool.Eq
 should_be_greater_or_equal_to = |actual, expected|
@@ -110,7 +110,7 @@ should_be_greater_or_equal_to = |actual, expected|
 ## Checks if the __actual__ `Num` is grater than the __expected__.
 ##
 ## ```
-## 3 |> Assert.shouldBeGreaterThan 2
+## 3 |> Assert.should_be_lesser_than(2)
 ## ```
 should_be_lesser_than : Num a, Num a -> Result {} [AssertionError Str] where a implements Bool.Eq
 should_be_lesser_than = |actual, expected|
@@ -124,7 +124,7 @@ should_be_lesser_than = |actual, expected|
 ## Checks if the __actual__ `Num` is grater or equal than the __expected__.
 ##
 ## ```
-## 3 |> Assert.shouldBeLesserOrEqualTo 2
+## 3 |> Assert.should_be_lesser_or_equal_to(2)
 ## ```
 should_be_lesser_or_equal_to : Num a, Num a -> Result {} [AssertionError Str] where a implements Bool.Eq
 should_be_lesser_or_equal_to = |actual, expected|
@@ -138,10 +138,10 @@ should_be_lesser_or_equal_to = |actual, expected|
 ## Checks if the __URL__ is equal to the __expected__.
 ##
 ## This function will wait for the expectation to be met,
-## for the **assertTimeout** specified in test options - default: 3s.
+## for the **assert_timeout** specified in test options - default: 3s.
 ## ```
 ## # assert text
-## browser |> Assert.urlShouldBe! "https://roc-lang.org/"
+## browser |> Assert.url_should_be!("https://roc-lang.org/")
 ## ```
 url_should_be! : Browser, Str => Result {} [AssertionError Str, WebDriverError Str]
 url_should_be! = |browser, expected|
@@ -168,10 +168,10 @@ url_should_be! = |browser, expected|
 ## Checks if the __title__ of the page is equal to the __expected__.
 ##
 ## This function will wait for the expectation to be met,
-## for the **assertTimeout** specified in test options - default: 3s.
+## for the **assert_timeout** specified in test options - default: 3s.
 ## ```
 ## # assert text
-## browser |> Assert.titleShouldBe! "The Roc Programming Language"
+## browser |> Assert.title_should_be!("The Roc Programming Language")
 ## ```
 title_should_be! : Browser, Str => Result {} [AssertionError Str, WebDriverError Str]
 title_should_be! = |browser, expected|
@@ -197,7 +197,7 @@ title_should_be! = |browser, expected|
 ##
 ## ```
 ## # fail the test
-## Assert.failWith! "this should not happen"
+## Assert.fail_with!("this should not happen")
 ## ```
 fail_with : Str -> Result _ [AssertionError Str]
 fail_with = |msg|
@@ -207,9 +207,9 @@ fail_with = |msg|
 ##
 ## ```
 ## # find all buttons element
-## buttons = browser |> Browser.findElements! (Css "button")?
+## buttons = browser |> Browser.find_elements!(Css("button"))?
 ## # assert that there are 3 buttons
-## buttons |> Assert.shouldHaveLength 3
+## buttons |> Assert.should_have_length 3
 ## ```
 should_have_length : List a, U64 -> Result {} [AssertionError Str]
 should_have_length = |list, expected|
@@ -237,13 +237,13 @@ pluralize = |count, singular, plural|
 ## Checks if the `Element` has __expected__ text.
 ##
 ## This function will wait for the `Element` to meet the expectation,
-## for the **assertTimeout** specified in test options - default: 3s.
+## for the **assert_timeout** specified in test options - default: 3s.
 ##
 ## ```
 ## # find button element
-## button = browser |> Browser.findElement! (Css "#submit-button")?
+## button = browser |> Browser.find_element!(Css("#submit-button"))?
 ## # check if button has text "Submit"
-## button |> Assert.elementShouldHaveText! "Submit"
+## button |> Assert.element_should_have_text!("Submit")
 ## ```
 element_should_have_text! : Element, Str => Result {} [AssertionError Str, ElementNotFound Str, WebDriverError Str]
 element_should_have_text! = |element, expected_text|
@@ -293,13 +293,13 @@ loop! = |callback!|
 ## Checks if the `Element` has __expected__ value.
 ##
 ## This function will wait for the `Element` to meet the expectation,
-## for the **assertTimeout** specified in test options - default: 3s.
+## for the **assert_timeout** specified in test options - default: 3s.
 ##
 ## ```
 ## # find input element
-## input = browser |> Browser.findElement! (Css "#username-input")?
+## input = browser |> Browser.find_element!(Css("#username-input"))?
 ## # check if input has value "fake-username"
-## input |> Assert.elementShouldHaveValue! "fake-username"
+## input |> Assert.element_should_have_value!("fake-username")
 ## ```
 element_should_have_value! : Element, Str => Result {} [AssertionError Str, ElementNotFound Str, WebDriverError Str, PropertyTypeError Str]
 element_should_have_value! = |element, expected_value|
@@ -326,13 +326,13 @@ element_should_have_value! = |element, expected_value|
 ## Checks if the `Element` is visible in the `Browser`.
 ##
 ## This function will wait for the `Element` to meet the expectation,
-## for the **assertTimeout** specified in test options - default: 3s.
+## for the **assert_timeout** specified in test options - default: 3s.
 ##
 ## ```
 ## # find error message element
-## errorMsg = browser |> Browser.findElement! (Css ".error-msg")?
+## errorMsg = browser |> Browser.find_element!(Css(".error-msg"))?
 ## # check if the error message element is visible
-## errorMsg |> Assert.elementShouldBeVisible!
+## errorMsg |> Assert.element_should_be_visible!()
 ## ```
 element_should_be_visible! : Element => Result {} [AssertionError Str, ElementNotFound Str, WebDriverError Str]
 element_should_be_visible! = |element|

@@ -6,11 +6,12 @@ import InternalReporting exposing [ReporterCallback, ReporterDefinition]
 ## Creates a custom reporter.
 ##
 ## ```
-## customReporter = Reporting.createReporter "myCustomReporter" \results, _meta ->
-##     lenStr = results |> List.len |> Num.toStr
-##     indexFile = { filePath: "index.html", content: "<h3>Test count: $(lenStr)</h3>" }
-##     testFile = { filePath: "test.txt", content: "this is just a test" }
-##     [indexFile, testFile]
+## custom_reporter = Reporting.create_reporter("myCustomReporter", |results, _meta|
+##     len_str = results |> List.len |> Num.to_str
+##     index_file = { file_path: "index.html", content: "<h3>Test count: $(lenStr)</h3>" }
+##     test_file = { file_path: "test.txt", content: "this is just a test" }
+##     [index_file, test_file]
+## )
 ## ```
 create_reporter : Str, ReporterCallback err -> ReporterDefinition err
 create_reporter = |name, callback|
@@ -20,9 +21,9 @@ create_reporter = |name, callback|
 ## The name of a reporter is also used to create the report dir in outDir.
 ##
 ## ```
-## customReporter =
+## custom_reporter =
 ##     Reporting.BasicHtmlReporter.reporter
-##     |> Reporting.rename "myCustomReporter"
+##     |> Reporting.rename("myCustomReporter")
 ## ```
 rename : ReporterDefinition err, Str -> ReporterDefinition err
 rename = |reporter, new_name|

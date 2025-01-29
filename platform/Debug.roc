@@ -8,15 +8,11 @@ import Internal exposing [Element, Browser]
 ## followed by a newline.
 ##
 ## ```
-## Debug.printLine! "Hello World"
+## Debug.print_line!("Hello World")
 ## ```
 print_line! : Str => {}
 print_line! = |str|
     Effect.stdout_line!(str)
-
-# readLine : Task Str []
-# readLine =
-#     Effect.stdinLine {} |> Task.mapErr \_ -> crash "stdin should not fail"
 
 ## Stops the test execution for specified amount of time.
 ##
@@ -24,7 +20,7 @@ print_line! = |str|
 ##
 ## ```
 ## # wait for 3s
-## Debug.wait! 3000
+## Debug.wait!(3000)
 ## ```
 wait! : U64 => {}
 wait! = |timeout|
@@ -33,7 +29,7 @@ wait! = |timeout|
 ## Stops the test execution till the "enter" key is pressed in the terminal.
 ##
 ## ```
-## Debug.waitForEnterKey! {}
+## Debug.wait_for_enter_key!({})
 ## ```
 wait_for_enter_key! : {} => {}
 wait_for_enter_key! = |{}|
@@ -41,14 +37,13 @@ wait_for_enter_key! = |{}|
     print_line!("\nPress <enter> to continue the test run...")
     _ = Effect.stdin_line!({})
     {}
-# Task.ok {}
 
 ## Blink an `Element` in the `Browser`.
 ##
 ## Can be useful for debugging and trouble shooting.
 ##
 ## ```
-## button |> Debug.showElement!?
+## button |> Debug.show_element!()?
 ## ```
 show_element! : Element => Result {} [WebDriverError Str, JsReturnTypeError Str]
 show_element! = |element|
@@ -64,7 +59,7 @@ show_element! = |element|
 ## Can be useful for debugging and trouble shooting.
 ##
 ## ```
-## checkboxes |> Debug.showElements!?
+## checkboxes |> Debug.show_elements!()?
 ## ```
 show_elements! : List Element => Result {} [WebDriverError Str, JsReturnTypeError Str]
 show_elements! = |elements|
@@ -83,7 +78,7 @@ show_elements! = |elements|
 ## Can be useful for debugging and trouble shooting.
 ##
 ## ```
-## browser |> Debug.showCurrentFrame!?
+## browser |> Debug.show_current_frame!()?
 ## ```
 show_current_frame! : Browser => Result {} [WebDriverError Str, JsReturnTypeError Str]
 show_current_frame! = |browser|

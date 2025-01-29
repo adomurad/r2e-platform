@@ -53,9 +53,9 @@ import InternalError
 ## please remember to close the browser windows you open manually.
 ##
 ## ```
-## newBrowser = Browser.openNewWindow! {}?
+## newBrowser = Browser.open_new_window!({})?
 ## ...
-## newBrowser |> Browser.closeWindow!?
+## newBrowser |> Browser.close_window!()?
 ## ```
 open_new_window! : {} => Result Browser [WebDriverError Str]
 open_new_window! = |{}|
@@ -75,8 +75,9 @@ open_new_window! = |{}|
 ## Will close the browser after the callback is finished.
 ##
 ## ```
-## try Browser.openNewWindowWithCleanup! \browser2 ->
-##     browser2 |> Browser.navigateTo! "https://www.roc-lang.org/"
+## Browser.open_new_window_with_cleanup!(|browser2|
+##     browser2 |> Browser.navigate_to!("https://www.roc-lang.org/")
+## )
 ## ```
 open_new_window_with_cleanup! : (Browser => Result val [WebDriverError Str]err) => Result val [WebDriverError Str]err
 open_new_window_with_cleanup! = |callback!|
@@ -91,9 +92,9 @@ open_new_window_with_cleanup! = |callback!|
 ## the automatic cleanup will fail trying to close this browser.
 ##
 ## ```
-## newBrowser = Browser.openNewWindow! {}
+## newBrowser = Browser.open_new_window!({})?
 ## ...
-## newBrowser |> Browser.closeWindow!
+## newBrowser |> Browser.close_window!
 ## ```
 close_window! : Browser => Result {} [WebDriverError Str]
 close_window! = |browser|
@@ -110,7 +111,7 @@ close_window! = |browser|
 ##
 ## ```
 ## # open google.com
-## browser |> Browser.navigateTo! "http://google.com"?
+## browser |> Browser.navigate_to!("http://google.com")?
 ## ```
 navigate_to! : Browser, Str => Result {} [WebDriverError Str]
 navigate_to! = |browser, url|
@@ -133,9 +134,9 @@ navigate_to! = |browser, url|
 ## Get browser title.
 ##
 ## ```
-## browser |> Browser.navigateTo! "http://google.com"?
+## browser |> Browser.navigate_to!("http://google.com")?
 ## # get title
-## title = browser |> Browser.getTitle!?
+## title = browser |> Browser.get_title!()?
 ## # title = "Google"
 ## ```
 get_title! : Browser => Result Str [WebDriverError Str]
@@ -152,9 +153,9 @@ get_title! = |browser|
 ## Get current URL.
 ##
 ## ```
-## browser |> Browser.navigateTo! "http://google.com"?
+## browser |> Browser.navigate_to!("http://google.com")?
 ## # get url
-## url = browser |> Browser.getUrl!?
+## url = browser |> Browser.get_url!()?
 ## # url = "https://google.com/"
 ## ```
 get_url! : Browser => Result Str [WebDriverError Str]
@@ -171,15 +172,15 @@ get_url! = |browser|
 
 ## Supported locator strategies
 ##
-## `Css Str` - e.g. Css ".my-button-class"
+## `Css Str` - e.g. Css(".my-button-class")
 ##
-## `TestId Str` - e.g. TestId "button" => Css "[data-testid=\"button\"]"
+## `TestId Str` - e.g. TestId("button") => Css("[data-testid=\"button\"]")
 ##
-## `XPath Str` - e.g. XPath "/bookstore/book[price>35]/price"
+## `XPath Str` - e.g. XPath("/bookstore/book[price>35]/price")
 ##
-## `LinkText Str` - e.g. LinkText "Examples" in <a href="/examples-page">Examples</a>
+## `LinkText Str` - e.g. LinkText("Examples") in <a href="/examples-page">Examples</a>
 ##
-## `PartialLinkText Str` - e.g. PartialLinkText "Exam" in <a href="/examples-page">Examples</a>
+## `PartialLinkText Str` - e.g. PartialLinkText("Exam") in <a href="/examples-page">Examples</a>
 ##
 Locator : Locator.Locator
 
@@ -192,17 +193,17 @@ Locator : Locator.Locator
 ##
 ## ```
 ## # find the html element with a css selector "#my-id"
-## button = browser |> Browser.findElement! (Css "#my-id")?
+## button = browser |> Browser.find_element!(Css("#my-id"))?
 ## ```
 ##
 ## ```
 ## # find the html element with a css selector ".my-class"
-## button = browser |> Browser.findElement! (Css ".my-class")?
+## button = browser |> Browser.find_element!(Css(".my-class"))?
 ## ```
 ##
 ## ```
 ## # find the html element with an attribute [data-testid="my-element"]
-## button = browser |> Browser.findElement! (TestId "my-element")?
+## button = browser |> Browser.find_element!(TestId("my-element"))?
 ## ```
 find_element! : Browser, Locator => Result Element [WebDriverError Str, ElementNotFound Str]
 find_element! = |browser, locator|
@@ -244,13 +245,13 @@ find_element! = |browser, locator|
 ## See supported locators at `Locator`.
 ##
 ## ```
-## maybeButton = browser |> Browser.tryFindElement! (Css "#submit-button")?
+## maybe_button = browser |> Browser.try_find_element!(Css("#submit-button"))?
 ##
-## when maybeButton is
-##     NotFound -> Stdout.line! "Button not found"
+## when maybe_button is
+##     NotFound -> Stdout.line!("Button not found")
 ##     Found el ->
-##         buttonText = el |> Element.getText!
-##         Stdout.line! "Button found with text: $(buttonText)"
+##         button_text = el |> Element.get_text!
+##         Stdout.line!("Button found with text: $(button_text)")
 ## ```
 try_find_element! : Browser, Locator => Result [Found Element, NotFound] [WebDriverError Str, ElementNotFound Str]
 try_find_element! = |browser, locator|
@@ -273,7 +274,7 @@ try_find_element! = |browser, locator|
 ## See supported locators at `Locator`.
 ##
 ## ```
-## button = browser |> Browser.findSingleElement! (Css "#submit-button")?
+## button = browser |> Browser.find_single_element!(Css("#submit-button"))?
 ## ```
 find_single_element! : Browser, Locator => Result Element [AssertionError Str, ElementNotFound Str, WebDriverError Str]
 find_single_element! = |browser, locator|
@@ -300,7 +301,7 @@ find_single_element! = |browser, locator|
 ##
 ## ```
 ## # find all <li> elements in #my-list
-## listItems = browser |> Browser.findElements! (Css "#my-list li")?
+## listItems = browser |> Browser.find_elements!(Css("#my-list li"))?
 ## ```
 ##
 find_elements! : Browser, Locator => Result (List Element) [WebDriverError Str, ElementNotFound Str]
@@ -350,7 +351,7 @@ find_elements! = |browser, locator|
 ## The result will be a **base64** encoded `Str` representation of a PNG file.
 ##
 ## ```
-## base64PngStr = browser |> Browser.takeScreenshotBase64!?
+## base64PngStr = browser |> Browser.take_screenshot_base64!()?
 ## ```
 take_screenshot_base64! : Browser => Result Str [WebDriverError Str]
 take_screenshot_base64! = |browser|
@@ -370,9 +371,9 @@ take_screenshot_base64! = |browser|
 #     margin ? PageMargins,
 #     scale ? F64, # 0.1 - 2.0 - default: 1.0
 #     orientation ? PageOrientation, # default: portrait
-#     shrinkToFit ? Bool, # default: true
+#     shrink_to_fit ? Bool, # default: true
 #     background ? Bool, # default: false
-#     pageRanges ? List Str, # default []
+#     page_ranges ? List Str, # default []
 # }
 #
 # PageDimensions : {
@@ -400,9 +401,9 @@ take_screenshot_base64! = |browser|
 ##     margin ? PageMargins,
 ##     scale ? F64, # 0.1 - 2.0 - default: 1.0
 ##     orientation ? PageOrientation, # default: portrait
-##     shrinkToFit ? Bool, # default: true
+##     shrink_to_fit ? Bool, # default: true
 ##     background ? Bool, # default: false
-##     pageRanges ? List Str, # default []
+##     page_ranges ? List Str, # default []
 ## }
 ##
 ## PageDimensions : {
@@ -418,10 +419,10 @@ take_screenshot_base64! = |browser|
 ## }
 ## ```
 ## ```
-## base64PdfStr = browser |> Browser.printPdfBase64! {}
+## base64_pdf_str = browser |> Browser.print_pdf_base64!({})?
 ## ```
-# printPdfBase64 : Browser, PrintPdfPayload -> Task.Task Str [WebDriverError Str]
-# printPdfBase64 = \browser, { scale ? 1.0f64, orientation ? Portrait, shrinkToFit ? Bool.true, background ? Bool.false, page ? { width: 21.59f64, height: 27.94f64 }, margin ? { top: 1.0f64, bottom: 1.0f64, left: 1.0f64, right: 1.0f64 }, pageRanges ? [] } ->
+# print_pdf_base64 : Browser, PrintPdfPayload -> Task.Task Str [WebDriverError Str]
+# print_pdf_base64 = \browser, { scale ? 1.0f64, orientation ? Portrait, shrinkToFit ? Bool.true, background ? Bool.false, page ? { width: 21.59f64, height: 27.94f64 }, margin ? { top: 1.0f64, bottom: 1.0f64, left: 1.0f64, right: 1.0f64 }, pageRanges ? [] } ->
 #     { sessionId } = Internal.unpackBrowserData browser
 #
 #     orientationStr = if orientation == Portrait then "portrait" else "landscape"
@@ -467,15 +468,15 @@ SetWindowRectOptions : [
 ## But the result contain the dimension of the browser viewport!
 ##
 ## ```
-## newRect = browser |> Browser.setWindowRect! (Move { x: 400, y: 600 })?
+## newRect = browser |> Browser.set_window_rect!(Move({ x: 400, y: 600 }))?
 ## # newRect is { x: 406, y: 627, width: 400, height: 600 }
 ## ```
 ## ```
-## newRect = browser |> Browser.setWindowRect! (Resize { width: 800, height: 750 })?
+## newRect = browser |> Browser.set_window_rect!(Resize({ width: 800, height: 750 }))?
 ## # newRect is { x: 300, y: 500, width: 800, height: 750 }
 ## ```
 ## ```
-## newRect = browser |> Browser.setWindowRect! (MoveAndResize { x: 400, y: 600, width: 800, height: 750 })?
+## newRect = browser |> Browser.set_window_rect!(MoveAndResize({ x: 400, y: 600, width: 800, height: 750 }))?
 ## # newRect is { x: 406, y: 627, width: 800, height: 750 }
 ## ```
 set_window_rect! : Browser, SetWindowRectOptions => Result WindowRect [WebDriverError Str]
@@ -516,7 +517,7 @@ set_window_rect! = |browser, set_rect_options|
 ## without the frame.
 ##
 ## ```
-## rect = browser |> Browser.getWindowRect!?
+## rect = browser |> Browser.get_window_rect!()?
 ## # rect is { x: 406, y: 627, width: 400, height: 600 }
 ## ```
 get_window_rect! : Browser => Result WindowRect [WebDriverError Str]
@@ -540,7 +541,7 @@ get_window_rect! = |browser|
 ## Navigate back in the browser history.
 ##
 ## ```
-## browser |> Browser.navigateBack!?
+## browser |> Browser.navigate_back!()?
 ## ```
 navigate_back! : Browser => Result {} [WebDriverError Str]
 navigate_back! = |browser|
@@ -563,7 +564,7 @@ navigate_back! = |browser|
 ## Navigate forward in the browser history.
 ##
 ## ```
-## browser |> Browser.navigateForward!?
+## browser |> Browser.navigate_forward!()?
 ## ```
 navigate_forward! : Browser => Result {} [WebDriverError Str]
 navigate_forward! = |browser|
@@ -586,7 +587,7 @@ navigate_forward! = |browser|
 ## Reload the current page.
 ##
 ## ```
-## browser |> Browser.reloadPage!?
+## browser |> Browser.reload_page!()?
 ## ```
 reload_page! : Browser => Result {} [WebDriverError Str]
 reload_page! = |browser|
@@ -611,7 +612,7 @@ reload_page! = |browser|
 ## Can fail when the system does not support this operation.
 ##
 ## ```
-## newRect = browser |> Browser.maximizeWindow!?
+## new_rect = browser |> Browser.maximize_window!()?
 ## ```
 maximize_window! : Browser => Result WindowRect [WebDriverError Str]
 maximize_window! = |browser|
@@ -636,7 +637,7 @@ maximize_window! = |browser|
 ## Can fail when the system does not support this operation.
 ##
 ## ```
-## newRect = browser |> Browser.minimizeWindow!?
+## new_rect = browser |> Browser.minimize_window!()?
 ## ```
 minimize_window! : Browser => Result WindowRect [WebDriverError Str]
 minimize_window! = |browser|
@@ -661,7 +662,7 @@ minimize_window! = |browser|
 ## Can fail when the system does not support this operation.
 ##
 ## ```
-## newRect = browser |> Browser.fullScreenWindow!?
+## new_rect = browser |> Browser.full_screen_window!()?
 ## ```
 full_screen_window! : Browser => Result WindowRect [WebDriverError Str]
 full_screen_window! = |browser|
@@ -684,7 +685,7 @@ full_screen_window! = |browser|
 ## Execute JavaScript in the `Browser`.
 ##
 ## ```
-## browser |> Browser.executeJs! "console.log('wow')"?
+## browser |> Browser.execute_js!("console.log('wow')")?
 ## ```
 execute_js! : Browser, Str => Result {} [WebDriverError Str, JsReturnTypeError Str] where a implements Decoding
 execute_js! = |browser, script|
@@ -716,20 +717,20 @@ execute_js! = |browser, script|
 ## The output will be casted to expected Roc type:
 ##
 ## ```
-##  response = browser |> Browser.executeJsWithOutput! "return 50 + 5;"?
-##  response |> Assert.shouldBe 55
+##  response = browser |> Browser.execute_js_with_output!("return 50 + 5;")?
+##  response |> Assert.should_be(55)
 ##
-##  response = browser |> Browser.executeJsWithOutput! "return 50.5 + 5;"?
-##  response |> Assert.shouldBe 55.5
+##  response = browser |> Browser.execute_js_with_output!("return 50.5 + 5;")?
+##  response |> Assert.should_be(55.5)
 ##
-##  response = browser |> Browser.executeJsWithOutput! "return 50.5 + 5;"?
-##  response |> Assert.shouldBe "55.5"
+##  response = browser |> Browser.execute_js_with_output!("return 50.5 + 5;")?
+##  response |> Assert.should_be("55.5")
 ##
-##  response = browser |> Browser.executeJsWithOutput! "return true"?
-##  response |> Assert.shouldBe "true"
+##  response = browser |> Browser.execute_js_with_output!("return true")?
+##  response |> Assert.should_be("true")
 ##
-##  response = browser |> Browser.executeJsWithOutput! "return true"?
-##  response |> Assert.shouldBe Bool.true
+##  response = browser |> Browser.execute_js_with_output!("return true")?
+##  response |> Assert.should_be(Bool.true)
 ## ```
 ##
 ## The function can return a `Promise`.
@@ -772,11 +773,11 @@ JsValue : [String Str, Number F64, Boolean Bool, Null]
 ## The output will be casted to expected Roc type:
 ##
 ## ```
-##  response = browser |> Browser.executeJsWithArgs! "return 50 + 5;" []?
-##  response |> Assert.shouldBe 55
+##  response = browser |> Browser.execute_js_with_args!("return 50 + 5;", [])?
+##  response |> Assert.should_Be(55)
 ##
-##  response = browser |> Browser.executeJsWithArgs! "return 50.5 + 5;" [Number 55.5, String "5"]?
-##  response |> Assert.shouldBe 55.5
+##  response = browser |> Browser.execute_js_with_args!("return 50.5 + 5;", [Number 55.5, String "5"])?
+##  response |> Assert.should_be(55.5)
 ## ```
 ##
 ## The function can return a `Promise`.
@@ -822,7 +823,7 @@ NewCookie : {
 ##     expiry : CookieExpiry,
 ## }
 ##
-## # MaxAge is a Epoch Timestamp (browsers accept max 400 days from now)
+## # MaxAge is a Epoch Timestamp (browsers accepts max 400 days in the future)
 ## CookieExpiry : [Session, MaxAge U32]
 ##
 ## SameSiteOption : [None, Lax, Strict]
@@ -863,18 +864,18 @@ bool_to_int = |bool|
 ## Add a cookie in the `Browser`.
 ##
 ## ```
-## browser |> Browser.addCookie! { name: "myCookie", value: "value1" }?
+## browser |> Browser.add_cookie!({ name: "myCookie", value: "value1" })?
 ## ```
 ## ```
-## browser |> Browser.addCookie! {
+## browser |> Browser.add_cookie!({
 ##     name: "myCookie",
 ##     value: "value1",
 ##     domain: "my-top-level-domain.com",
 ##     path: "/path",
-##     sameSite: Lax,
+##     same_site: Lax,
 ##     secure: Bool.true,
-##     httpOnly: Bool.true,
-##     expiry: MaxAge 2865848396, # unix epoch
+##     http_only: Bool.true,
+##     expiry: MaxAge(2865848396), # unix epoch
 ## }?
 ## ```
 add_cookie! : Browser, NewCookie => Result {} [WebDriverError Str]
@@ -895,7 +896,7 @@ add_cookie! = |browser, { name, value, domain ?? "", path ?? "", same_site ?? No
 ## Delete a cookie in the `Browser` by name.
 ##
 ## ```
-## browser |> Browser.deleteCookie! "myCookieName"?
+## browser |> Browser.delete_cookie!("myCookieName")?
 ## ```
 delete_cookie! : Browser, Str => Result {} [WebDriverError Str, CookieNotFound Str]
 delete_cookie! = |browser, name|
@@ -906,7 +907,7 @@ delete_cookie! = |browser, name|
 ## Delete all cookies in the `Browser`.
 ##
 ## ```
-## browser |> Browser.deleteAllCookies!?
+## browser |> Browser.delete_all_cookies!?
 ## ```
 delete_all_cookies! : Browser => Result {} [WebDriverError Str]
 delete_all_cookies! = |browser|
@@ -917,17 +918,17 @@ delete_all_cookies! = |browser|
 ## Get a cookie from the `Browser` by name.
 ##
 ## ```
-## cookie1 = browser |> Browser.getCookie! "myCookie"?
-## cookie1 |> Assert.shouldBe {
+## cookie1 = browser |> Browser.get_cookie!("myCookie")?
+## cookie1 |> Assert.should_be({
 ##     name: "myCookie",
 ##     value: "value1",
 ##     domain: ".my-domain.io",
 ##     path: "/",
-##     sameSite: Lax,
+##     same_site: Lax,
 ##     expiry: Session,
 ##     secure: Bool.true,
-##     httpOnly: Bool.false,
-## }
+##     http_only: Bool.false,
+## })
 ## ```
 get_cookie! : Browser, Str => Result Cookie [WebDriverError Str, CookieNotFound Str]
 get_cookie! = |browser, cookie_name|
@@ -939,8 +940,8 @@ get_cookie! = |browser, cookie_name|
 ## Get all cookies from the `Browser`.
 ##
 ## ```
-## cookies = browser |> Browser.getAllCookies!?
-## cookies |> List.len |> Assert.shouldBe 3
+## cookies = browser |> Browser.get_all_cookies!()?
+## cookies |> List.len |> Assert.should_be(3)
 ## ```
 get_all_cookies! : Browser => Result (List Cookie) [WebDriverError Str, CookieNotFound Str]
 get_all_cookies! = |browser|
@@ -980,8 +981,8 @@ expiry_str_to_roc = |exp_str|
 ## Get alert/prompt text.
 ##
 ## ```
-## text = browser |> Browser.getAlertText!?
-## text |> Assert.shouldBe "Are you sure to close tab?"
+## text = browser |> Browser.get_alert_text!()?
+## text |> Assert.should_be("Are you sure to close tab?")
 ## ```
 get_alert_text! : Browser => Result Str [WebDriverError Str, AlertNotFound Str]
 get_alert_text! = |browser|
@@ -997,8 +998,8 @@ get_alert_text! = |browser|
 ## Input text in prompt.
 ##
 ## ```
-## browser |> Browser.sendTextToAlert! "my reply"?
-## browser |> Browser.acceptAlert!?
+## browser |> Browser.send_text_to_alert!("my reply")?
+## browser |> Browser.accept_alert!()?
 ## ```
 send_text_to_alert! : Browser, Str => Result {} [WebDriverError Str, AlertNotFound Str]
 send_text_to_alert! = |browser, text|
@@ -1014,7 +1015,7 @@ send_text_to_alert! = |browser, text|
 ## Accept alert/prompt.
 ##
 ## ```
-## browser |> Browser.acceptAlert!?
+## browser |> Browser.accept_alert!()?
 ## ```
 accept_alert! : Browser => Result {} [WebDriverError Str, AlertNotFound Str]
 accept_alert! = |browser|
@@ -1037,7 +1038,7 @@ accept_alert! = |browser|
 ## Dismiss alert/prompt.
 ##
 ## ```
-## browser |> Browser.dismissAlert!?
+## browser |> Browser.dismiss_alert!()?
 ## ```
 dismiss_alert! : Browser => Result {} [WebDriverError Str, AlertNotFound Str]
 dismiss_alert! = |browser|
@@ -1060,8 +1061,8 @@ dismiss_alert! = |browser|
 ## Get the serialized DOM as HTML `Str`.
 ##
 ## ```
-## html = browser |> Browser.getPageHtml!?
-## html |> Assert.shouldContainText "<h1>Header</h1>"
+## html = browser |> Browser.get_page_html!()?
+## html |> Assert.should_contain_text("<h1>Header</h1>")
 ## ```
 get_page_html! : Browser => Result Str [WebDriverError Str]
 get_page_html! = |browser|

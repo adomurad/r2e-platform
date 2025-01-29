@@ -2,15 +2,15 @@ module [Locator, get_locator]
 
 ## Supported locator strategies
 ##
-## `Css Str` - e.g. Css ".my-button-class"
+## `Css Str` - e.g. Css(".my-button-class")
 ##
-## `TestId Str` - e.g. TestId "button" => Css "[data-testid=\"button\"]"
+## `TestId Str` - e.g. TestId("button") => Css("[data-testid=\"button\"]")
 ##
-## `XPath Str` - e.g. XPath "/bookstore/book[price>35]/price"
+## `XPath Str` - e.g. XPath("/bookstore/book[price>35]/price")
 ##
-## `LinkText Str` - e.g. LinkText "Examples" in <a href="/examples-page">Examples</a>
+## `LinkText Str` - e.g. LinkText("Examples") in <a href="/examples-page">Examples</a>
 ##
-## `PartialLinkText Str` - e.g. PartialLinkText "Exam" in <a href="/examples-page">Examples</a>
+## `PartialLinkText Str` - e.g. PartialLinkText("Exam") in <a href="/examples-page">Examples</a>
 ##
 Locator : [
     Css Str,
