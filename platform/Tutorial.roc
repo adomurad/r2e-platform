@@ -27,17 +27,17 @@
 ##
 ## test1 = test "validation message" \browser ->
 ##     # open the test page
-##     browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/"
+##     browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/" |> try
 ##     # find the test count input by id
-##     testCountInput = browser |> Browser.findElement! (Css "#testCount")
+##     testCountInput = browser |> Browser.findElement! (Css "#testCount") |> try
 ##     # send text to input
-##     testCountInput |> Element.inputText! "2"
+##     testCountInput |> Element.inputText! "2" |> try
 ##     # find the submit button
-##     submitButton = browser |> Browser.findElement! (Css "#submit-button")
+##     submitButton = browser |> Browser.findElement! (Css "#submit-button") |> try
 ##     # click the submit button
-##     submitButton |> Element.click!
+##     submitButton |> Element.click! |> try
 ##     # find the error message
-##     testCountError = browser |> Browser.findElement! (TestId "testCountError")
+##     testCountError = browser |> Browser.findElement! (TestId "testCountError") |> try
 ##     # check the error message text
 ##     testCountError |> Assert.elementShouldHaveText! "At least 5 tests are required"
 ## ```
@@ -77,8 +77,7 @@
 ## in the moment of failure.
 ## You can test this by change the assert in the test to:
 ## ```
-## testCountError
-## |> Assert.elementShouldHaveText! "wrong validation message"
+## testCountError |> Assert.elementShouldHaveText! "wrong validation message" |> try
 ## ```
 ##
 ## The test is self explanatory.
@@ -87,31 +86,31 @@
 ##
 ## If you want to interact with the browser, you use the `Browser` module:
 ## ```
-## Browser.findElement
-## Browser.navigateTo
-## Browser.getCookie
-## Browser.getUrl
+## Browser.findElement!
+## Browser.navigateTo!
+## Browser.getCookie!
+## Browser.getUrl!
 ## ```
 ## If you want to interact with elements on the page, you use the `Element` module:
 ## ```
-## Element.click
-## Element.inputText
-## Element.getText
-## Element.getValue
+## Element.click!
+## Element.inputText!
+## Element.getText!
+## Element.getValue!
 ## ```
 ## If you want to make assertions (expects) then you use the `Assert` module:
 ## ```
 ## Assert.shouldBe
-## Assert.urlShouldBe
-## Assert.elementShouldBeVisible
-## Assert.elementShouldHaveText
+## Assert.urlShouldBe!
+## Assert.elementShouldBeVisible!
+## Assert.elementShouldHaveText!
 ## ```
 ## If you need more tools to debug a test then you use the `Debug` module:
 ## ```
-## Debug.printLine
-## Debug.wait
-## Debug.waitForEnterKey
-## Debug.showElement
+## Debug.printLine!
+## Debug.wait!
+## Debug.waitForEnterKey!
+## Debug.showElement!
 ## ```
 ##
 ## # CLI
@@ -193,7 +192,7 @@
 ##
 ## test1 = longTest "this is flaky test" \browser ->
 ##     # open the test page
-##     browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/"
+##     browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/" |> try
 ## ```
 ##
 ## All possible overrides:
@@ -239,11 +238,11 @@
 ##
 ## - function that assert values in the browser:
 ##
-##   - `Assert.urlShouldBe`
-##   - `Assert.titleShouldBe`
-##   - `Assert.elementShouldBeVisible`
-##   - `Assert.elementShouldHaveText`
-##   - `Assert.elementShouldHaveValue`
+##   - `Assert.urlShouldBe!`
+##   - `Assert.titleShouldBe!`
+##   - `Assert.elementShouldBeVisible!`
+##   - `Assert.elementShouldHaveText!`
+##   - `Assert.elementShouldHaveValue!`
 ##
 ## The first group fails immediately when the assertion is not met.
 ##
@@ -334,11 +333,11 @@
 ## You can use the environment variables in R2E tests.
 ##
 ## ```
-##  empty = Env.get! "FAKE_ENV_FOR_SURE_EMPTY"
-##  empty |> Assert.shouldBe! ""
+##  empty = Env.get! "FAKE_ENV_FOR_SURE_EMPTY" |> try
+##  empty |> Assert.shouldBe "" |> try
 ##
-##  env = Env.get! "SECRET_ENV_KEY"
-##  env |> Assert.shouldBe! "secret_value"
+##  env = Env.get! "SECRET_ENV_KEY" |> try
+##  env |> Assert.shouldBe! "secret_value" |> try
 ## ```
 ##
 ## # Roadmap

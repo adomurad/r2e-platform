@@ -7,7 +7,7 @@ import InternalTest
 ## ```
 ## myTest = test "open roc-lang.org website" \browser ->
 ##     # open roc-lang.org
-##     browser |> Browser.navigateTo! "http://roc-lang.org"
+##     browser |> Browser.navigateTo! "http://roc-lang.org" |> try
 ## ```
 test = InternalTest.test
 
@@ -24,7 +24,7 @@ test = InternalTest.test
 ##
 ## test1 = longTest "this is flaky test" \browser ->
 ##     # open the test page
-##     browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/"
+##     browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/" |> try
 ## ```
 ##
 ## All possible overrides:

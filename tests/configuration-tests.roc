@@ -52,10 +52,10 @@ test1Override = Test.testWith {
     elementImplicitTimeout: Override 5000,
 }
 test1 = test1Override "assertTimeout test" \browser ->
-    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
+    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting" |> try
 
-    div1 = browser |> Browser.findElement! (Css ".hide-by-opacity")
-    res = div1 |> Assert.elementShouldBeVisible |> Task.result!
+    div1 = browser |> Browser.findElement! (Css ".hide-by-opacity") |> try
+    res = div1 |> Assert.elementShouldBeVisible!
     when res is
         Ok _ -> Assert.failWith "should fail"
         Err (AssertionError err) -> err |> Assert.shouldBe "Expected element (Css \".hide-by-opacity\") to be visible (waited for 1000ms)"
@@ -70,64 +70,65 @@ test1 = test1Override "assertTimeout test" \browser ->
 #         Err (WebDriverError err) -> err |> Assert.shouldBe "hmm"
 
 test3 = test "elementImplicitTimeout" \browser ->
-    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
+    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting" |> try
 
-    input1 = browser |> Browser.findElement! (Css "#create-element-input")
-    input1 |> Element.clear!
-    input1 |> Element.inputText! "1"
+    input1 = browser |> Browser.findElement! (Css "#create-element-input") |> try
+    input1 |> Element.clear! |> try
+    input1 |> Element.inputText! "1" |> try
 
-    button1 = browser |> Browser.findElement! (Css "#create-element-btn")
-    button1 |> Element.click!
+    button1 = browser |> Browser.findElement! (Css "#create-element-btn") |> try
+    button1 |> Element.click! |> try
 
-    _ = browser |> Browser.findElement! (Css ".created-el")
+    _ = browser |> Browser.findElement! (Css ".created-el") |> try
 
-    browser |> Browser.reloadPage!
+    browser |> Browser.reloadPage! |> try
 
-    input = browser |> Browser.findElement! (Css "#create-element-input")
-    input |> Element.clear!
-    input |> Element.inputText! "100"
+    input = browser |> Browser.findElement! (Css "#create-element-input") |> try
+    input |> Element.clear! |> try
+    input |> Element.inputText! "100" |> try
 
-    button = browser |> Browser.findElement! (Css "#create-element-btn")
-    button |> Element.click!
+    button = browser |> Browser.findElement! (Css "#create-element-btn") |> try
+    button |> Element.click! |> try
 
-    res = browser |> Browser.findElement (Css ".created-el") |> Task.result!
+    res = browser |> Browser.findElement! (Css ".created-el")
 
     when res is
         Ok _ -> Assert.failWith "should fail"
-        Err (ElementNotFound _) -> Task.ok {}
+        Err (ElementNotFound _) -> Ok {}
         Err _ -> Assert.failWith "should fail for different reason"
 
 test4 = test "scriptExecutionTimeout" \browser ->
-    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
+    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting" |> try
 
     res =
         browser
-            |> Browser.executeJs
-                """
-                return new Promise(res => {
-                    setTimeout(() => res(), 15)
-                })
-                """
-            |> Task.result!
+        |> Browser.executeJs!
+            """
+            return new Promise(res => {
+                setTimeout(() => res(), 15)
+            })
+            """
 
     when res is
         Ok _ -> Assert.failWith "should fail"
         Err err ->
             if err |> Inspect.toStr |> Str.contains "script timeout" then
-                Task.ok {}
+                Ok {}
             else
                 Assert.failWith (err |> Inspect.toStr)
 
 test5 = test "windowSize" \browser ->
-    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
+    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting" |> try
 
-    { width, height } = browser |> Browser.getWindowRect!
+    { width, height } = browser |> Browser.getWindowRect! |> try
 
-    width |> Assert.shouldBeGreaterThan! 499
-    width |> Assert.shouldBeLesserThan! 530
+    width |> Assert.shouldBeGreaterThan 499 |> try
+    width |> Assert.shouldBeLesserThan 530 |> try
 
-    height |> Assert.shouldBeGreaterThan! 499
-    height |> Assert.shouldBeLesserThan! 530
+    height |> Assert.shouldBeGreaterThan 499 |> try
+    height |> Assert.shouldBeLesserThan 530 |> try
+
+    Ok {}
 
 customTest = Test.testWith {
     assertTimeout: Override 1,
@@ -140,50 +141,53 @@ customTest = Test.testWith {
 }
 
 test6 = customTest "windowSize override" \browser ->
-    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
+    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting" |> try
 
-    { width, height } = browser |> Browser.getWindowRect!
+    { width, height } = browser |> Browser.getWindowRect! |> try
 
-    width |> Assert.shouldBeGreaterThan! 1799
-    width |> Assert.shouldBeLesserThan! 1830
+    width |> Assert.shouldBeGreaterThan 1799 |> try
+    width |> Assert.shouldBeLesserThan 1830 |> try
 
-    height |> Assert.shouldBeGreaterThan! 999
-    height |> Assert.shouldBeLesserThan! 1030
+    height |> Assert.shouldBeGreaterThan 999 |> try
+    height |> Assert.shouldBeLesserThan 1030 |> try
+
+    Ok {}
 
 test7 = customTest "assertTimeout override" \browser ->
-    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
+    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting" |> try
 
-    div1 = browser |> Browser.findElement! (Css ".hide-by-opacity")
-    res = div1 |> Assert.elementShouldBeVisible |> Task.result!
+    div1 = browser |> Browser.findElement! (Css ".hide-by-opacity") |> try
+    res = div1 |> Assert.elementShouldBeVisible!
     when res is
         Ok _ -> Assert.failWith "should fail"
         Err (AssertionError err) -> err |> Assert.shouldBe "Expected element (Css \".hide-by-opacity\") to be visible (waited for 1ms)"
         Err _ -> Assert.failWith "should fail for different reason"
 
 test8 = customTest "scriptExecutionTimeout override" \browser ->
-    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
+    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting" |> try
 
     browser
+    |> Browser.executeJs!
+        """
+        return new Promise(res => {
+            setTimeout(() => res(), 180)
+        })
+        """
+    |> try
+
+    res =
+        browser
         |> Browser.executeJs!
             """
             return new Promise(res => {
-                setTimeout(() => res(), 180)
+                setTimeout(() => res(), 210)
             })
             """
-    res =
-        browser
-            |> Browser.executeJs
-                """
-                return new Promise(res => {
-                    setTimeout(() => res(), 210)
-                })
-                """
-            |> Task.result!
 
     when res is
         Ok _ -> Assert.failWith "should fail"
         Err err ->
             if err |> Inspect.toStr |> Str.contains "script timeout" then
-                Task.ok {}
+                Ok {}
             else
                 Assert.failWith (err |> Inspect.toStr)

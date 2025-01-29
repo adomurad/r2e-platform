@@ -15,10 +15,10 @@ platform ""
     ]
     packages {}
     imports [InternalTest, Config, Utils]
-    provides [mainForHost]
+    provides [mainForHost!]
 
-mainForHost : Task {} I64
-mainForHost =
+mainForHost! : {} => I32
+mainForHost! = \{} ->
     Utils.setTimeouts! {
         assertTimeout: config.assertTimeout,
         pageLoadTimeout: config.pageLoadTimeout,
@@ -27,12 +27,9 @@ mainForHost =
     }
     Utils.setWindowSize! config.windowSize
 
-    testCases
-    |> InternalTest.runTests config
-    |> Task.attempt \res ->
-        when res is
-            Ok {} ->
-                Task.ok {}
+    when testCases |> InternalTest.runTests! config is
+        Ok {} ->
+            0
 
-            Err _ ->
-                Task.err 1
+        Err _ ->
+            1
