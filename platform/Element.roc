@@ -20,7 +20,7 @@ module [
     find_elements!,
     find_single_element!,
     try_find_element!,
-    use_i_frame!,
+    use_iframe!,
 ]
 
 import Internal exposing [Element]
@@ -658,8 +658,8 @@ get_rect! = |element|
 ##     span = frame |> Browser.findElement! (Css "#span-inside-frame")?
 ##     span |> Assert.elementShouldHaveText! "This is inside an iFrame"?
 ## ```
-use_i_frame! : Element, (Internal.Browser => Result {} _) => Result {} _
-use_i_frame! = |element, callback!|
+use_iframe! : Element, (Internal.Browser => Result {} _) => Result {} _
+use_iframe! = |element, callback!|
     { session_id, element_id, selector_text } = Internal.unpack_element_data(element)
 
     DebugMode.run_if_verbose!(
