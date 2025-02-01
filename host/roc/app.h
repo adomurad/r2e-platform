@@ -34,6 +34,6 @@ struct ResultListStr {
     unsigned char disciminant;
 };
 
-void roc__mainForHost_1_exposed_generic(void* captures);
-size_t roc__mainForHost_1_exposed_size();
-void roc__mainForHost_0_caller(char* flags, void* closure_data, struct ResultVoidI64 *result);
+
+size_t roc__main_for_host_1_exposed_size();
+uint32_t roc__main_for_host_1_exposed();

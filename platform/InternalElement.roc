@@ -1,37 +1,37 @@
-module [getText, getProperty, isVisible]
+module [get_text!, get_property!, is_visible!]
 
 import Internal exposing [Element]
 import InternalError
 import Effect
 import PropertyDecoder
 
-getText : Element -> Task Str [WebDriverError Str, ElementNotFound Str]
-getText = \element ->
-    { sessionId, elementId } = Internal.unpackElementData element
+get_text! : Element => Result Str [WebDriverError Str, ElementNotFound Str]
+get_text! = |element|
+    { session_id, element_id } = Internal.unpack_element_data(element)
 
-    Effect.elementGetText sessionId elementId |> Task.mapErr InternalError.handleElementError
+    Effect.element_get_text!(session_id, element_id) |> Result.map_err(InternalError.handle_element_error)
 
-getProperty : Internal.Element, Str -> Task a [ElementNotFound Str, PropertyTypeError Str, WebDriverError Str] where a implements Decoding
-getProperty = \element, propertyName ->
-    { sessionId, elementId } = Internal.unpackElementData element
+get_property! : Internal.Element, Str => Result a [ElementNotFound Str, PropertyTypeError Str, WebDriverError Str] where a implements Decoding
+get_property! = |element, property_name|
+    { session_id, element_id } = Internal.unpack_element_data(element)
 
-    resultStr = Effect.elementGetProperty sessionId elementId propertyName |> Task.mapErr! InternalError.handleElementError
-    resultUtf8 = resultStr |> Str.toUtf8
+    result_str = Effect.element_get_property!(session_id, element_id, property_name) |> Result.map_err(InternalError.handle_element_error)?
+    result_utf8 = result_str |> Str.to_utf8
 
     decoded : Result a _
-    decoded = Decode.fromBytes resultUtf8 PropertyDecoder.utf8
+    decoded = Decode.from_bytes(result_utf8, PropertyDecoder.utf8)
 
     when decoded is
-        Ok val -> Task.ok val
-        Err _ -> Task.err (PropertyTypeError "could not cast property \"$(propertyName)\" with value \"$(resultStr)\" to expected type")
+        Ok(val) -> Ok(val)
+        Err(_) -> Err(PropertyTypeError("could not cast property \"${property_name}\" with value \"${result_str}\" to expected type"))
 
-isVisible : Element -> Task [Visible, NotVisible] [WebDriverError Str, ElementNotFound Str]
-isVisible = \element ->
-    { sessionId, elementId } = Internal.unpackElementData element
+is_visible! : Element => Result [Visible, NotVisible] [WebDriverError Str, ElementNotFound Str]
+is_visible! = |element|
+    { session_id, element_id } = Internal.unpack_element_data(element)
 
-    result = Effect.elementIsDisplayed sessionId elementId |> Task.mapErr! InternalError.handleElementError
+    result = Effect.element_is_displayed!(session_id, element_id) |> Result.map_err(InternalError.handle_element_error)?
 
     if result == "true" then
-        Task.ok Visible
+        Ok(Visible)
     else
-        Task.ok NotVisible
+        Ok(NotVisible)

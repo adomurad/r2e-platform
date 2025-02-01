@@ -1,4 +1,4 @@
-module [executeJs, executeJsWithArgs, JsValue]
+module [execute_js!, execute_js_with_args!, JsValue]
 
 import Internal exposing [Browser]
 import Effect
@@ -7,64 +7,67 @@ import EncodeDecode
 
 JsValue : [String Str, Number F64, Boolean Bool, Null]
 
-executeJs : Browser, Str -> Task a [WebDriverError Str, JsReturnTypeError Str] where a implements Decoding
-executeJs = \browser, script ->
-    { sessionId } = Internal.unpackBrowserData browser
+execute_js! : Browser, Str => Result a [WebDriverError Str, JsReturnTypeError Str] where a implements Decoding
+execute_js! = |browser, script|
+    { session_id } = Internal.unpack_browser_data(browser)
 
-    resultStr = Effect.executeJs sessionId script "[]" |> Task.mapErr! \err -> WebDriverError err
-    resultUtf8 = resultStr |> Str.toUtf8
-
-    decoded : Result a _
-    decoded = Decode.fromBytes resultUtf8 PropertyDecoder.utf8
-
-    when decoded is
-        Ok val -> Task.ok val
-        Err _ -> Task.err (JsReturnTypeError "unsupported return type from js: \"$(resultStr)\"")
-
-executeJsWithArgs : Browser, Str, List JsValue -> Task a [WebDriverError Str, JsReturnTypeError Str] where a implements Decoding
-executeJsWithArgs = \browser, script, arguments ->
-    { sessionId } = Internal.unpackBrowserData browser
-
-    argumentsStr = arguments |> jsArgumentsToStr
-
-    resultStr = Effect.executeJs sessionId script argumentsStr |> Task.mapErr! WebDriverError
-    resultUtf8 = resultStr |> Str.toUtf8
+    result_str = Effect.execute_js!(session_id, script, "[]") |> Result.map_err(|err| WebDriverError(err))?
+    result_utf8 = result_str |> Str.to_utf8
 
     decoded : Result a _
-    decoded = Decode.fromBytes resultUtf8 PropertyDecoder.utf8
+    decoded = Decode.from_bytes(result_utf8, PropertyDecoder.utf8)
 
     when decoded is
-        Ok val -> Task.ok val
-        Err _ -> Task.err (JsReturnTypeError "unsupported return type from js: \"$(resultStr)\"")
+        Ok(val) -> Ok(val)
+        Err(_) -> Err(JsReturnTypeError("unsupported return type from js: \"${result_str}\""))
 
-jsArgumentsToStr : List JsValue -> Str
-jsArgumentsToStr = \args ->
-    argsStr =
+execute_js_with_args! : Browser, Str, List JsValue => Result a [WebDriverError Str, JsReturnTypeError Str] where a implements Decoding
+execute_js_with_args! = |browser, script, arguments|
+    { session_id } = Internal.unpack_browser_data(browser)
+
+    arguments_str = arguments |> js_arguments_to_str
+
+    result_str = Effect.execute_js!(session_id, script, arguments_str) |> Result.map_err(WebDriverError)?
+    result_utf8 = result_str |> Str.to_utf8
+
+    decoded : Result a _
+    decoded = Decode.from_bytes(result_utf8, PropertyDecoder.utf8)
+
+    when decoded is
+        Ok(val) -> Ok(val)
+        Err(_) -> Err(JsReturnTypeError("unsupported return type from js: \"${result_str}\""))
+
+js_arguments_to_str : List JsValue -> Str
+js_arguments_to_str = |args|
+    args_str =
         args
-        |> List.walk "" \state, arg ->
-            when arg is
-                String str ->
-                    escapedStr = EncodeDecode.encodeJsonString str
-                    state |> Str.concat ",$(escapedStr)"
+        |> List.walk(
+            "",
+            |state, arg|
+                when arg is
+                    String(str) ->
+                        escaped_str = EncodeDecode.encode_json_string(str)
+                        state |> Str.concat(",${escaped_str}")
 
-                Number num -> state |> Str.concat ",$(num |> Num.toStr)"
-                Null -> state |> Str.concat ",null"
-                Boolean bool ->
-                    if bool then
-                        state |> Str.concat ",true"
-                    else
-                        state |> Str.concat ",false"
+                    Number(num) -> state |> Str.concat(",${num |> Num.to_str}")
+                    Null -> state |> Str.concat(",null")
+                    Boolean(bool) ->
+                        if bool then
+                            state |> Str.concat(",true")
+                        else
+                            state |> Str.concat(",false"),
+        )
 
-    "[$(argsStr |> Str.dropPrefix ",")]"
+    "[${args_str |> Str.drop_prefix(",")}]"
 
 expect
     input = []
     expected = "[]"
-    output = jsArgumentsToStr input
+    output = js_arguments_to_str(input)
     output == expected
 
 expect
-    input = [String "wow", Number 78.2, Number 0, Boolean Bool.true, Boolean Bool.false, Null]
+    input = [String("wow"), Number(78.2), Number(0), Boolean(Bool.true), Boolean(Bool.false), Null]
     expected = "[\"wow\",78.2,0,true,false,null]"
-    output = jsArgumentsToStr input
+    output = js_arguments_to_str(input)
     output == expected

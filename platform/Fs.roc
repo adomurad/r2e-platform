@@ -1,11 +1,11 @@
-module [createDirIfNotExist, writeUtf8]
+module [create_dir_if_not_exist!, write_utf8!]
 
 import Effect
 
-createDirIfNotExist : Str -> Task {} [FileSystemError Str]
-createDirIfNotExist = \path ->
-    Effect.createDirIfNotExist path |> Task.mapErr FileSystemError
+create_dir_if_not_exist! : Str => Result {} [FileSystemError Str]
+create_dir_if_not_exist! = |path|
+    Effect.create_dir_if_not_exist!(path) |> Result.map_err(FileSystemError)
 
-writeUtf8 : Str, Str -> Task {} [FileSystemError Str]
-writeUtf8 = \path, content ->
-    Effect.fileWriteUtf8 path content |> Task.mapErr FileSystemError
+write_utf8! : Str, Str => Result {} [FileSystemError Str]
+write_utf8! = |path, content|
+    Effect.file_write_utf8!(path, content) |> Result.map_err(FileSystemError)

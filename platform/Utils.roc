@@ -1,91 +1,76 @@
 module [
-    getTimeMilis,
-    resetTestLogBucket,
-    getLogsFromBucket,
-    getTestNameFilter,
-    setTimeouts,
-    setWindowSize,
-    getAssertTimeout,
-    setImplicitTimeoutOverride,
-    setScriptTimeoutOverride,
-    setPageLoadTimeoutOverride,
-    setAssertTimeoutOverride,
-    resetTestOverrides,
-    setWindowSizeOverride,
+    get_time_milis!,
+    reset_test_log_bucket!,
+    get_logs_from_bucket!,
+    get_test_name_filter!,
+    set_timeouts!,
+    set_window_size!,
+    get_assert_timeout!,
+    set_implicit_timeout_override!,
+    set_script_timeout_override!,
+    set_page_load_timeout_override!,
+    set_assert_timeout_override!,
+    reset_test_overrides!,
+    set_window_size_override!,
 ]
 
 import Effect
 
-getTimeMilis : Task U64 []
-getTimeMilis =
-    Effect.getTimeMilis {}
-    |> Task.map Num.toU64
-    |> Task.mapErr \_ -> crash "getTimeMilis should never crash"
+get_time_milis! : {} => U64
+get_time_milis! = |{}|
+    Effect.get_time_milis!({}) |> Num.to_u64
 
-resetTestLogBucket : Task {} []
-resetTestLogBucket =
-    Effect.resetTestLogBucket {}
-    |> Task.mapErr \_ -> crash "resetTestLogBucket should never crash"
+reset_test_log_bucket! : {} => {}
+reset_test_log_bucket! = |{}|
+    Effect.reset_test_log_bucket!({})
 
-getLogsFromBucket : Task (List Str) []
-getLogsFromBucket =
-    Effect.getLogsFromBucket {}
-    |> Task.mapErr \_ -> crash "getLogsFromBucket should never crash"
+get_logs_from_bucket! : {} => List Str
+get_logs_from_bucket! = |{}|
+    Effect.get_logs_from_bucket!({})
 
-getTestNameFilter : Task [FilterTests Str, NoFilter] []
-getTestNameFilter =
-    Effect.getTestNameFilter {}
-    |> Task.map \val ->
-        if val |> Str.isEmpty then
-            NoFilter
-        else
-            FilterTests val
-    |> Task.mapErr \_ -> crash "getTestNameFilter should never crash"
+get_test_name_filter! : {} => [FilterTests Str, NoFilter]
+get_test_name_filter! = |{}|
+    val = Effect.get_test_name_filter!({})
 
-setTimeouts : { assertTimeout : U64, pageLoadTimeout : U64, scriptExecutionTimeout : U64, elementImplicitTimeout : U64 } -> Task {} _
-setTimeouts = \{ assertTimeout, pageLoadTimeout, scriptExecutionTimeout, elementImplicitTimeout } ->
-    Effect.setTimeouts assertTimeout pageLoadTimeout scriptExecutionTimeout elementImplicitTimeout
-    |> Task.mapErr \_ -> crash "setTimeuts should never crash"
+    if val |> Str.is_empty then
+        NoFilter
+    else
+        FilterTests(val)
 
-setAssertTimeoutOverride : U64 -> Task {} []
-setAssertTimeoutOverride = \timeout ->
-    Effect.setAssertTimeoutOverride timeout
-    |> Task.mapErr \_ -> crash "set override should never crash"
+set_timeouts! : { assert_timeout : U64, page_load_timeout : U64, script_execution_timeout : U64, element_implicit_timeout : U64 } => {}
+set_timeouts! = |{ assert_timeout, page_load_timeout, script_execution_timeout, element_implicit_timeout }|
+    Effect.set_timeouts!(assert_timeout, page_load_timeout, script_execution_timeout, element_implicit_timeout)
 
-setPageLoadTimeoutOverride : U64 -> Task {} []
-setPageLoadTimeoutOverride = \timeout ->
-    Effect.setPageLoadTimeoutOverride timeout
-    |> Task.mapErr \_ -> crash "set override should never crash"
+set_assert_timeout_override! : U64 => {}
+set_assert_timeout_override! = |timeout|
+    Effect.set_assert_timeout_override!(timeout)
 
-setScriptTimeoutOverride : U64 -> Task {} []
-setScriptTimeoutOverride = \timeout ->
-    Effect.setScriptTimeoutOverride timeout
-    |> Task.mapErr \_ -> crash "set override should never crash"
+set_page_load_timeout_override! : U64 => {}
+set_page_load_timeout_override! = |timeout|
+    Effect.set_page_load_timeout_override!(timeout)
 
-setImplicitTimeoutOverride : U64 -> Task {} []
-setImplicitTimeoutOverride = \timeout ->
-    Effect.setImplicitTimeoutOverride timeout
-    |> Task.mapErr \_ -> crash "set override should never crash"
+set_script_timeout_override! : U64 => {}
+set_script_timeout_override! = |timeout|
+    Effect.set_script_timeout_override!(timeout)
 
-resetTestOverrides : Task {} []
-resetTestOverrides =
-    Effect.resetTestOverrides {}
-    |> Task.mapErr \_ -> crash "set override should never crash"
+set_implicit_timeout_override! : U64 => {}
+set_implicit_timeout_override! = |timeout|
+    Effect.set_implicit_timeout_override!(timeout)
 
-setWindowSize : [Size U64 U64] -> Task {} _
-setWindowSize = \Size x y ->
-    size = "$(x |> Num.toStr),$(y |> Num.toStr)"
-    Effect.setWindowSize size
-    |> Task.mapErr \_ -> crash "setWindowSize should never crash"
+reset_test_overrides! : {} => {}
+reset_test_overrides! = |{}|
+    Effect.reset_test_overrides!({})
 
-setWindowSizeOverride : [Size U64 U64] -> Task {} _
-setWindowSizeOverride = \Size x y ->
-    size = "$(x |> Num.toStr),$(y |> Num.toStr)"
-    Effect.setWindowSizeOverride size
-    |> Task.mapErr \_ -> crash "setWindowSize should never crash"
+set_window_size! : [Size U64 U64] => {}
+set_window_size! = |Size(x, y)|
+    size = "${x |> Num.to_str},${y |> Num.to_str}"
+    Effect.set_window_size!(size)
 
-getAssertTimeout : Task U64 []
-getAssertTimeout =
-    Effect.getAssertTimeout {}
-    |> Task.map Num.toU64
-    |> Task.mapErr \_ -> crash "getAssertTimeout should never crash"
+set_window_size_override! : [Size U64 U64] => {}
+set_window_size_override! = |Size(x, y)|
+    size = "${x |> Num.to_str},${y |> Num.to_str}"
+    Effect.set_window_size_override!(size)
+
+get_assert_timeout! : {} => U64
+get_assert_timeout! = |{}|
+    Effect.get_assert_timeout!({})

@@ -1,42 +1,42 @@
 # `Browser` module contains functions to interact with the `Browser`.
 module [
-    openNewWindow,
-    openNewWindowWithCleanup,
-    closeWindow,
-    navigateTo,
-    navigateBack,
-    navigateForward,
-    reloadPage,
-    getTitle,
-    getUrl,
+    open_new_window!,
+    open_new_window_with_cleanup!,
+    close_window!,
+    navigate_to!,
+    navigate_back!,
+    navigate_forward!,
+    reload_page!,
+    get_title!,
+    get_url!,
     Locator,
-    findElement,
-    tryFindElement,
-    findSingleElement,
-    findElements,
-    takeScreenshotBase64,
+    find_element!,
+    try_find_element!,
+    find_single_element!,
+    find_elements!,
+    take_screenshot_base64!,
     # printPdfBase64,
-    maximizeWindow,
-    minimizeWindow,
-    fullScreenWindow,
-    setWindowRect,
-    getWindowRect,
-    executeJs,
-    executeJsWithOutput,
-    executeJsWithArgs,
+    maximize_window!,
+    minimize_window!,
+    full_screen_window!,
+    set_window_rect!,
+    get_window_rect!,
+    execute_js!,
+    execute_js_with_output!,
+    execute_js_with_args!,
     Cookie,
     CookieExpiry,
     SameSiteOption,
-    addCookie,
-    getCookie,
-    getAllCookies,
-    deleteCookie,
-    deleteAllCookies,
-    acceptAlert,
-    dismissAlert,
-    sendTextToAlert,
-    getAlertText,
-    getPageHtml,
+    add_cookie!,
+    get_cookie!,
+    get_all_cookies!,
+    delete_cookie!,
+    delete_all_cookies!,
+    accept_alert!,
+    dismiss_alert!,
+    send_text_to_alert!,
+    get_alert_text!,
+    get_page_html!,
 ]
 
 import Effect
@@ -53,33 +53,38 @@ import InternalError
 ## please remember to close the browser windows you open manually.
 ##
 ## ```
-## newBrowser = Browser.openNewWindow!
+## newBrowser = Browser.open_new_window!({})?
 ## ...
-## browser |> Browser.closeWindow!
+## newBrowser |> Browser.close_window!()?
 ## ```
-openNewWindow : Task Browser [WebDriverError Str]
-openNewWindow =
-    DebugMode.runIfVerbose! \{} ->
-        Debug.printLine! "Opening new browser window"
+open_new_window! : {} => Result Browser [WebDriverError Str]
+open_new_window! = |{}|
+    DebugMode.run_if_verbose!(
+        |{}|
+            Debug.print_line!("Opening new browser window"),
+    )
 
-    Effect.startSession {}
-    |> Task.mapErr WebDriverError
-    |> Task.map \sessionId ->
-        Internal.packBrowserData { sessionId }
+    Effect.start_session!({})
+    |> Result.map_err(WebDriverError)
+    |> Result.map_ok(
+        |session_id|
+            Internal.pack_browser_data({ session_id }),
+    )
 
 ## Opens a new `Browser` window and runs a callback.
 ## Will close the browser after the callback is finished.
 ##
 ## ```
-## Browser.openNewWindowWithCleanup! \browser2 ->
-##     browser2 |> Browser.navigateTo! "https://www.roc-lang.org/"
+## Browser.open_new_window_with_cleanup!(|browser2|
+##     browser2 |> Browser.navigate_to!("https://www.roc-lang.org/")
+## )
 ## ```
-openNewWindowWithCleanup : (Browser -> Task val [WebDriverError Str]err) -> Task val [WebDriverError Str]err
-openNewWindowWithCleanup = \callback ->
-    browser = openNewWindow!
-    result = callback browser |> Task.result!
-    browser |> closeWindow!
-    result |> Task.fromResult
+open_new_window_with_cleanup! : (Browser => Result val [WebDriverError Str]err) => Result val [WebDriverError Str]err
+open_new_window_with_cleanup! = |callback!|
+    browser = open_new_window!({})?
+    result = callback!(browser)
+    browser |> close_window!?
+    result
 
 ## Close a `Browser` window.
 ##
@@ -87,85 +92,95 @@ openNewWindowWithCleanup = \callback ->
 ## the automatic cleanup will fail trying to close this browser.
 ##
 ## ```
-## newBrowser = Browser.openNewWindow!
+## newBrowser = Browser.open_new_window!({})?
 ## ...
-## browser |> Browser.closeWindow!
+## newBrowser |> Browser.close_window!
 ## ```
-closeWindow : Browser -> Task {} [WebDriverError Str]
-closeWindow = \browser ->
-    { sessionId } = Internal.unpackBrowserData browser
+close_window! : Browser => Result {} [WebDriverError Str]
+close_window! = |browser|
+    { session_id } = Internal.unpack_browser_data(browser)
 
-    DebugMode.runIfVerbose! \{} ->
-        Debug.printLine! "Closing browser window"
+    DebugMode.run_if_verbose!(
+        |{}|
+            Debug.print_line!("Closing browser window"),
+    )
 
-    Effect.deleteSession sessionId |> Task.mapErr WebDriverError
+    Effect.delete_session!(session_id) |> Result.map_err(WebDriverError)
 
 ## Navigate the browser to the given URL.
 ##
 ## ```
 ## # open google.com
-## browser |> Browser.navigateTo! "http://google.com"
+## browser |> Browser.navigate_to!("http://google.com")?
 ## ```
-navigateTo : Browser, Str -> Task {} [WebDriverError Str]
-navigateTo = \browser, url ->
-    { sessionId } = Internal.unpackBrowserData browser
+navigate_to! : Browser, Str => Result {} [WebDriverError Str]
+navigate_to! = |browser, url|
+    { session_id } = Internal.unpack_browser_data(browser)
 
-    DebugMode.runIfVerbose! \{} ->
-        Debug.printLine! "Navigating to: $(url)"
+    DebugMode.run_if_verbose!(
+        |{}|
+            Debug.print_line!("Navigating to: ${url}"),
+    )
 
-    Effect.browserNavigateTo sessionId url |> Task.mapErr! WebDriverError
+    Effect.browser_navigate_to!(session_id, url) |> Result.map_err(WebDriverError)?
 
-    DebugMode.runIfDebugMode! \{} ->
-        DebugMode.wait!
+    DebugMode.run_if_debug_mode!(
+        |{}|
+            DebugMode.wait!({}),
+    )
 
-    Task.ok {}
+    Ok({})
 
 ## Get browser title.
 ##
 ## ```
-## browser |> Browser.navigateTo! "http://google.com"
+## browser |> Browser.navigate_to!("http://google.com")?
 ## # get title
-## title = browser |> Browser.getTitle!
+## title = browser |> Browser.get_title!()?
 ## # title = "Google"
 ## ```
-getTitle : Browser -> Task.Task Str [WebDriverError Str]
-getTitle = \browser ->
-    { sessionId } = Internal.unpackBrowserData browser
+get_title! : Browser => Result Str [WebDriverError Str]
+get_title! = |browser|
+    { session_id } = Internal.unpack_browser_data(browser)
 
-    DebugMode.runIfVerbose! \{} ->
-        Debug.printLine! "Getting title of the current page"
+    DebugMode.run_if_verbose!(
+        |{}|
+            Debug.print_line!("Getting title of the current page"),
+    )
 
-    Effect.browserGetTitle sessionId |> Task.mapErr WebDriverError
+    Effect.browser_get_title!(session_id) |> Result.map_err(WebDriverError)
 
 ## Get current URL.
 ##
 ## ```
-## browser |> Browser.navigateTo! "http://google.com"
+## browser |> Browser.navigate_to!("http://google.com")?
 ## # get url
-## url = browser |> Browser.getUrl!
+## url = browser |> Browser.get_url!()?
 ## # url = "https://google.com/"
 ## ```
-getUrl : Browser -> Task Str [WebDriverError Str]
-getUrl = \browser ->
-    { sessionId } = Internal.unpackBrowserData browser
+get_url! : Browser => Result Str [WebDriverError Str]
+get_url! = |browser|
+    { session_id } = Internal.unpack_browser_data(browser)
 
-    DebugMode.runIfVerbose! \{} ->
-        Debug.printLine! "Getting url of the current page"
+    DebugMode.run_if_verbose!(
+        |{}|
+            Debug.print_line!("Getting url of the current page"),
+    )
 
-    Effect.browserGetUrl sessionId
-    |> Task.mapErr WebDriverError
+    Effect.browser_get_url!(session_id)
+    |> Result.map_err(WebDriverError)
 
 ## Supported locator strategies
 ##
-## `Css Str` - e.g. Css ".my-button-class"
+## `Css Str` - e.g. Css(".my-button-class")
 ##
-## `TestId Str` - e.g. TestId "button" => Css "[data-testid=\"button\"]"
+## `TestId Str` - e.g. TestId("button") => Css("[data-testid=\"button\"]")
 ##
-## `XPath Str` - e.g. XPath "/bookstore/book[price>35]/price"
+## `XPath Str` - e.g. XPath("/bookstore/book[price>35]/price")
 ##
-## `LinkText Str` - e.g. LinkText "Examples" in <a href="/examples-page">Examples</a>
+## `LinkText Str` - e.g. LinkText("Examples") in <a href="/examples-page">Examples</a>
 ##
-## `PartialLinkText Str` - e.g. PartialLinkText "Exam" in <a href="/examples-page">Examples</a>
+## `PartialLinkText Str` - e.g. PartialLinkText("Exam") in <a href="/examples-page">Examples</a>
 ##
 Locator : Locator.Locator
 
@@ -178,39 +193,46 @@ Locator : Locator.Locator
 ##
 ## ```
 ## # find the html element with a css selector "#my-id"
-## button = browser |> Browser.findElement! (Css "#my-id")
+## button = browser |> Browser.find_element!(Css("#my-id"))?
 ## ```
 ##
 ## ```
 ## # find the html element with a css selector ".my-class"
-## button = browser |> Browser.findElement! (Css ".my-class")
+## button = browser |> Browser.find_element!(Css(".my-class"))?
 ## ```
 ##
 ## ```
 ## # find the html element with an attribute [data-testid="my-element"]
-## button = browser |> Browser.findElement! (TestId "my-element")
+## button = browser |> Browser.find_element!(TestId("my-element"))?
 ## ```
-findElement : Browser, Locator -> Task Element [WebDriverError Str, ElementNotFound Str]
-findElement = \browser, locator ->
-    { sessionId } = Internal.unpackBrowserData browser
-    (using, value) = Locator.getLocator locator
+find_element! : Browser, Locator => Result Element [WebDriverError Str, ElementNotFound Str]
+find_element! = |browser, locator|
+    { session_id } = Internal.unpack_browser_data(browser)
+    (using, value) = Locator.get_locator(locator)
 
-    selectorText = "$(locator |> Inspect.toStr)"
+    selector_text = "${locator |> Inspect.to_str}"
 
-    DebugMode.runIfVerbose! \{} ->
-        Debug.printLine! "Searching for element: $(selectorText)"
+    DebugMode.run_if_verbose!(
+        |{}|
+            Debug.print_line!("Searching for element: ${selector_text}"),
+    )
 
-    elementId = Effect.browserFindElement sessionId using value |> Task.mapErr! InternalError.handleElementError
+    element_id = Effect.browser_find_element!(session_id, using, value) |> Result.map_err(InternalError.handle_element_error)?
 
-    DebugMode.runIfVerbose! \{} ->
-        Debug.printLine! "Found element: $(selectorText)"
+    DebugMode.run_if_verbose!(
+        |{}|
+            Debug.print_line!("Found element: ${selector_text}"),
+    )
 
-    DebugMode.runIfDebugMode! \{} ->
-        DebugMode.showDebugMessageInBrowser! sessionId "Find Element $(selectorText)"
-        DebugMode.flashElements! sessionId locator Single
-        DebugMode.wait!
+    DebugMode.run_if_debug_mode!(
+        |{}|
+            DebugMode.show_debug_message_in_browser!(session_id, "Find Element ${selector_text}")?
+            DebugMode.flash_elements!(session_id, locator, Single)?
+            DebugMode.wait!({})
+            Ok({}),
+    )
 
-    Internal.packElementData { sessionId, elementId, selectorText, locator } |> Task.ok
+    Internal.pack_element_data({ session_id, element_id, selector_text, locator }) |> Ok
 
 ## Find an `Element` in the `Browser`.
 ##
@@ -223,22 +245,24 @@ findElement = \browser, locator ->
 ## See supported locators at `Locator`.
 ##
 ## ```
-## maybeButton = browser |> Browser.tryFindElement! (Css "#submit-button")
+## maybe_button = browser |> Browser.try_find_element!(Css("#submit-button"))?
 ##
-## when maybeButton is
-##     NotFound -> Stdout.line! "Button not found"
+## when maybe_button is
+##     NotFound -> Stdout.line!("Button not found")
 ##     Found el ->
-##         buttonText = el |> Element.getText!
-##         Stdout.line! "Button found with text: $(buttonText)"
+##         button_text = el |> Element.get_text!
+##         Stdout.line!("Button found with text: $(button_text)")
 ## ```
-tryFindElement : Browser, Locator -> Task [Found Element, NotFound] [WebDriverError Str, ElementNotFound Str]
-tryFindElement = \browser, locator ->
-    findElement browser locator
-    |> Task.map Found
-    |> Task.onErr \err ->
-        when err is
-            ElementNotFound _ -> Task.ok NotFound
-            other -> Task.err other
+try_find_element! : Browser, Locator => Result [Found Element, NotFound] [WebDriverError Str, ElementNotFound Str]
+try_find_element! = |browser, locator|
+    find_element!(browser, locator)
+    |> Result.map_ok(Found)
+    |> Result.on_err(
+        |err|
+            when err is
+                ElementNotFound(_) -> Ok(NotFound)
+                other -> Err(other),
+    )
 
 ## Find an `Element` in the `Browser`.
 ##
@@ -250,25 +274,24 @@ tryFindElement = \browser, locator ->
 ## See supported locators at `Locator`.
 ##
 ## ```
-## button = browser |> Browser.findSingleElement! (Css "#submit-button")
+## button = browser |> Browser.find_single_element!(Css("#submit-button"))?
 ## ```
-findSingleElement : Browser, Locator -> Task Element [AssertionError Str, ElementNotFound Str, WebDriverError Str]
-findSingleElement = \browser, locator ->
-    elements = findElements! browser locator
+find_single_element! : Browser, Locator => Result Element [AssertionError Str, ElementNotFound Str, WebDriverError Str]
+find_single_element! = |browser, locator|
+    elements = find_elements!(browser, locator)?
     when elements |> List.len is
         0 ->
-            (_, value) = Locator.getLocator locator
-            Task.err (ElementNotFound "element with selector $(value) was not found")
+            (_, value) = Locator.get_locator(locator)
+            Err(ElementNotFound("element with selector ${value} was not found"))
 
         1 ->
             elements
             |> List.first
-            |> Result.onErr \_ -> crash "just check - there is 1 element in the list"
-            |> Task.fromResult
+            |> Result.on_err(|_| crash("just check - there is 1 element in the list"))
 
         n ->
-            (_, value) = Locator.getLocator locator
-            Task.err (AssertionError "expected to find only 1 element with selector \"$(value)\", but found $(n |> Num.toStr)")
+            (_, value) = Locator.get_locator(locator)
+            Err(AssertionError("expected to find only 1 element with selector \"${value}\", but found ${n |> Num.to_str}"))
 
 ## Find all `Elements` in the `Browser`.
 ##
@@ -278,57 +301,68 @@ findSingleElement = \browser, locator ->
 ##
 ## ```
 ## # find all <li> elements in #my-list
-## listItems = browser |> Browser.findElements! (Css "#my-list li")
+## listItems = browser |> Browser.find_elements!(Css("#my-list li"))?
 ## ```
 ##
-findElements : Browser, Locator -> Task (List Element) [WebDriverError Str, ElementNotFound Str]
-findElements = \browser, locator ->
-    { sessionId } = Internal.unpackBrowserData browser
-    (using, value) = Locator.getLocator locator
+find_elements! : Browser, Locator => Result (List Element) [WebDriverError Str, ElementNotFound Str]
+find_elements! = |browser, locator|
+    { session_id } = Internal.unpack_browser_data(browser)
+    (using, value) = Locator.get_locator(locator)
 
-    selectorText = "$(locator |> Inspect.toStr)"
+    selector_text = "${locator |> Inspect.to_str}"
 
-    DebugMode.runIfVerbose! \{} ->
-        Debug.printLine! "Searching for elements: $(selectorText)"
+    DebugMode.run_if_verbose!(
+        |{}|
+            Debug.print_line!("Searching for elements: ${selector_text}"),
+    )
 
-    result = Effect.browserFindElements sessionId using value |> Task.mapErr InternalError.handleElementError |> Task.result!
+    result = Effect.browser_find_elements!(session_id, using, value) |> Result.map_err(InternalError.handle_element_error)
 
     when result is
-        Ok elementIds ->
-            DebugMode.runIfVerbose! \{} ->
-                Debug.printLine! "Found $(elementIds |> List.len |> Num.toStr) elements: $(selectorText)"
+        Ok(element_ids) ->
+            DebugMode.run_if_verbose!(
+                |{}|
+                    Debug.print_line!("Found ${element_ids |> List.len |> Num.to_str} elements: ${selector_text}"),
+            )
 
-            DebugMode.runIfDebugMode! \{} ->
-                if elementIds |> List.isEmpty then
-                    Task.ok {}
-                else
-                    DebugMode.showDebugMessageInBrowser! sessionId "Find Elements $(selectorText)"
-                    DebugMode.flashElements! sessionId locator All
-                    DebugMode.wait!
+            DebugMode.run_if_debug_mode!(
+                |{}|
+                    if element_ids |> List.is_empty then
+                        Ok({})
+                    else
+                        DebugMode.show_debug_message_in_browser!(session_id, "Find Elements ${selector_text}")?
+                        DebugMode.flash_elements!(session_id, locator, All)?
+                        DebugMode.wait!({})
+                        Ok({}),
+            )
 
-            elementIds
-            |> List.map \elementId ->
-                Internal.packElementData { sessionId, elementId, selectorText, locator }
-            |> Task.ok
+            element_ids
+            |> List.map(
+                |element_id|
+                    Internal.pack_element_data({ session_id, element_id, selector_text, locator }),
+            )
+            |> Ok
 
-        Err (ElementNotFound _) -> Task.ok []
-        Err err -> Task.err err
+        Err(ElementNotFound(_)) -> Ok([])
+        Err(err) -> Err(err)
 
 ## Take a screenshot of the whole document.
 ##
 ## The result will be a **base64** encoded `Str` representation of a PNG file.
 ##
 ## ```
-## base64PngStr = browser |> Browser.takeScreenshotBase64!
+## base64PngStr = browser |> Browser.take_screenshot_base64!()?
 ## ```
-takeScreenshotBase64 : Browser -> Task Str [WebDriverError Str]
-takeScreenshotBase64 = \browser ->
-    { sessionId } = Internal.unpackBrowserData browser
+take_screenshot_base64! : Browser => Result Str [WebDriverError Str]
+take_screenshot_base64! = |browser|
+    { session_id } = Internal.unpack_browser_data(browser)
 
-    DebugMode.runIfVerbose! \{} ->
-        Debug.printLine! "Taking screenshot of the whole page"
+    DebugMode.run_if_verbose!(
+        |{}|
+            Debug.print_line!("Taking screenshot of the whole page"),
+    )
 
-    Effect.browserGetScreenshot sessionId |> Task.mapErr WebDriverError
+    Effect.browser_get_screenshot!(session_id) |> Result.map_err(WebDriverError)
 
 # PageOrientation : [Landscape, Portrait]
 #
@@ -337,9 +371,9 @@ takeScreenshotBase64 = \browser ->
 #     margin ? PageMargins,
 #     scale ? F64, # 0.1 - 2.0 - default: 1.0
 #     orientation ? PageOrientation, # default: portrait
-#     shrinkToFit ? Bool, # default: true
+#     shrink_to_fit ? Bool, # default: true
 #     background ? Bool, # default: false
-#     pageRanges ? List Str, # default []
+#     page_ranges ? List Str, # default []
 # }
 #
 # PageDimensions : {
@@ -367,9 +401,9 @@ takeScreenshotBase64 = \browser ->
 ##     margin ? PageMargins,
 ##     scale ? F64, # 0.1 - 2.0 - default: 1.0
 ##     orientation ? PageOrientation, # default: portrait
-##     shrinkToFit ? Bool, # default: true
+##     shrink_to_fit ? Bool, # default: true
 ##     background ? Bool, # default: false
-##     pageRanges ? List Str, # default []
+##     page_ranges ? List Str, # default []
 ## }
 ##
 ## PageDimensions : {
@@ -385,10 +419,10 @@ takeScreenshotBase64 = \browser ->
 ## }
 ## ```
 ## ```
-## base64PdfStr = browser |> Browser.printPdfBase64! {}
+## base64_pdf_str = browser |> Browser.print_pdf_base64!({})?
 ## ```
-# printPdfBase64 : Browser, PrintPdfPayload -> Task.Task Str [WebDriverError Str]
-# printPdfBase64 = \browser, { scale ? 1.0f64, orientation ? Portrait, shrinkToFit ? Bool.true, background ? Bool.false, page ? { width: 21.59f64, height: 27.94f64 }, margin ? { top: 1.0f64, bottom: 1.0f64, left: 1.0f64, right: 1.0f64 }, pageRanges ? [] } ->
+# print_pdf_base64 : Browser, PrintPdfPayload -> Task.Task Str [WebDriverError Str]
+# print_pdf_base64 = \browser, { scale ? 1.0f64, orientation ? Portrait, shrinkToFit ? Bool.true, background ? Bool.false, page ? { width: 21.59f64, height: 27.94f64 }, margin ? { top: 1.0f64, bottom: 1.0f64, left: 1.0f64, right: 1.0f64 }, pageRanges ? [] } ->
 #     { sessionId } = Internal.unpackBrowserData browser
 #
 #     orientationStr = if orientation == Portrait then "portrait" else "landscape"
@@ -434,39 +468,43 @@ SetWindowRectOptions : [
 ## But the result contain the dimension of the browser viewport!
 ##
 ## ```
-## newRect = browser |> Browser.setWindowRect! (Move { x: 400, y: 600 })
+## newRect = browser |> Browser.set_window_rect!(Move({ x: 400, y: 600 }))?
 ## # newRect is { x: 406, y: 627, width: 400, height: 600 }
 ## ```
 ## ```
-## newRect = browser |> Browser.setWindowRect! (Resize { width: 800, height: 750 })
+## newRect = browser |> Browser.set_window_rect!(Resize({ width: 800, height: 750 }))?
 ## # newRect is { x: 300, y: 500, width: 800, height: 750 }
 ## ```
 ## ```
-## newRect = browser |> Browser.setWindowRect! (MoveAndResize { x: 400, y: 600, width: 800, height: 750 })
+## newRect = browser |> Browser.set_window_rect!(MoveAndResize({ x: 400, y: 600, width: 800, height: 750 }))?
 ## # newRect is { x: 406, y: 627, width: 800, height: 750 }
 ## ```
-setWindowRect : Browser, SetWindowRectOptions -> Task.Task WindowRect [WebDriverError Str]
-setWindowRect = \browser, setRectOptions ->
-    { sessionId } = Internal.unpackBrowserData browser
+set_window_rect! : Browser, SetWindowRectOptions => Result WindowRect [WebDriverError Str]
+set_window_rect! = |browser, set_rect_options|
+    { session_id } = Internal.unpack_browser_data(browser)
 
-    DebugMode.runIfVerbose! \{} ->
-        when setRectOptions is
-            Move { x, y } -> Debug.printLine "Moving browser window to: ($(x |> Num.toStr), $(y |> Num.toStr))"
-            Resize { width, height } -> Debug.printLine "Resizing browser window to: ($(width |> Num.toStr), $(height |> Num.toStr))"
-            MoveAndResize { x, y, width, height } -> Debug.printLine "Moving browser window to: ($(x |> Num.toStr), $(y |> Num.toStr)), and resizing to: ($(width |> Num.toStr), $(height |> Num.toStr))"
+    DebugMode.run_if_verbose!(
+        |{}|
+            when set_rect_options is
+                Move({ x, y }) -> Debug.print_line!("Moving browser window to: (${x |> Num.to_str}, ${y |> Num.to_str})")
+                Resize({ width, height }) -> Debug.print_line!("Resizing browser window to: (${width |> Num.to_str}, ${height |> Num.to_str})")
+                MoveAndResize({ x, y, width, height }) -> Debug.print_line!("Moving browser window to: (${x |> Num.to_str}, ${y |> Num.to_str}), and resizing to: (${width |> Num.to_str}, ${height |> Num.to_str})"),
+    )
 
-    { disciminant, newX, newY, newWidth, newHeight } =
-        when setRectOptions is
-            Move { x, y } -> { disciminant: 1, newX: x, newY: y, newWidth: 0, newHeight: 0 }
-            Resize { width, height } -> { disciminant: 2, newX: 0, newY: 0, newWidth: width |> Num.toI64, newHeight: height |> Num.toI64 }
-            MoveAndResize { x, y, width, height } -> { disciminant: 3, newX: x, newY: y, newWidth: width |> Num.toI64, newHeight: height |> Num.toI64 }
+    { disciminant, new_x, new_y, new_width, new_height } =
+        when set_rect_options is
+            Move({ x, y }) -> { disciminant: 1, new_x: x, new_y: y, new_width: 0, new_height: 0 }
+            Resize({ width, height }) -> { disciminant: 2, new_x: 0, new_y: 0, new_width: width |> Num.to_i64, new_height: height |> Num.to_i64 }
+            MoveAndResize({ x, y, width, height }) -> { disciminant: 3, new_x: x, new_y: y, new_width: width |> Num.to_i64, new_height: height |> Num.to_i64 }
 
-    Effect.browserSetWindowRect sessionId disciminant newX newY newWidth newHeight
-    |> Task.map \list ->
-        when list is
-            [xVal, yVal, widthVal, heightVal] -> { x: xVal, y: yVal, width: widthVal |> Num.toU32, height: heightVal |> Num.toU32 }
-            _ -> crash "the contract with host should not fail"
-    |> Task.mapErr WebDriverError
+    Effect.browser_set_window_rect!(session_id, disciminant, new_x, new_y, new_width, new_height)
+    |> Result.map_ok(
+        |list|
+            when list is
+                [x_val, y_val, width_val, height_val] -> { x: x_val, y: y_val, width: width_val |> Num.to_u32, height: height_val |> Num.to_u32 }
+                _ -> crash("the contract with host should not fail"),
+    )
+    |> Result.map_err(WebDriverError)
 
 ## Get browser window position and size.
 ##
@@ -479,152 +517,192 @@ setWindowRect = \browser, setRectOptions ->
 ## without the frame.
 ##
 ## ```
-## rect = browser |> Browser.getWindowRect!
+## rect = browser |> Browser.get_window_rect!()?
 ## # rect is { x: 406, y: 627, width: 400, height: 600 }
 ## ```
-getWindowRect : Browser -> Task WindowRect [WebDriverError Str]
-getWindowRect = \browser ->
-    { sessionId } = Internal.unpackBrowserData browser
+get_window_rect! : Browser => Result WindowRect [WebDriverError Str]
+get_window_rect! = |browser|
+    { session_id } = Internal.unpack_browser_data(browser)
 
-    DebugMode.runIfVerbose! \{} ->
-        Debug.printLine! "Getting browser position and size"
+    DebugMode.run_if_verbose!(
+        |{}|
+            Debug.print_line!("Getting browser position and size"),
+    )
 
-    Effect.browserGetWindowRect sessionId
-    |> Task.map \list ->
-        when list is
-            [xVal, yVal, widthVal, heightVal] -> { x: xVal, y: yVal, width: widthVal |> Num.toU32, height: heightVal |> Num.toU32 }
-            _ -> crash "the contract with host should not fail"
-    |> Task.mapErr WebDriverError
+    Effect.browser_get_window_rect!(session_id)
+    |> Result.map_ok(
+        |list|
+            when list is
+                [x_val, y_val, width_val, height_val] -> { x: x_val, y: y_val, width: width_val |> Num.to_u32, height: height_val |> Num.to_u32 }
+                _ -> crash("the contract with host should not fail"),
+    )
+    |> Result.map_err(WebDriverError)
 
 ## Navigate back in the browser history.
 ##
 ## ```
-## browser |> Browser.navigateBack!
+## browser |> Browser.navigate_back!()?
 ## ```
-navigateBack : Browser -> Task {} [WebDriverError Str]
-navigateBack = \browser ->
-    { sessionId } = Internal.unpackBrowserData browser
+navigate_back! : Browser => Result {} [WebDriverError Str]
+navigate_back! = |browser|
+    { session_id } = Internal.unpack_browser_data(browser)
 
-    DebugMode.runIfVerbose! \{} ->
-        Debug.printLine! "Navigating back"
+    DebugMode.run_if_verbose!(
+        |{}|
+            Debug.print_line!("Navigating back"),
+    )
 
-    Effect.browserNavigateBack sessionId |> Task.mapErr! WebDriverError
+    Effect.browser_navigate_back!(session_id) |> Result.map_err(WebDriverError)?
 
-    DebugMode.runIfDebugMode! \{} ->
-        DebugMode.wait!
+    DebugMode.run_if_debug_mode!(
+        |{}|
+            DebugMode.wait!({}),
+    )
+
+    Ok({})
 
 ## Navigate forward in the browser history.
 ##
 ## ```
-## browser |> Browser.navigateForward!
+## browser |> Browser.navigate_forward!()?
 ## ```
-navigateForward : Browser -> Task {} [WebDriverError Str]
-navigateForward = \browser ->
-    { sessionId } = Internal.unpackBrowserData browser
+navigate_forward! : Browser => Result {} [WebDriverError Str]
+navigate_forward! = |browser|
+    { session_id } = Internal.unpack_browser_data(browser)
 
-    DebugMode.runIfVerbose! \{} ->
-        Debug.printLine! "Navigating froward"
+    DebugMode.run_if_verbose!(
+        |{}|
+            Debug.print_line!("Navigating froward"),
+    )
 
-    Effect.browserNavigateForward sessionId |> Task.mapErr! WebDriverError
+    Effect.browser_navigate_forward!(session_id) |> Result.map_err(WebDriverError)?
 
-    DebugMode.runIfDebugMode! \{} ->
-        DebugMode.wait!
+    DebugMode.run_if_debug_mode!(
+        |{}|
+            DebugMode.wait!({}),
+    )
+
+    Ok({})
 
 ## Reload the current page.
 ##
 ## ```
-## browser |> Browser.reloadPage!
+## browser |> Browser.reload_page!()?
 ## ```
-reloadPage : Browser -> Task {} [WebDriverError Str]
-reloadPage = \browser ->
-    { sessionId } = Internal.unpackBrowserData browser
+reload_page! : Browser => Result {} [WebDriverError Str]
+reload_page! = |browser|
+    { session_id } = Internal.unpack_browser_data(browser)
 
-    DebugMode.runIfVerbose! \{} ->
-        Debug.printLine! "Reloading page"
+    DebugMode.run_if_verbose!(
+        |{}|
+            Debug.print_line!("Reloading page"),
+    )
 
-    Effect.browserReload sessionId |> Task.mapErr! WebDriverError
+    Effect.browser_reload!(session_id) |> Result.map_err(WebDriverError)?
 
-    DebugMode.runIfDebugMode! \{} ->
-        DebugMode.wait!
+    DebugMode.run_if_debug_mode!(
+        |{}|
+            DebugMode.wait!({}),
+    )
+
+    Ok({})
 
 ## Maximize the `Browser` window.
 ##
 ## Can fail when the system does not support this operation.
 ##
 ## ```
-## newRect = browser |> Browser.maximizeWindow!
+## new_rect = browser |> Browser.maximize_window!()?
 ## ```
-maximizeWindow : Browser -> Task WindowRect [WebDriverError Str]
-maximizeWindow = \browser ->
-    { sessionId } = Internal.unpackBrowserData browser
+maximize_window! : Browser => Result WindowRect [WebDriverError Str]
+maximize_window! = |browser|
+    { session_id } = Internal.unpack_browser_data(browser)
 
-    DebugMode.runIfVerbose! \{} ->
-        Debug.printLine! "Maximizing browser window"
+    DebugMode.run_if_verbose!(
+        |{}|
+            Debug.print_line!("Maximizing browser window"),
+    )
 
-    Effect.browserMaximize sessionId
-    |> Task.map \list ->
-        when list is
-            [xVal, yVal, widthVal, heightVal] -> { x: xVal, y: yVal, width: widthVal |> Num.toU32, height: heightVal |> Num.toU32 }
-            _ -> crash "the contract with host should not fail"
-    |> Task.mapErr WebDriverError
+    Effect.browser_maximize!(session_id)
+    |> Result.map_ok(
+        |list|
+            when list is
+                [x_val, y_val, width_val, height_val] -> { x: x_val, y: y_val, width: width_val |> Num.to_u32, height: height_val |> Num.to_u32 }
+                _ -> crash("the contract with host should not fail"),
+    )
+    |> Result.map_err(WebDriverError)
 
 ## Minimize the `Browser` window.
 ##
 ## Can fail when the system does not support this operation.
 ##
 ## ```
-## newRect = browser |> Browser.minimizeWindow!
+## new_rect = browser |> Browser.minimize_window!()?
 ## ```
-minimizeWindow : Browser -> Task WindowRect [WebDriverError Str]
-minimizeWindow = \browser ->
-    { sessionId } = Internal.unpackBrowserData browser
+minimize_window! : Browser => Result WindowRect [WebDriverError Str]
+minimize_window! = |browser|
+    { session_id } = Internal.unpack_browser_data(browser)
 
-    DebugMode.runIfVerbose! \{} ->
-        Debug.printLine! "Minimizing browser window"
+    DebugMode.run_if_verbose!(
+        |{}|
+            Debug.print_line!("Minimizing browser window"),
+    )
 
-    Effect.browserMinimize sessionId
-    |> Task.map \list ->
-        when list is
-            [xVal, yVal, widthVal, heightVal] -> { x: xVal, y: yVal, width: widthVal |> Num.toU32, height: heightVal |> Num.toU32 }
-            _ -> crash "the contract with host should not fail"
-    |> Task.mapErr WebDriverError
+    Effect.browser_minimize!(session_id)
+    |> Result.map_ok(
+        |list|
+            when list is
+                [x_val, y_val, width_val, height_val] -> { x: x_val, y: y_val, width: width_val |> Num.to_u32, height: height_val |> Num.to_u32 }
+                _ -> crash("the contract with host should not fail"),
+    )
+    |> Result.map_err(WebDriverError)
 
 ## Make the `Browser` window full screen.
 ##
 ## Can fail when the system does not support this operation.
 ##
 ## ```
-## newRect = browser |> Browser.fullScreenWindow!
+## new_rect = browser |> Browser.full_screen_window!()?
 ## ```
-fullScreenWindow : Browser -> Task WindowRect [WebDriverError Str]
-fullScreenWindow = \browser ->
-    { sessionId } = Internal.unpackBrowserData browser
+full_screen_window! : Browser => Result WindowRect [WebDriverError Str]
+full_screen_window! = |browser|
+    { session_id } = Internal.unpack_browser_data(browser)
 
-    DebugMode.runIfVerbose! \{} ->
-        Debug.printLine! "Making browser window full screen"
+    DebugMode.run_if_verbose!(
+        |{}|
+            Debug.print_line!("Making browser window full screen"),
+    )
 
-    Effect.browserFullScreen sessionId
-    |> Task.map \list ->
-        when list is
-            [xVal, yVal, widthVal, heightVal] -> { x: xVal, y: yVal, width: widthVal |> Num.toU32, height: heightVal |> Num.toU32 }
-            _ -> crash "the contract with host should not fail"
-    |> Task.mapErr WebDriverError
+    Effect.browser_full_screen!(session_id)
+    |> Result.map_ok(
+        |list|
+            when list is
+                [x_val, y_val, width_val, height_val] -> { x: x_val, y: y_val, width: width_val |> Num.to_u32, height: height_val |> Num.to_u32 }
+                _ -> crash("the contract with host should not fail"),
+    )
+    |> Result.map_err(WebDriverError)
 
 ## Execute JavaScript in the `Browser`.
 ##
 ## ```
-## browser |> Browser.executeJs! "console.log('wow')"
+## browser |> Browser.execute_js!("console.log('wow')")?
 ## ```
-executeJs : Browser, Str -> Task {} [WebDriverError Str, JsReturnTypeError Str] where a implements Decoding
-executeJs = \browser, script ->
-    DebugMode.runIfVerbose! \{} ->
-        Debug.printLine! "Executing JavaScript in the browser"
+execute_js! : Browser, Str => Result {} [WebDriverError Str, JsReturnTypeError Str] where a implements Decoding
+execute_js! = |browser, script|
+    DebugMode.run_if_verbose!(
+        |{}|
+            Debug.print_line!("Executing JavaScript in the browser"),
+    )
 
     _output : Str
-    _output = ExecuteJs.executeJs! browser script
+    _output = ExecuteJs.execute_js!(browser, script)?
 
-    DebugMode.runIfDebugMode! \{} ->
-        DebugMode.wait!
+    DebugMode.run_if_debug_mode!(
+        |{}|
+            DebugMode.wait!({}),
+    )
+
+    Ok({})
 
 ## Execute JavaScript in the `Browser` and get the response.
 ##
@@ -639,34 +717,38 @@ executeJs = \browser, script ->
 ## The output will be casted to expected Roc type:
 ##
 ## ```
-##  response = browser |> Browser.executeJsWithOutput! "return 50 + 5;"
-##  response |> Assert.shouldBe! 55
+##  response = browser |> Browser.execute_js_with_output!("return 50 + 5;")?
+##  response |> Assert.should_be(55)
 ##
-##  response = browser |> Browser.executeJsWithOutput! "return 50.5 + 5;"
-##  response |> Assert.shouldBe! 55.5
+##  response = browser |> Browser.execute_js_with_output!("return 50.5 + 5;")?
+##  response |> Assert.should_be(55.5)
 ##
-##  response = browser |> Browser.executeJsWithOutput! "return 50.5 + 5;"
-##  response |> Assert.shouldBe! "55.5"
+##  response = browser |> Browser.execute_js_with_output!("return 50.5 + 5;")?
+##  response |> Assert.should_be("55.5")
 ##
-##  response = browser |> Browser.executeJsWithOutput! "return true"
-##  response |> Assert.shouldBe! "true"
+##  response = browser |> Browser.execute_js_with_output!("return true")?
+##  response |> Assert.should_be("true")
 ##
-##  response = browser |> Browser.executeJsWithOutput! "return true"
-##  response |> Assert.shouldBe! Bool.true
+##  response = browser |> Browser.execute_js_with_output!("return true")?
+##  response |> Assert.should_be(Bool.true)
 ## ```
 ##
 ## The function can return a `Promise`.
-executeJsWithOutput : Browser, Str -> Task a [WebDriverError Str, JsReturnTypeError Str] where a implements Decoding
-executeJsWithOutput = \browser, script ->
-    DebugMode.runIfVerbose! \{} ->
-        Debug.printLine! "Executing JavaScript in the browser"
+execute_js_with_output! : Browser, Str => Result a [WebDriverError Str, JsReturnTypeError Str] where a implements Decoding
+execute_js_with_output! = |browser, script|
+    DebugMode.run_if_verbose!(
+        |{}|
+            Debug.print_line!("Executing JavaScript in the browser"),
+    )
 
-    result = ExecuteJs.executeJs browser script |> Task.result!
+    result = ExecuteJs.execute_js!(browser, script)?
 
-    DebugMode.runIfDebugMode! \{} ->
-        DebugMode.wait!
+    DebugMode.run_if_debug_mode!(
+        |{}|
+            DebugMode.wait!({}),
+    )
 
-    result |> Task.fromResult
+    Ok(result)
 
 JsValue : [String Str, Number F64, Boolean Bool, Null]
 
@@ -691,36 +773,40 @@ JsValue : [String Str, Number F64, Boolean Bool, Null]
 ## The output will be casted to expected Roc type:
 ##
 ## ```
-##  response = browser |> Browser.executeJsWithArgs! "return 50 + 5;" []
-##  response |> Assert.shouldBe! 55
+##  response = browser |> Browser.execute_js_with_args!("return 50 + 5;", [])?
+##  response |> Assert.should_Be(55)
 ##
-##  response = browser |> Browser.executeJsWithArgs! "return 50.5 + 5;" [Number 55.5, String "5"]
-##  response |> Assert.shouldBe! 55.5
+##  response = browser |> Browser.execute_js_with_args!("return 50.5 + 5;", [Number 55.5, String "5"])?
+##  response |> Assert.should_be(55.5)
 ## ```
 ##
 ## The function can return a `Promise`.
-executeJsWithArgs : Browser, Str, List JsValue -> Task a [WebDriverError Str, JsReturnTypeError Str] where a implements Decoding
-executeJsWithArgs = \browser, script, arguments ->
-    DebugMode.runIfVerbose! \{} ->
-        Debug.printLine! "Executing JavaScript in the browser"
+execute_js_with_args! : Browser, Str, List JsValue => Result a [WebDriverError Str, JsReturnTypeError Str] where a implements Decoding
+execute_js_with_args! = |browser, script, arguments|
+    DebugMode.run_if_verbose!(
+        |{}|
+            Debug.print_line!("Executing JavaScript in the browser"),
+    )
 
-    result = ExecuteJs.executeJsWithArgs browser script arguments |> Task.result!
+    result = ExecuteJs.execute_js_with_args!(browser, script, arguments)?
 
-    DebugMode.runIfDebugMode! \{} ->
-        DebugMode.wait!
+    DebugMode.run_if_debug_mode!(
+        |{}|
+            DebugMode.wait!({}),
+    )
 
-    result |> Task.fromResult
+    Ok(result)
 
 # COOKIES
 NewCookie : {
     name : Str,
     value : Str,
-    domain ? Str,
-    path ? Str,
-    sameSite ? SameSiteOption,
-    secure ? Bool,
-    httpOnly ? Bool,
-    expiry ? CookieExpiry,
+    domain ?? Str,
+    path ?? Str,
+    same_site ?? SameSiteOption,
+    secure ?? Bool,
+    http_only ?? Bool,
+    expiry ?? CookieExpiry,
 }
 
 ## R2E cookie representation
@@ -737,6 +823,7 @@ NewCookie : {
 ##     expiry : CookieExpiry,
 ## }
 ##
+## # MaxAge is a Epoch Timestamp (browsers accepts max 400 days in the future)
 ## CookieExpiry : [Session, MaxAge U32]
 ##
 ## SameSiteOption : [None, Lax, Strict]
@@ -746,9 +833,9 @@ Cookie : {
     value : Str,
     domain : Str,
     path : Str,
-    sameSite : SameSiteOption,
+    same_site : SameSiteOption,
     secure : Bool,
-    httpOnly : Bool,
+    http_only : Bool,
     expiry : CookieExpiry,
 }
 
@@ -756,14 +843,14 @@ CookieExpiry : [Session, MaxAge U32]
 
 SameSiteOption : [None, Lax, Strict]
 
-sameSiteOptionToStr : SameSiteOption -> Str
-sameSiteOptionToStr = \option ->
+same_site_option_to_str : SameSiteOption -> Str
+same_site_option_to_str = |option|
     when option is
         None -> "None"
         Lax -> "Lax"
         Strict -> "Strict"
 
-sameSiteStrToOption = \str ->
+same_site_str_to_option = |str|
     when str is
         "None" -> None
         "Lax" -> Lax
@@ -771,200 +858,219 @@ sameSiteStrToOption = \str ->
         # TODO - hmm
         _ -> None
 
-boolToInt = \bool ->
+bool_to_int = |bool|
     if bool then 1 else 0
 
 ## Add a cookie in the `Browser`.
 ##
 ## ```
-## browser |> Browser.addCookie! { name: "myCookie", value: "value1" }
+## browser |> Browser.add_cookie!({ name: "myCookie", value: "value1" })?
 ## ```
 ## ```
-## browser |> Browser.addCookie! {
+## browser |> Browser.add_cookie!({
 ##     name: "myCookie",
 ##     value: "value1",
 ##     domain: "my-top-level-domain.com",
 ##     path: "/path",
-##     sameSite: Lax,
+##     same_site: Lax,
 ##     secure: Bool.true,
-##     httpOnly: Bool.true,
-##     expiry: MaxAge 2865848396, # unix epoch
-## }
+##     http_only: Bool.true,
+##     expiry: MaxAge(2865848396), # unix epoch
+## }?
 ## ```
-addCookie : Browser, NewCookie -> Task {} [WebDriverError Str]
-addCookie = \browser, { name, value, domain ? "", path ? "", sameSite ? None, secure ? Bool.false, httpOnly ? Bool.false, expiry ? Session } ->
-    { sessionId } = Internal.unpackBrowserData browser
+add_cookie! : Browser, NewCookie => Result {} [WebDriverError Str]
+add_cookie! = |browser, { name, value, domain ?? "", path ?? "", same_site ?? None, secure ?? Bool.false, http_only ?? Bool.false, expiry ?? Session }|
+    { session_id } = Internal.unpack_browser_data(browser)
 
-    sameSiteStr = sameSite |> sameSiteOptionToStr
-    secureInt = secure |> boolToInt
-    httpOnlyInt = httpOnly |> boolToInt
-    expiryI64 =
+    same_site_str = same_site |> same_site_option_to_str
+    secure_int = secure |> bool_to_int
+    http_only_int = http_only |> bool_to_int
+    expiry_i64 =
         when expiry is
             Session -> -1
-            MaxAge n -> n |> Num.toI64
+            MaxAge(n) -> n |> Num.to_i64
 
-    Effect.addCookie sessionId name value domain path sameSiteStr httpOnlyInt secureInt expiryI64
-        |> Task.mapErr! WebDriverError
+    Effect.add_cookie!(session_id, name, value, domain, path, same_site_str, http_only_int, secure_int, expiry_i64)
+    |> Result.map_err(WebDriverError)
 
 ## Delete a cookie in the `Browser` by name.
 ##
 ## ```
-## browser |> Browser.deleteCookie! "myCookieName"
+## browser |> Browser.delete_cookie!("myCookieName")?
 ## ```
-deleteCookie : Browser, Str -> Task {} [WebDriverError Str, CookieNotFound Str]
-deleteCookie = \browser, name ->
-    { sessionId } = Internal.unpackBrowserData browser
+delete_cookie! : Browser, Str => Result {} [WebDriverError Str, CookieNotFound Str]
+delete_cookie! = |browser, name|
+    { session_id } = Internal.unpack_browser_data(browser)
 
-    Effect.deleteCookie sessionId name |> Task.mapErr! InternalError.handleCookieError
+    Effect.delete_cookie!(session_id, name) |> Result.map_err(InternalError.handle_cookie_error)
 
 ## Delete all cookies in the `Browser`.
 ##
 ## ```
-## browser |> Browser.deleteAllCookies!
+## browser |> Browser.delete_all_cookies!?
 ## ```
-deleteAllCookies : Browser -> Task {} [WebDriverError Str]
-deleteAllCookies = \browser ->
-    { sessionId } = Internal.unpackBrowserData browser
+delete_all_cookies! : Browser => Result {} [WebDriverError Str]
+delete_all_cookies! = |browser|
+    { session_id } = Internal.unpack_browser_data(browser)
 
-    Effect.deleteAllCookies sessionId |> Task.mapErr! WebDriverError
+    Effect.delete_all_cookies!(session_id) |> Result.map_err(WebDriverError)
 
 ## Get a cookie from the `Browser` by name.
 ##
 ## ```
-## cookie1 = browser |> Browser.getCookie! "myCookie"
-## cookie1 |> Assert.shouldBe! {
+## cookie1 = browser |> Browser.get_cookie!("myCookie")?
+## cookie1 |> Assert.should_be({
 ##     name: "myCookie",
 ##     value: "value1",
 ##     domain: ".my-domain.io",
 ##     path: "/",
-##     sameSite: Lax,
+##     same_site: Lax,
 ##     expiry: Session,
 ##     secure: Bool.true,
-##     httpOnly: Bool.false,
-## }
+##     http_only: Bool.false,
+## })
 ## ```
-getCookie : Browser, Str -> Task Cookie [WebDriverError Str, CookieNotFound Str]
-getCookie = \browser, cookieName ->
-    { sessionId } = Internal.unpackBrowserData browser
+get_cookie! : Browser, Str => Result Cookie [WebDriverError Str, CookieNotFound Str]
+get_cookie! = |browser, cookie_name|
+    { session_id } = Internal.unpack_browser_data(browser)
 
-    cookieArray = Effect.getCookie sessionId cookieName |> Task.mapErr! InternalError.handleCookieError
-    cookieArray |> cookieArrayToRocCookie |> Task.fromResult
+    cookie_array = Effect.get_cookie!(session_id, cookie_name) |> Result.map_err(InternalError.handle_cookie_error)?
+    cookie_array |> cookie_array_to_roc_cookie
 
 ## Get all cookies from the `Browser`.
 ##
 ## ```
-## cookies = browser |> Browser.getAllCookies!
-## cookies |> List.len |> Assert.shouldBe! 3
+## cookies = browser |> Browser.get_all_cookies!()?
+## cookies |> List.len |> Assert.should_be(3)
 ## ```
-getAllCookies : Browser -> Task (List Cookie) [WebDriverError Str, CookieNotFound Str]
-getAllCookies = \browser ->
-    { sessionId } = Internal.unpackBrowserData browser
+get_all_cookies! : Browser => Result (List Cookie) [WebDriverError Str, CookieNotFound Str]
+get_all_cookies! = |browser|
+    { session_id } = Internal.unpack_browser_data(browser)
 
-    cookies = Effect.getAllCookies sessionId |> Task.mapErr! InternalError.handleCookieError
-    rocCookies =
+    cookies = Effect.get_all_cookies!(session_id) |> Result.map_err(InternalError.handle_cookie_error)?
+    roc_cookies =
         cookies
-        |> List.map cookieArrayToRocCookie # TODO - right now I'm ignoring errors
-        |> List.keepOks \e -> e
+        |> List.map(cookie_array_to_roc_cookie) # TODO - right now I'm ignoring errors
+        |> List.keep_oks(|e| e)
 
-    rocCookies |> Task.ok
+    roc_cookies |> Ok
 
-cookieArrayToRocCookie : List Str -> Result Cookie [WebDriverError Str]
-cookieArrayToRocCookie = \cookieArray ->
-    when cookieArray is
-        [name, value, domain, path, httpOnlyStr, secureStr, sameSiteStr, expiryStr] ->
-            httpOnly = if httpOnlyStr == "true" then Bool.true else Bool.false
-            secure = if secureStr == "true" then Bool.true else Bool.false
-            sameSite = sameSiteStr |> sameSiteStrToOption
+cookie_array_to_roc_cookie : List Str -> Result Cookie [WebDriverError Str]
+cookie_array_to_roc_cookie = |cookie_array|
+    when cookie_array is
+        [name, value, domain, path, http_only_str, secure_str, same_site_str, expiry_str] ->
+            http_only = if http_only_str == "true" then Bool.true else Bool.false
+            secure = if secure_str == "true" then Bool.true else Bool.false
+            same_site = same_site_str |> same_site_str_to_option
             expiry =
-                expiryStr
-                    |> expiryStrToRoc
-                    |> Result.mapErr? \_ -> WebDriverError "could not parse cookie: probabably a bug in R2E"
-            Ok { name, value, domain, path, expiry, httpOnly, sameSite, secure }
+                expiry_str
+                |> expiry_str_to_roc
+                |> Result.map_err(|_| WebDriverError("could not parse cookie: probabably a bug in R2E"))?
 
-        _ -> Err (WebDriverError "could not parse cookie: probably a bug in R2E")
+            Ok({ name, value, domain, path, expiry, http_only, same_site, secure })
 
-expiryStrToRoc = \expStr ->
-    if expStr |> Str.isEmpty then
+        _ -> Err(WebDriverError("could not parse cookie: probably a bug in R2E"))
+
+expiry_str_to_roc = |exp_str|
+    if exp_str |> Str.is_empty then
         Session |> Ok
     else
-        u32 = expStr |> Str.toU32?
+        u32 = exp_str |> Str.to_u32?
         u32 |> MaxAge |> Ok
 
 ## Get alert/prompt text.
 ##
 ## ```
-## text = browser |> Browser.getAlertText!
-## text |> Assert.shouldBe "Are you sure to close tab?"
+## text = browser |> Browser.get_alert_text!()?
+## text |> Assert.should_be("Are you sure to close tab?")
 ## ```
-getAlertText : Browser -> Task Str [WebDriverError Str, AlertNotFound Str]
-getAlertText = \browser ->
-    { sessionId } = Internal.unpackBrowserData browser
+get_alert_text! : Browser => Result Str [WebDriverError Str, AlertNotFound Str]
+get_alert_text! = |browser|
+    { session_id } = Internal.unpack_browser_data(browser)
 
-    DebugMode.runIfVerbose! \{} ->
-        Debug.printLine! "Getting alert text"
+    DebugMode.run_if_verbose!(
+        |{}|
+            Debug.print_line!("Getting alert text"),
+    )
 
-    Effect.alertGetText sessionId |> Task.mapErr InternalError.handleAlertError
+    Effect.alert_get_text!(session_id) |> Result.map_err(InternalError.handle_alert_error)
 
 ## Input text in prompt.
 ##
 ## ```
-## browser |> Browser.sendTextToAlert! "my reply"
-## browser |> Browser.acceptAlert!
+## browser |> Browser.send_text_to_alert!("my reply")?
+## browser |> Browser.accept_alert!()?
 ## ```
-sendTextToAlert : Browser, Str -> Task {} [WebDriverError Str, AlertNotFound Str]
-sendTextToAlert = \browser, text ->
-    { sessionId } = Internal.unpackBrowserData browser
+send_text_to_alert! : Browser, Str => Result {} [WebDriverError Str, AlertNotFound Str]
+send_text_to_alert! = |browser, text|
+    { session_id } = Internal.unpack_browser_data(browser)
 
-    DebugMode.runIfVerbose! \{} ->
-        Debug.printLine! "Sending text to an alert: \"$(text)\""
+    DebugMode.run_if_verbose!(
+        |{}|
+            Debug.print_line!("Sending text to an alert: \"${text}\""),
+    )
 
-    Effect.alertSendText sessionId text |> Task.mapErr InternalError.handleAlertError
+    Effect.alert_send_text!(session_id, text) |> Result.map_err(InternalError.handle_alert_error)
 
 ## Accept alert/prompt.
 ##
 ## ```
-## browser |> Browser.acceptAlert!
+## browser |> Browser.accept_alert!()?
 ## ```
-acceptAlert : Browser -> Task {} [WebDriverError Str, AlertNotFound Str]
-acceptAlert = \browser ->
-    { sessionId } = Internal.unpackBrowserData browser
+accept_alert! : Browser => Result {} [WebDriverError Str, AlertNotFound Str]
+accept_alert! = |browser|
+    { session_id } = Internal.unpack_browser_data(browser)
 
-    DebugMode.runIfVerbose! \{} ->
-        Debug.printLine! "Accepting an alert"
+    DebugMode.run_if_verbose!(
+        |{}|
+            Debug.print_line!("Accepting an alert"),
+    )
 
-    Effect.alertAccept sessionId |> Task.mapErr! InternalError.handleAlertError
+    Effect.alert_accept!(session_id) |> Result.map_err(InternalError.handle_alert_error)?
 
-    DebugMode.runIfDebugMode! \{} ->
-        DebugMode.wait!
+    DebugMode.run_if_debug_mode!(
+        |{}|
+            DebugMode.wait!({}),
+    )
+
+    Ok({})
 
 ## Dismiss alert/prompt.
 ##
 ## ```
-## browser |> Browser.dismissAlert!
+## browser |> Browser.dismiss_alert!()?
 ## ```
-dismissAlert : Browser -> Task {} [WebDriverError Str, AlertNotFound Str]
-dismissAlert = \browser ->
-    { sessionId } = Internal.unpackBrowserData browser
+dismiss_alert! : Browser => Result {} [WebDriverError Str, AlertNotFound Str]
+dismiss_alert! = |browser|
+    { session_id } = Internal.unpack_browser_data(browser)
 
-    DebugMode.runIfVerbose! \{} ->
-        Debug.printLine! "Dismissing an alert"
+    DebugMode.run_if_verbose!(
+        |{}|
+            Debug.print_line!("Dismissing an alert"),
+    )
 
-    Effect.alertDismiss sessionId |> Task.mapErr! InternalError.handleAlertError
+    Effect.alert_dismiss!(session_id) |> Result.map_err(InternalError.handle_alert_error)?
 
-    DebugMode.runIfDebugMode! \{} ->
-        DebugMode.wait!
+    DebugMode.run_if_debug_mode!(
+        |{}|
+            DebugMode.wait!({}),
+    )
+
+    Ok({})
 
 ## Get the serialized DOM as HTML `Str`.
 ##
 ## ```
-## html = browser |> Browser.getPageHtml!
-## html |> Assert.shouldContainText "<h1>Header</h1>"
+## html = browser |> Browser.get_page_html!()?
+## html |> Assert.should_contain_text("<h1>Header</h1>")
 ## ```
-getPageHtml : Browser -> Task Str [WebDriverError Str]
-getPageHtml = \browser ->
-    { sessionId } = Internal.unpackBrowserData browser
+get_page_html! : Browser => Result Str [WebDriverError Str]
+get_page_html! = |browser|
+    { session_id } = Internal.unpack_browser_data(browser)
 
-    DebugMode.runIfVerbose! \{} ->
-        Debug.printLine! "Getting page HTML"
+    DebugMode.run_if_verbose!(
+        |{}|
+            Debug.print_line!("Getting page HTML"),
+    )
 
-    Effect.getPageSource sessionId |> Task.mapErr WebDriverError
+    Effect.get_page_source!(session_id) |> Result.map_err(WebDriverError)

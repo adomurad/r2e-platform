@@ -1,16 +1,16 @@
-module [handleElementError, handleCookieError, handleAlertError]
+module [handle_element_error, handle_cookie_error, handle_alert_error]
 
-handleElementError = \err ->
+handle_element_error = |err|
     when err is
-        e if e |> Str.startsWith "WebDriverNotFoundError" -> ElementNotFound (e |> Str.dropPrefix "WebDriverNotFoundError::")
-        e -> WebDriverError e
+        e if e |> Str.starts_with("WebDriverNotFoundError") -> ElementNotFound((e |> Str.drop_prefix("WebDriverNotFoundError::")))
+        e -> WebDriverError(e)
 
-handleAlertError = \err ->
+handle_alert_error = |err|
     when err is
-        e if e |> Str.startsWith "WebDriverNotFoundError" -> AlertNotFound (e |> Str.dropPrefix "WebDriverNotFoundError::")
-        e -> WebDriverError e
+        e if e |> Str.starts_with("WebDriverNotFoundError") -> AlertNotFound((e |> Str.drop_prefix("WebDriverNotFoundError::")))
+        e -> WebDriverError(e)
 
-handleCookieError = \err ->
+handle_cookie_error = |err|
     when err is
-        e if e |> Str.startsWith "WebDriverNotFoundError" -> CookieNotFound (e |> Str.dropPrefix "WebDriverNotFoundError::")
-        e -> WebDriverError e
+        e if e |> Str.starts_with("WebDriverNotFoundError") -> CookieNotFound((e |> Str.drop_prefix("WebDriverNotFoundError::")))
+        e -> WebDriverError(e)

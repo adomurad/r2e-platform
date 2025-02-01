@@ -1,23 +1,23 @@
 ## `Assert` module contains assertion functions to check properties of` Elements`
 ## and data extracted from the browser.
 ##
-## All assert functions return a `Task` with the `[AssertionError Str]` error.
+## All assert functions return a `Result` with the `[AssertionError Str]` error.
 module [
-    shouldBe,
-    shouldBeEqualTo,
-    shouldContainText,
-    urlShouldBe,
-    titleShouldBe,
-    shouldBeGreaterOrEqualTo,
-    shouldBeGreaterThan,
-    shouldBeLesserOrEqualTo,
-    shouldBeLesserThan,
-    shouldHaveLength,
-    failWith,
+    should_be,
+    should_be_equal_to,
+    should_contain_text,
+    url_should_be!,
+    title_should_be!,
+    should_be_greater_or_equal_to,
+    should_be_greater_than,
+    should_be_lesser_or_equal_to,
+    should_be_lesser_than,
+    should_have_length,
+    fail_with,
     # element
-    elementShouldHaveText,
-    elementShouldHaveValue,
-    elementShouldBeVisible,
+    element_should_have_text!,
+    element_should_have_value!,
+    element_should_be_visible!,
 ]
 
 import Internal exposing [Element, Browser]
@@ -31,32 +31,32 @@ import InternalElement
 ##
 ## ```
 ## # find button element
-## button = browser |> Browser.findElement! (Css "#submit-button")
+## button = browser |> Browser.find_element!(Css "#submit-button")?
 ## # get button text
-## buttonText = button |> Element.getText!
+## buttonText = button |> Element.get_text!()?
 ## # assert text
-## buttonText |> Assert.shouldBe! "Roc"
+## buttonText |> Assert.should_be("Roc")
 ## ```
-shouldBe : a, a -> Task.Task {} [AssertionError Str] where a implements Eq & Inspect
-shouldBe = \actual, expected ->
+should_be : a, a -> Result {} [AssertionError Str] where a implements Eq & Inspect
+should_be = |actual, expected|
     if expected == actual then
-        Task.ok {}
+        Ok({})
     else
-        actualStr = Inspect.toStr actual
-        expectedStr = Inspect.toStr expected
-        Task.err (AssertionError "Expected $(expectedStr), but got $(actualStr)")
+        actual_str = Inspect.to_str(actual)
+        expected_str = Inspect.to_str(expected)
+        Err(AssertionError("Expected ${expected_str}, but got ${actual_str}"))
 
 ## Checks if the value of __actual__ contains the `Str` __expected__.
 ##
 ## ```
-## "github" |> Assert.shouldContainText! "git"
+## "github" |> Assert.should_contain_text("git")
 ## ```
-shouldContainText : Str, Str -> Task.Task {} [AssertionError Str]
-shouldContainText = \actual, expected ->
-    if actual |> Str.contains expected then
-        Task.ok {}
+should_contain_text : Str, Str -> Result {} [AssertionError Str]
+should_contain_text = |actual, expected|
+    if actual |> Str.contains(expected) then
+        Ok({})
     else
-        Task.err (AssertionError "Expected \"$(actual)\" to contain text \"$(expected)\"")
+        Err(AssertionError("Expected \"${actual}\" to contain text \"${expected}\""))
 
 ## Checks if the value of __actual__ is equal to the __expected__.
 ##
@@ -64,157 +64,169 @@ shouldContainText = \actual, expected ->
 ##
 ## ```
 ## # find button element
-## button = browser |> Browser.findElement! (Css "#submit-button")
+## button = browser |> Browser.find_element!(Css "#submit-button")?
 ## # get button text
-## buttonSize = button |> Element.getProperty! "size"
+## buttonSize = button |> Element.get_property!("size")?
 ## # assert value
-## buttonSize |> Assert.shouldBeEqualTo! 20f64
+## buttonSize |> Assert.should_be_equal_to(20f64)
 ## ```
-shouldBeEqualTo : Frac a, Frac a -> Task.Task {} [AssertionError Str]
-shouldBeEqualTo = \actual, expected ->
-    if expected |> Num.isApproxEq actual {} then
-        Task.ok {}
+should_be_equal_to : Frac a, Frac a -> Result {} [AssertionError Str]
+should_be_equal_to = |actual, expected|
+    if expected |> Num.is_approx_eq(actual, {}) then
+        Ok({})
     else
-        actualStr = Num.toStr actual
-        expectedStr = Num.toStr expected
-        Task.err (AssertionError "Expected $(expectedStr), but got $(actualStr)")
+        actual_str = Num.to_str(actual)
+        expected_str = Num.to_str(expected)
+        Err(AssertionError("Expected ${expected_str}, but got ${actual_str}"))
 
 ## Checks if the __actual__ `Num` is grater than the __expected__.
 ##
 ## ```
-## 3 |> Assert.shouldBeGreaterThan! 2
+## 3 |> Assert.should_be_greater_than(2)
 ## ```
-shouldBeGreaterThan : Num a, Num a -> Task.Task {} [AssertionError Str] where a implements Bool.Eq
-shouldBeGreaterThan = \actual, expected ->
+should_be_greater_than : Num a, Num a -> Result {} [AssertionError Str] where a implements Bool.Eq
+should_be_greater_than = |actual, expected|
     if actual > expected then
-        Task.ok {}
+        Ok({})
     else
-        actualStr = actual |> Num.toStr
-        expectedStr = expected |> Num.toStr
-        Task.err (AssertionError "Expected (value > $(expectedStr)), but got $(actualStr)")
+        actual_str = actual |> Num.to_str
+        expected_str = expected |> Num.to_str
+        Err(AssertionError("Expected (value > ${expected_str}), but got ${actual_str}"))
 
 ## Checks if the __actual__ `Num` is grater or equal than the __expected__.
 ##
 ## ```
-## 3 |> Assert.shouldBeGreaterOrEqualTo! 2
+## 3 |> Assert.should_be_greater_or_equal_to(2)
 ## ```
-shouldBeGreaterOrEqualTo : Num a, Num a -> Task.Task {} [AssertionError Str] where a implements Bool.Eq
-shouldBeGreaterOrEqualTo = \actual, expected ->
+should_be_greater_or_equal_to : Num a, Num a -> Result {} [AssertionError Str] where a implements Bool.Eq
+should_be_greater_or_equal_to = |actual, expected|
     if actual >= expected then
-        Task.ok {}
+        Ok({})
     else
-        actualStr = actual |> Num.toStr
-        expectedStr = expected |> Num.toStr
-        Task.err (AssertionError "Expected (value >= $(expectedStr)), but got $(actualStr)")
+        actual_str = actual |> Num.to_str
+        expected_str = expected |> Num.to_str
+        Err(AssertionError("Expected (value >= ${expected_str}), but got ${actual_str}"))
 
 ## Checks if the __actual__ `Num` is grater than the __expected__.
 ##
 ## ```
-## 3 |> Assert.shouldBeGreaterThan! 2
+## 3 |> Assert.should_be_lesser_than(2)
 ## ```
-shouldBeLesserThan : Num a, Num a -> Task.Task {} [AssertionError Str] where a implements Bool.Eq
-shouldBeLesserThan = \actual, expected ->
+should_be_lesser_than : Num a, Num a -> Result {} [AssertionError Str] where a implements Bool.Eq
+should_be_lesser_than = |actual, expected|
     if actual < expected then
-        Task.ok {}
+        Ok({})
     else
-        actualStr = actual |> Num.toStr
-        expectedStr = expected |> Num.toStr
-        Task.err (AssertionError "Expected (value < $(expectedStr)), but got $(actualStr)")
+        actual_str = actual |> Num.to_str
+        expected_str = expected |> Num.to_str
+        Err(AssertionError("Expected (value < ${expected_str}), but got ${actual_str}"))
 
 ## Checks if the __actual__ `Num` is grater or equal than the __expected__.
 ##
 ## ```
-## 3 |> Assert.shouldBeLesserOrEqualTo! 2
+## 3 |> Assert.should_be_lesser_or_equal_to(2)
 ## ```
-shouldBeLesserOrEqualTo : Num a, Num a -> Task.Task {} [AssertionError Str] where a implements Bool.Eq
-shouldBeLesserOrEqualTo = \actual, expected ->
+should_be_lesser_or_equal_to : Num a, Num a -> Result {} [AssertionError Str] where a implements Bool.Eq
+should_be_lesser_or_equal_to = |actual, expected|
     if actual <= expected then
-        Task.ok {}
+        Ok({})
     else
-        actualStr = actual |> Num.toStr
-        expectedStr = expected |> Num.toStr
-        Task.err (AssertionError "Expected (value <= $(expectedStr)), but got $(actualStr)")
+        actual_str = actual |> Num.to_str
+        expected_str = expected |> Num.to_str
+        Err(AssertionError("Expected (value <= ${expected_str}), but got ${actual_str}"))
 
 ## Checks if the __URL__ is equal to the __expected__.
 ##
 ## This function will wait for the expectation to be met,
-## for the **assertTimeout** specified in test options - default: 3s.
+## for the **assert_timeout** specified in test options - default: 3s.
 ## ```
 ## # assert text
-## browser |> Assert.urlShouldBe! "https://roc-lang.org/"
+## browser |> Assert.url_should_be!("https://roc-lang.org/")
 ## ```
-urlShouldBe : Browser, Str -> Task.Task {} [AssertionError Str, WebDriverError Str]
-urlShouldBe = \browser, expected ->
-    DebugMode.runIfVerbose! \{} ->
-        Debug.printLine! "Assert: Waiting for the URL to be \"$(expected)\""
+url_should_be! : Browser, Str => Result {} [AssertionError Str, WebDriverError Str]
+url_should_be! = |browser, expected|
+    DebugMode.run_if_verbose!(
+        |{}|
+            Debug.print_line!("Assert: Waiting for the URL to be \"${expected}\""),
+    )
 
-    assertTimeout = Utils.getAssertTimeout!
+    assert_timeout = Utils.get_assert_timeout!({})
 
-    tryFor assertTimeout \{} ->
-        actual = browser |> Browser.getUrl!
+    try_for!(
+        assert_timeout,
+        |{}|
+            when browser |> Browser.get_url! is
+                Ok(actual) ->
+                    if expected == actual then
+                        Ok({})
+                    else
+                        Err(AssertionError("Expected the URL to be \"${expected}\", but got \"${actual}\" (waited for ${assert_timeout |> Num.to_str}ms)"))
 
-        if expected == actual then
-            Task.ok {}
-        else
-            Task.err (AssertionError "Expected the URL to be \"$(expected)\", but got \"$(actual)\" (waited for $(assertTimeout |> Num.toStr)ms)")
+                Err(err) -> Err(err),
+    )
 
 ## Checks if the __title__ of the page is equal to the __expected__.
 ##
 ## This function will wait for the expectation to be met,
-## for the **assertTimeout** specified in test options - default: 3s.
+## for the **assert_timeout** specified in test options - default: 3s.
 ## ```
 ## # assert text
-## browser |> Assert.titleShouldBe! "The Roc Programming Language"
+## browser |> Assert.title_should_be!("The Roc Programming Language")
 ## ```
-titleShouldBe : Browser, Str -> Task {} [AssertionError Str, WebDriverError Str]
-titleShouldBe = \browser, expected ->
-    DebugMode.runIfVerbose! \{} ->
-        Debug.printLine! "Assert: Waiting for the page title to be \"$(expected)\""
+title_should_be! : Browser, Str => Result {} [AssertionError Str, WebDriverError Str]
+title_should_be! = |browser, expected|
+    DebugMode.run_if_verbose!(
+        |{}|
+            Debug.print_line!("Assert: Waiting for the page title to be \"${expected}\""),
+    )
 
-    assertTimeout = Utils.getAssertTimeout!
+    assert_timeout = Utils.get_assert_timeout!({})
 
-    tryFor assertTimeout \{} ->
-        actual = browser |> Browser.getTitle!
+    try_for!(
+        assert_timeout,
+        |{}|
+            actual = browser |> Browser.get_title!?
 
-        if expected == actual then
-            Task.ok {}
-        else
-            Task.err (AssertionError "Expected the page title to be \"$(expected)\", but got \"$(actual)\" (waited for $(assertTimeout |> Num.toStr)ms)")
+            if expected == actual then
+                Ok({})
+            else
+                Err(AssertionError("Expected the page title to be \"${expected}\", but got \"${actual}\" (waited for ${assert_timeout |> Num.to_str}ms)")),
+    )
 
 ## Fails with given error message.
 ##
 ## ```
 ## # fail the test
-## Assert.failWith! "this should not happen"
+## Assert.fail_with!("this should not happen")
 ## ```
-failWith : Str -> Task.Task _ [AssertionError Str]
-failWith = \msg ->
-    Task.err (AssertionError msg)
+fail_with : Str -> Result _ [AssertionError Str]
+fail_with = |msg|
+    Err(AssertionError(msg))
 
 ## Checks if the length of __list__ is equal to the __expected__ length.
 ##
 ## ```
 ## # find all buttons element
-## buttons = browser |> Browser.findElements! (Css "button")
+## buttons = browser |> Browser.find_elements!(Css("button"))?
 ## # assert that there are 3 buttons
-## buttons |> Assert.shouldHaveLength! 3
+## buttons |> Assert.should_have_length 3
 ## ```
-shouldHaveLength : List a, U64 -> Task.Task {} [AssertionError Str]
-shouldHaveLength = \list, expected ->
-    actualLen = list |> List.len
+should_have_length : List a, U64 -> Result {} [AssertionError Str]
+should_have_length = |list, expected|
+    actual_len = list |> List.len
 
-    if actualLen == expected then
-        Task.ok {}
+    if actual_len == expected then
+        Ok({})
     else
-        actualLenStr = actualLen |> Num.toStr
-        expectedLenStr = expected |> Num.toStr
-        actualElementsWord = pluralize actualLen "element" "elements"
-        expectedElementsWord = pluralize actualLen "element" "elements"
+        actual_len_str = actual_len |> Num.to_str
+        expected_len_str = expected |> Num.to_str
+        actual_elements_word = pluralize(actual_len, "element", "elements")
+        expected_elements_word = pluralize(actual_len, "element", "elements")
 
-        Task.err (AssertionError "Expected a list with $(actualLenStr) $(actualElementsWord), but got $(expectedLenStr) $(expectedElementsWord)")
+        Err(AssertionError("Expected a list with ${actual_len_str} ${actual_elements_word}, but got ${expected_len_str} ${expected_elements_word}"))
 
 pluralize : U64, a, a -> a
-pluralize = \count, singular, plural ->
+pluralize = |count, singular, plural|
     if
         count == 1
     then
@@ -225,99 +237,121 @@ pluralize = \count, singular, plural ->
 ## Checks if the `Element` has __expected__ text.
 ##
 ## This function will wait for the `Element` to meet the expectation,
-## for the **assertTimeout** specified in test options - default: 3s.
+## for the **assert_timeout** specified in test options - default: 3s.
 ##
 ## ```
 ## # find button element
-## button = browser |> Browser.findElement! (Css "#submit-button")
+## button = browser |> Browser.find_element!(Css("#submit-button"))?
 ## # check if button has text "Submit"
-## button |> Assert.elementShouldHaveText! "Submit"
+## button |> Assert.element_should_have_text!("Submit")
 ## ```
-elementShouldHaveText : Element, Str -> Task {} [AssertionError Str, ElementNotFound Str, WebDriverError Str]
-elementShouldHaveText = \element, expectedText ->
-    { selectorText } = Internal.unpackElementData element
+element_should_have_text! : Element, Str => Result {} [AssertionError Str, ElementNotFound Str, WebDriverError Str]
+element_should_have_text! = |element, expected_text|
+    { selector_text } = Internal.unpack_element_data(element)
 
-    DebugMode.runIfVerbose! \{} ->
-        Debug.printLine! "Assert: Waiting for element $(selectorText) to have text: \"$(expectedText)\""
+    DebugMode.run_if_verbose!(
+        |{}|
+            Debug.print_line!("Assert: Waiting for element ${selector_text} to have text: \"${expected_text}\""),
+    )
 
-    assertTimeout = Utils.getAssertTimeout!
+    assert_timeout = Utils.get_assert_timeout!({})
 
-    tryFor assertTimeout \{} ->
-        elementText = InternalElement.getText! element
+    try_for!(
+        assert_timeout,
+        |{}|
+            element_text = InternalElement.get_text!(element)?
 
-        if expectedText == elementText then
-            Task.ok {}
-        else
-            Task.err (AssertionError "Expected element $(selectorText) to have text \"$(expectedText)\", but got \"$(elementText)\" (waited for $(assertTimeout |> Num.toStr)ms)")
+            if expected_text == element_text then
+                Ok({})
+            else
+                Err(AssertionError("Expected element ${selector_text} to have text \"${expected_text}\", but got \"${element_text}\" (waited for ${assert_timeout |> Num.to_str}ms)")),
+    )
 
-tryFor : U64, ({} -> Task ok []a) -> Task {} []a
-tryFor = \timeout, task ->
-    startTime = Utils.getTimeMilis!
+try_for! : U64, ({} => Result ok a) => Result {} a
+try_for! = |timeout, task!|
+    start_time = Utils.get_time_milis!({})
 
-    Task.loop {} \_ ->
-        result = task {} |> Task.result!
-        when result is
-            Ok _ -> Task.ok (Done {})
-            Err err ->
-                now = Utils.getTimeMilis!
-                if now - startTime >= timeout then
-                    Task.err err
-                else
-                    Debug.wait! 100 # wait for 100 ms
-                    Task.ok (Step {})
+    loop!(
+        |{}|
+            result = task!({})
+            when result is
+                Ok(_) -> Done(Ok({}))
+                Err(err) ->
+                    now = Utils.get_time_milis!({})
+                    if now - start_time >= timeout then
+                        Done(Err(err))
+                    else
+                        Debug.wait!(100) # wait for 100 ms
+                        Step,
+    )
+
+loop! = |callback!|
+    when callback!({}) is
+        Done(res) -> res
+        Step -> loop!(callback!)
 
 ## Checks if the `Element` has __expected__ value.
 ##
 ## This function will wait for the `Element` to meet the expectation,
-## for the **assertTimeout** specified in test options - default: 3s.
+## for the **assert_timeout** specified in test options - default: 3s.
 ##
 ## ```
 ## # find input element
-## input = browser |> Browser.findElement! (Css "#username-input")
+## input = browser |> Browser.find_element!(Css("#username-input"))?
 ## # check if input has value "fake-username"
-## input |> Assert.elementShouldHaveValue! "fake-username"
+## input |> Assert.element_should_have_value!("fake-username")
 ## ```
-elementShouldHaveValue : Element, Str -> Task {} [AssertionError Str, ElementNotFound Str, WebDriverError Str, PropertyTypeError Str]
-elementShouldHaveValue = \element, expectedValue ->
-    { selectorText } = Internal.unpackElementData element
+element_should_have_value! : Element, Str => Result {} [AssertionError Str, ElementNotFound Str, WebDriverError Str, PropertyTypeError Str]
+element_should_have_value! = |element, expected_value|
+    { selector_text } = Internal.unpack_element_data(element)
 
-    DebugMode.runIfVerbose! \{} ->
-        Debug.printLine! "Assert: Waiting for element $(selectorText) to have value: \"$(expectedValue)\""
+    DebugMode.run_if_verbose!(
+        |{}|
+            Debug.print_line!("Assert: Waiting for element ${selector_text} to have value: \"${expected_value}\""),
+    )
 
-    assertTimeout = Utils.getAssertTimeout!
+    assert_timeout = Utils.get_assert_timeout!({})
 
-    tryFor assertTimeout \{} ->
-        elementValue = element |> InternalElement.getProperty! "value"
+    try_for!(
+        assert_timeout,
+        |{}|
+            element_value = element |> InternalElement.get_property!("value")?
 
-        if expectedValue == elementValue then
-            Task.ok {}
-        else
-            Task.err (AssertionError "Expected element $(selectorText) to have value \"$(expectedValue)\", but got \"$(elementValue)\" (waited for $(assertTimeout |> Num.toStr)ms)")
+            if expected_value == element_value then
+                Ok({})
+            else
+                Err(AssertionError("Expected element ${selector_text} to have value \"${expected_value}\", but got \"${element_value}\" (waited for ${assert_timeout |> Num.to_str}ms)")),
+    )
 
 ## Checks if the `Element` is visible in the `Browser`.
 ##
 ## This function will wait for the `Element` to meet the expectation,
-## for the **assertTimeout** specified in test options - default: 3s.
+## for the **assert_timeout** specified in test options - default: 3s.
 ##
 ## ```
 ## # find error message element
-## errorMsg = browser |> Browser.findElement! (Css ".error-msg")
+## errorMsg = browser |> Browser.find_element!(Css(".error-msg"))?
 ## # check if the error message element is visible
-## errorMsg |> Assert.elementShouldBeVisible!
+## errorMsg |> Assert.element_should_be_visible!()
 ## ```
-elementShouldBeVisible : Element -> Task {} [AssertionError Str, ElementNotFound Str, WebDriverError Str]
-elementShouldBeVisible = \element ->
-    { selectorText } = Internal.unpackElementData element
+element_should_be_visible! : Element => Result {} [AssertionError Str, ElementNotFound Str, WebDriverError Str]
+element_should_be_visible! = |element|
+    { selector_text } = Internal.unpack_element_data(element)
 
-    DebugMode.runIfVerbose! \{} ->
-        Debug.printLine! "Assert: Waiting for element $(selectorText) to visible"
+    DebugMode.run_if_verbose!(
+        |{}|
+            Debug.print_line!("Assert: Waiting for element ${selector_text} to visible"),
+    )
 
-    assertTimeout = Utils.getAssertTimeout!
+    assert_timeout = Utils.get_assert_timeout!({})
 
-    tryFor assertTimeout \{} ->
-        isVisible = element |> InternalElement.isVisible!
+    try_for!(
+        assert_timeout,
+        |{}|
+            is_visible = element |> InternalElement.is_visible!?
 
-        when isVisible is
-            Visible -> Task.ok {}
-            NotVisible ->
-                Task.err (AssertionError "Expected element $(selectorText) to be visible (waited for $(assertTimeout |> Num.toStr)ms)")
+            when is_visible is
+                Visible -> Ok({})
+                NotVisible ->
+                    Err(AssertionError("Expected element ${selector_text} to be visible (waited for ${assert_timeout |> Num.to_str}ms)")),
+    )

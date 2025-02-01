@@ -1,4 +1,4 @@
-app [testCases, config] { r2e: platform "../platform/main.roc" }
+app [test_cases, config] { r2e: platform "../platform/main.roc" }
 
 import r2e.Test exposing [test]
 import r2e.Config
@@ -6,58 +6,65 @@ import r2e.Browser
 import r2e.Assert
 import r2e.Debug
 
-config = Config.defaultConfig
+config = Config.default_config
 
-testCases = [
+test_cases = [
     test1,
     test2,
 ]
 
 # TODO craete a mock webpage to test better test this
 
-test1 = test "debug selectors" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+test1 = test(
+    "debug selectors",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/")?
 
-    _h1 = browser |> Browser.findElement! (TestId "name-input")
-    _h2 = browser |> Browser.findElement! (Css "h1")
-    _h3 = browser |> Browser.findElement! (XPath "//div")
+        _h1 = browser |> Browser.find_element!(TestId("name-input"))?
+        _h2 = browser |> Browser.find_element!(Css("h1"))?
+        _h3 = browser |> Browser.find_element!(XPath("//div"))?
 
-    _h10 = browser |> Browser.findElements! (Css "input")
-    _h12 = browser |> Browser.findElements! (TestId "name-input")
-    _h11 = browser |> Browser.findElements! (XPath "//div")
+        _h10 = browser |> Browser.find_elements!(Css("input"))?
+        _h12 = browser |> Browser.find_elements!(TestId("name-input"))?
+        _h11 = browser |> Browser.find_elements!(XPath("//div"))?
 
-    browser |> Browser.navigateTo! "https://www.roc-lang.org/"
-    _h5 = browser |> Browser.findElements! (LinkText "examples")
-    _h4 = browser |> Browser.findElement! (LinkText "examples")
-    _h7 = browser |> Browser.findElements! (PartialLinkText "xam")
-    _h6 = browser |> Browser.findElement! (PartialLinkText "xam")
+        browser |> Browser.navigate_to!("https://www.roc-lang.org/")?
+        _h5 = browser |> Browser.find_elements!(LinkText("examples"))?
+        _h4 = browser |> Browser.find_element!(LinkText("examples"))?
+        _h7 = browser |> Browser.find_elements!(PartialLinkText("xam"))?
+        _h6 = browser |> Browser.find_element!(PartialLinkText("xam"))?
 
-    Assert.shouldBe 1 1
+        Assert.should_be(1, 1),
+)
 
-test2 = test "showElements" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+test2 = test(
+    "showElements",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/")?
 
-    browser |> Debug.showCurrentFrame!
-    browser |> Debug.showCurrentFrame!
+        browser |> Debug.show_current_frame!?
+        browser |> Debug.show_current_frame!?
 
-    el1 = browser |> Browser.findElement! (TestId "name-input")
-    el1 |> Debug.showElement!
-    [el1] |> Debug.showElements!
+        el1 = browser |> Browser.find_element!(TestId("name-input"))?
+        el1 |> Debug.show_element!?
+        [el1] |> Debug.show_elements!?
 
-    el2 = browser |> Browser.findElement! (Css "h1")
-    el2 |> Debug.showElement!
-    [el2] |> Debug.showElements!
+        el2 = browser |> Browser.find_element!(Css("h1"))?
+        el2 |> Debug.show_element!?
+        [el2] |> Debug.show_elements!?
 
-    el3 = browser |> Browser.findElement! (XPath "//div")
-    el3 |> Debug.showElement!
-    [el3] |> Debug.showElements!
+        el3 = browser |> Browser.find_element!(XPath("//div"))?
+        el3 |> Debug.show_element!?
+        [el3] |> Debug.show_elements!?
 
-    browser |> Browser.navigateTo! "https://www.roc-lang.org/"
+        browser |> Browser.navigate_to!("https://www.roc-lang.org/")?
 
-    el4 = browser |> Browser.findElement! (LinkText "examples")
-    el4 |> Debug.showElement!
-    [el4] |> Debug.showElements!
+        el4 = browser |> Browser.find_element!(LinkText("examples"))?
+        el4 |> Debug.show_element!?
+        [el4] |> Debug.show_elements!?
 
-    el5 = browser |> Browser.findElement! (PartialLinkText "xam")
-    el5 |> Debug.showElement!
-    [el5] |> Debug.showElements!
+        el5 = browser |> Browser.find_element!(PartialLinkText("xam"))?
+        el5 |> Debug.show_element!?
+        [el5] |> Debug.show_elements!,
+)
+

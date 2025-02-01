@@ -1,8 +1,8 @@
 module [
-    packBrowserData,
-    unpackBrowserData,
-    packElementData,
-    unpackElementData,
+    pack_browser_data,
+    unpack_browser_data,
+    pack_element_data,
+    unpack_element_data,
     Browser,
     Element,
 ]
@@ -12,25 +12,25 @@ import Common.Locator exposing [Locator]
 # ----------------------------------------------------------------
 
 Browser := {
-    sessionId : Str,
+    session_id : Str,
 }
 
 Element := {
-    sessionId : Str,
-    elementId : Str,
+    session_id : Str,
+    element_id : Str,
     # used to provide better context in Asserts
-    selectorText : Str,
+    selector_text : Str,
     locator : Locator,
 }
 
-packBrowserData = \data ->
-    @Browser data
+pack_browser_data = |data|
+    @Browser(data)
 
-unpackBrowserData = \@Browser data ->
+unpack_browser_data = |@Browser(data)|
     data
 
-packElementData = \data ->
-    @Element data
+pack_element_data = |data|
+    @Element(data)
 
-unpackElementData = \@Element data ->
+unpack_element_data = |@Element(data)|
     data

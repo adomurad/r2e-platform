@@ -1,13 +1,13 @@
-app [testCases, config] { r2e: platform "../platform/main.roc" }
+app [test_cases, config] { r2e: platform "../platform/main.roc" }
 
 import r2e.Test exposing [test]
 import r2e.Config
 import r2e.Browser
 import r2e.Assert
 
-config = Config.defaultConfig
+config = Config.default_config
 
-testCases = [
+test_cases = [
     test1,
     test2,
     test3,
@@ -41,334 +41,443 @@ testCases = [
     test31,
 ]
 
-test1 = test "navigation" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
-    browser |> Assert.urlShouldBe! "https://devexpress.github.io/testcafe/example/"
+test1 = test(
+    "navigation",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/")?
+        browser |> Assert.url_should_be!("https://devexpress.github.io/testcafe/example/")?
 
-    browser |> Browser.navigateTo! "https://www.roc-lang.org/"
-    browser |> Assert.urlShouldBe! "https://www.roc-lang.org/"
+        browser |> Browser.navigate_to!("https://www.roc-lang.org/")?
+        browser |> Assert.url_should_be!("https://www.roc-lang.org/")?
 
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
-    browser |> Assert.urlShouldBe! "https://devexpress.github.io/testcafe/example/"
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/")?
+        browser |> Assert.url_should_be!("https://devexpress.github.io/testcafe/example/"),
+)
 
-test2 = test "open and close browser windows" \_browser ->
-    browser2 = Browser.openNewWindow!
-    browser2 |> Browser.navigateTo! "https://www.roc-lang.org/"
-    browser2 |> Browser.closeWindow!
+test2 = test(
+    "open and close browser windows",
+    |_browser|
+        browser2 = Browser.open_new_window!({})?
+        browser2 |> Browser.navigate_to!("https://www.roc-lang.org/")?
+        browser2 |> Browser.close_window!,
+)
 
-test3 = test "openNewWindowWithCleanup" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+test3 = test(
+    "openNewWindowWithCleanup",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/")?
 
-    Browser.openNewWindowWithCleanup! \browser2 ->
-        browser2 |> Browser.navigateTo! "https://www.roc-lang.org/"
+        Browser.open_new_window_with_cleanup!(
+            |browser2|
+                browser2 |> Browser.navigate_to!("https://www.roc-lang.org/"),
+        ),
+)
 
-test4 = test "window move" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+test4 = test(
+    "window move",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/")?
 
-    _newRect = browser |> Browser.setWindowRect! (Move { x: 400, y: 600 })
+        _newRect = browser |> Browser.set_window_rect!(Move({ x: 400, y: 600 }))?
 
-    # newRect.x |> Assert.shouldBe 406
-    Task.ok {}
+        # newRect.x |> Assert.shouldBe 406
+        Ok({}),
+)
 
-test5 = test "window resize" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+test5 = test(
+    "window resize",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/")?
 
-    _newRect = browser |> Browser.setWindowRect! (Resize { width: 800, height: 750 })
+        _newRect = browser |> Browser.set_window_rect!(Resize({ width: 800, height: 750 }))?
 
-    # newRect.width |> Assert.shouldBe 800
-    Task.ok {}
+        # newRect.width |> Assert.shouldBe 800
+        Ok({}),
+)
 
-test6 = test "window move and resize" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+test6 = test(
+    "window move and resize",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/")?
 
-    _newRect = browser |> Browser.setWindowRect! (MoveAndResize { x: 400, y: 600, width: 800, height: 750 })
+        _newRect = browser |> Browser.set_window_rect!(MoveAndResize({ x: 400, y: 600, width: 800, height: 750 }))?
 
-    # newRect.x |> Assert.shouldBe! 406
-    # newRect.width |> Assert.shouldBe 800
-    Task.ok {}
+        # newRect.x |> Assert.shouldBe! 406
+        # newRect.width |> Assert.shouldBe 800
+        Ok({}),
+)
 
-test7 = test "getWindowRect" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+test7 = test(
+    "getWindowRect",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/")?
 
-    _rect = browser |> Browser.getWindowRect!
+        _rect = browser |> Browser.get_window_rect!?
 
-    # rect.x |> Assert.shouldBe! 16
-    # rect.width |> Assert.shouldBeGreaterThan 0
-    Task.ok {}
+        # rect.x |> Assert.shouldBe! 16
+        # rect.width |> Assert.shouldBeGreaterThan 0
+        Ok({}),
+)
 
-test8 = test "getTitle" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
-    title = browser |> Browser.getTitle!
+test8 = test(
+    "getTitle",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/")?
+        title = browser |> Browser.get_title!?
 
-    title |> Assert.shouldBe "TestCafe Example Page"
+        title |> Assert.should_be("TestCafe Example Page"),
+)
 
-test9 = test "getTitle assert" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+test9 = test(
+    "getTitle assert",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/")?
 
-    browser |> Assert.titleShouldBe "TestCafe Example Page"
+        browser |> Assert.title_should_be!("TestCafe Example Page"),
+)
 
-test10 = test "getUrl" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
-    url = browser |> Browser.getUrl!
+test10 = test(
+    "getUrl",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/")?
+        url = browser |> Browser.get_url!?
 
-    url |> Assert.shouldBe "https://devexpress.github.io/testcafe/example/"
+        url |> Assert.should_be("https://devexpress.github.io/testcafe/example/"),
+)
 
-test11 = test "browser navigation operations" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
-    browser |> Browser.navigateTo! "https://google.com"
-    browser |> Browser.navigateTo! "https://roc-lang.org"
-    browser |> Browser.reloadPage!
-    browser |> Browser.navigateBack!
-    browser |> Browser.navigateBack!
-    browser |> Browser.navigateForward!
-    browser |> Browser.navigateForward!
+test11 = test(
+    "browser navigation operations",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/")?
+        browser |> Browser.navigate_to!("https://google.com")?
+        browser |> Browser.navigate_to!("https://roc-lang.org")?
+        browser |> Browser.reload_page!?
+        browser |> Browser.navigate_back!?
+        browser |> Browser.navigate_back!?
+        browser |> Browser.navigate_forward!?
+        browser |> Browser.navigate_forward!,
+)
 
-test12 = test "window max, min, full" \browser ->
+test12 = test(
+    "window max, min, full",
+    |browser|
 
-    # cannot run this on my machine
-    # rect2 = browser |> Browser.minimizeWindow!
-    # rect2.x |> Assert.shouldBe! 16
-    # rect2.width |> Assert.shouldBe! 1919
+        # cannot run this on my machine
+        # rect2 = browser |> Browser.minimizeWindow!
+        # rect2.x |> Assert.shouldBe! 16
+        # rect2.width |> Assert.shouldBe! 1919
 
-    _rect3 = browser |> Browser.fullScreenWindow!
-    # rect3.x |> Assert.shouldBe! 0
-    # rect3.width |> Assert.shouldBe! 3840
+        _rect3 = browser |> Browser.full_screen_window!?
+        # rect3.x |> Assert.shouldBe! 0
+        # rect3.width |> Assert.shouldBe! 3840
 
-    _rect1 = browser |> Browser.maximizeWindow!
-    Task.ok {}
+        when browser |> Browser.maximize_window! is
+            Ok(_) -> Ok({})
+            Err(err) -> Err(err),
+)
+# Ok {}
 # rect1.x |> Assert.shouldBe! 6
 # rect1.width |> Assert.shouldBe! 3828
 
-test13 = test "executeJs return int" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+test13 = test(
+    "executeJs return int",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/")?
 
-    response = browser |> Browser.executeJsWithOutput! "return 50 + 5;"
-    response |> Assert.shouldBe! 55
+        response = browser |> Browser.execute_js_with_output!("return 50 + 5;")?
+        response |> Assert.should_be(55),
+)
 
-test14 = test "executeJs return float" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+test14 = test(
+    "executeJs return float",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/")?
 
-    response = browser |> Browser.executeJsWithOutput! "return 50.5 + 5;"
-    response |> Assert.shouldBe! 55.5
+        response = browser |> Browser.execute_js_with_output!("return 50.5 + 5;")?
+        response |> Assert.should_be(55.5),
+)
 
-test15 = test "executeJs return string" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+test15 = test(
+    "executeJs return string",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/")?
 
-    response = browser |> Browser.executeJsWithOutput! "return 50.5 + 5;"
-    response |> Assert.shouldBe! "55.5"
+        response = browser |> Browser.execute_js_with_output!("return 50.5 + 5;")?
+        response |> Assert.should_be("55.5"),
+)
 
-test16 = test "executeJs return bool to str" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+test16 = test(
+    "executeJs return bool to str",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/")?
 
-    response = browser |> Browser.executeJsWithOutput! "return true"
-    response |> Assert.shouldBe! "true"
+        response = browser |> Browser.execute_js_with_output!("return true")?
+        response |> Assert.should_be("true"),
+)
 
-test17 = test "executeJs return bool" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+test17 = test(
+    "executeJs return bool",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/")?
 
-    response = browser |> Browser.executeJsWithOutput! "return true"
-    response |> Assert.shouldBe! Bool.true
+        response = browser |> Browser.execute_js_with_output!("return true")?
+        response |> Assert.should_be(Bool.true),
+)
 
-test18 = test "executeJs" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+test18 = test(
+    "executeJs",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/")?
 
-    browser |> Browser.executeJs! "console.log(\"test\");"
+        browser |> Browser.execute_js!("console.log(\"test\");"),
+)
 
-test19 = test "executeJsWithArgs" \browser ->
-    browser |> Browser.navigateTo! "https://devexpress.github.io/testcafe/example/"
+test19 = test(
+    "executeJsWithArgs",
+    |browser|
+        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/")?
 
-    response = browser |> Browser.executeJsWithArgs! "return 50.5 + 5;" [Number 55.5, String "5"]
-    response |> Assert.shouldBe! 55.5
+        response = browser |> Browser.execute_js_with_args!("return 50.5 + 5;", [Number(55.5), String("5")])?
+        response |> Assert.should_be(55.5),
+)
 
-test20 = test "cookies add, get, getAll" \browser ->
-    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
+test20 = test(
+    "cookies add, get, getAll",
+    |browser|
+        browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting")?
 
-    browser |> Browser.addCookie! { name: "myCookie", value: "value1" }
+        browser |> Browser.add_cookie!({ name: "myCookie", value: "value1" })?
 
-    cookies1 = browser |> Browser.getAllCookies!
-    cookies1 |> List.len |> Assert.shouldBe! 1
+        cookies1 = browser |> Browser.get_all_cookies!?
+        cookies1 |> List.len |> Assert.should_be(1)?
 
-    browser |> Browser.addCookie! { name: "myCookie2", value: "value2" }
+        browser |> Browser.add_cookie!({ name: "myCookie2", value: "value2" })?
 
-    cookies2 = browser |> Browser.getAllCookies!
-    cookies2 |> List.len |> Assert.shouldBe! 2
+        cookies2 = browser |> Browser.get_all_cookies!?
+        cookies2 |> List.len |> Assert.should_be(2)?
 
-    cookie1 = browser |> Browser.getCookie! "myCookie"
-    cookie1
-    |> Assert.shouldBe {
-        name: "myCookie",
-        value: "value1",
-        domain: "adomurad.github.io",
-        path: "/",
-        sameSite: None,
-        expiry: Session,
-        # TODO webdriver always sets true... need to investigate
-        secure: Bool.true,
-        httpOnly: Bool.false,
-    }
+        cookie1 = browser |> Browser.get_cookie!("myCookie")?
+        cookie1
+        |> Assert.should_be(
+            {
+                name: "myCookie",
+                value: "value1",
+                domain: "adomurad.github.io",
+                path: "/",
+                same_site: None,
+                expiry: Session,
+                # TODO webdriver always sets true... need to investigate
+                secure: Bool.true,
+                http_only: Bool.false,
+            },
+        ),
+)
 
-test21 = test "cookies delete, deleteAll" \browser ->
-    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
+test21 = test(
+    "cookies delete, deleteAll",
+    |browser|
+        browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting")?
 
-    browser |> Browser.addCookie! { name: "myCookie", value: "value1" }
-    browser |> Browser.addCookie! { name: "myCookie2", value: "value2" }
-    browser |> Browser.addCookie! { name: "myCookie3", value: "value3" }
+        browser |> Browser.add_cookie!({ name: "myCookie", value: "value1" })?
+        browser |> Browser.add_cookie!({ name: "myCookie2", value: "value2" })?
+        browser |> Browser.add_cookie!({ name: "myCookie3", value: "value3" })?
 
-    cookies1 = browser |> Browser.getAllCookies!
-    cookies1 |> List.len |> Assert.shouldBe! 3
+        cookies1 = browser |> Browser.get_all_cookies!?
+        cookies1 |> List.len |> Assert.should_be(3)?
 
-    browser |> Browser.deleteCookie! "myCookie2"
+        browser |> Browser.delete_cookie!("myCookie2")?
 
-    cookies2 = browser |> Browser.getAllCookies!
-    cookies2 |> List.len |> Assert.shouldBe! 2
+        cookies2 = browser |> Browser.get_all_cookies!?
+        cookies2 |> List.len |> Assert.should_be(2)?
 
-    browser |> Browser.deleteCookie! "fake-cookie"
+        browser |> Browser.delete_cookie!("fake-cookie")?
 
-    cookies3 = browser |> Browser.getAllCookies!
-    cookies3 |> List.len |> Assert.shouldBe! 2
+        cookies3 = browser |> Browser.get_all_cookies!?
+        cookies3 |> List.len |> Assert.should_be(2)?
 
-    browser |> Browser.deleteAllCookies!
+        browser |> Browser.delete_all_cookies!?
 
-    cookies4 = browser |> Browser.getAllCookies!
-    cookies4 |> List.len |> Assert.shouldBe! 0
+        cookies4 = browser |> Browser.get_all_cookies!?
+        cookies4 |> List.len |> Assert.should_be(0),
+)
 
-test22 = test "cookies custom" \browser ->
-    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
+test22 = test(
+    "cookies custom",
+    |browser|
+        browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting")?
 
-    browser
-        |> Browser.addCookie! {
-            name: "myCookie",
-            value: "value1",
-            # TODO have to find a domain on which I can test subdomains // github.io is on public suffix
-            domain: "adomurad.github.io",
-            path: "/e2e-test-page",
-            sameSite: Lax,
-            secure: Bool.true,
-            httpOnly: Bool.true,
-            expiry: MaxAge 2865848396,
-        }
+        browser
+        |> Browser.add_cookie!(
+            {
+                name: "myCookie",
+                value: "value1",
+                # TODO have to find a domain on which I can test subdomains // github.io is on public suffix
+                domain: "adomurad.github.io",
+                path: "/e2e-test-page",
+                same_site: Lax,
+                secure: Bool.true,
+                http_only: Bool.true,
+                expiry: MaxAge(1772323200),
+            },
+        )?
 
-    cookie1 = browser |> Browser.getCookie! "myCookie"
-    cookie1
-        |> Assert.shouldBe! {
-            name: "myCookie",
-            value: "value1",
-            domain: ".adomurad.github.io",
-            path: "/e2e-test-page",
-            sameSite: Lax,
-            # TODO - bug in Roc compiler - U32 -> I64
-            expiry: Session,
-            secure: Bool.true,
-            httpOnly: Bool.true,
-        }
+        cookie1 = browser |> Browser.get_cookie!("myCookie")?
+        cookie1
+        |> Assert.should_be(
+            {
+                name: "myCookie",
+                value: "value1",
+                domain: ".adomurad.github.io",
+                path: "/e2e-test-page",
+                same_site: Lax,
+                expiry: MaxAge(1772323200),
+                secure: Bool.true,
+                http_only: Bool.true,
+            },
+        )?
 
-    browser
-        |> Browser.addCookie! {
-            name: "myCookie2",
-            value: "value2",
-            # TODO have to find a domain on which I can test subdomains // github.io is on public suffix
-            domain: "adomurad.github.io",
-            path: "/e2e-test-page",
-            sameSite: Strict,
-            secure: Bool.true,
-            httpOnly: Bool.true,
-            expiry: MaxAge 2865848396,
-        }
+        browser
+        |> Browser.add_cookie!(
+            {
+                name: "myCookie2",
+                value: "value2",
+                # TODO have to find a domain on which I can test subdomains // github.io is on public suffix
+                domain: "adomurad.github.io",
+                path: "/e2e-test-page",
+                same_site: Strict,
+                secure: Bool.true,
+                http_only: Bool.true,
+                expiry: MaxAge(1772323200),
+            },
+        )?
 
-    cookie2 = browser |> Browser.getCookie! "myCookie2"
-    cookie2
-    |> Assert.shouldBe {
-        name: "myCookie2",
-        value: "value2",
-        domain: ".adomurad.github.io",
-        path: "/e2e-test-page",
-        sameSite: Strict,
-        # TODO - bug in Roc compiler - U32 -> I64
-        expiry: Session,
-        secure: Bool.true,
-        httpOnly: Bool.true,
-    }
+        cookie2 = browser |> Browser.get_cookie!("myCookie2")?
+        cookie2
+        |> Assert.should_be(
+            {
+                name: "myCookie2",
+                value: "value2",
+                domain: ".adomurad.github.io",
+                path: "/e2e-test-page",
+                same_site: Strict,
+                expiry: MaxAge(1772323200),
+                secure: Bool.true,
+                http_only: Bool.true,
+            },
+        ),
+)
 
-test23 = test "getAlertText fail" \browser ->
-    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
+test23 = test(
+    "getAlertText fail",
+    |browser|
+        browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting")?
 
-    when browser |> Browser.getAlertText |> Task.result! is
-        Ok _ -> Assert.failWith "should fail"
-        Err (AlertNotFound err) -> err |> Assert.shouldContainText "no such alert"
-        Err _ -> Assert.failWith "should fail with other"
+        when browser |> Browser.get_alert_text! is
+            Ok(_) -> Assert.fail_with("should fail")
+            Err(AlertNotFound(err)) -> err |> Assert.should_contain_text("no such alert")
+            Err(_) -> Assert.fail_with("should fail with other"),
+)
 
-test24 = test "acceptAlert fail" \browser ->
-    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
+test24 = test(
+    "acceptAlert fail",
+    |browser|
+        browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting")?
 
-    when browser |> Browser.acceptAlert |> Task.result! is
-        Ok _ -> Assert.failWith "should fail"
-        Err (AlertNotFound err) -> err |> Assert.shouldContainText "no such alert"
-        Err _ -> Assert.failWith "should fail with other"
+        when browser |> Browser.accept_alert! is
+            Ok(_) -> Assert.fail_with("should fail")
+            Err(AlertNotFound(err)) -> err |> Assert.should_contain_text("no such alert")
+            Err(_) -> Assert.fail_with("should fail with other"),
+)
 
-test25 = test "dismissAlert fail" \browser ->
-    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
+test25 = test(
+    "dismissAlert fail",
+    |browser|
+        browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting")?
 
-    when browser |> Browser.dismissAlert |> Task.result! is
-        Ok _ -> Assert.failWith "should fail"
-        Err (AlertNotFound err) -> err |> Assert.shouldContainText "no such alert"
-        Err _ -> Assert.failWith "should fail with other"
+        when browser |> Browser.dismiss_alert! is
+            Ok(_) -> Assert.fail_with("should fail")
+            Err(AlertNotFound(err)) -> err |> Assert.should_contain_text("no such alert")
+            Err(_) -> Assert.fail_with("should fail with other"),
+)
 
-test26 = test "sentTextToAlert fail" \browser ->
-    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
+test26 = test(
+    "sentTextToAlert fail",
+    |browser|
+        browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting")?
 
-    when browser |> Browser.sendTextToAlert "wow" |> Task.result! is
-        Ok _ -> Assert.failWith "should fail"
-        Err (AlertNotFound err) -> err |> Assert.shouldContainText "no such alert"
-        Err _ -> Assert.failWith "should fail with other"
+        when browser |> Browser.send_text_to_alert!("wow") is
+            Ok(_) -> Assert.fail_with("should fail")
+            Err(AlertNotFound(err)) -> err |> Assert.should_contain_text("no such alert")
+            Err(_) -> Assert.fail_with("should fail with other"),
+)
 
-test27 = test "getAlertText" \browser ->
-    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
+test27 = test(
+    "getAlertText",
+    |browser|
+        browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting")?
 
-    browser
-        |> Browser.executeJs!
+        browser
+        |> Browser.execute_js!(
             """
                 alert("abcdef");
-            """
+            """,
+        )?
 
-    text = browser |> Browser.getAlertText!
-    text |> Assert.shouldBe! "abcdef"
+        text = browser |> Browser.get_alert_text!?
+        text |> Assert.should_be("abcdef"),
+)
 
-test28 = test "acceptAlert" \browser ->
-    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
+test28 = test(
+    "acceptAlert",
+    |browser|
+        browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting")?
 
-    browser
-        |> Browser.executeJs!
-            """
-                alert("abcdef");
-            """
-
-    browser |> Browser.acceptAlert!
-
-test29 = test "dismissAlert" \browser ->
-    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
-
-    browser
-        |> Browser.executeJs!
+        browser
+        |> Browser.execute_js!(
             """
                 alert("abcdef");
+            """,
+        )?
+
+        browser |> Browser.accept_alert!,
+)
+
+test29 = test(
+    "dismissAlert",
+    |browser|
+        browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting")?
+
+        browser
+        |> Browser.execute_js!(
             """
+                alert("abcdef");
+            """,
+        )?
 
-    browser |> Browser.dismissAlert!
+        browser |> Browser.dismiss_alert!,
+)
 
-test30 = test "sendTextToAlert" \browser ->
-    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
+test30 = test(
+    "sendTextToAlert",
+    |browser|
+        browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting")?
 
-    browser
-        |> Browser.executeJs!
+        browser
+        |> Browser.execute_js!(
             """
                 prompt("abcdef");
-            """
+            """,
+        )?
 
-    browser |> Browser.sendTextToAlert! "response"
-    browser |> Browser.acceptAlert!
+        browser |> Browser.send_text_to_alert!("response")?
+        browser |> Browser.accept_alert!,
+)
 
-test31 = test "getPageHtml" \browser ->
-    browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/waiting"
+test31 = test(
+    "getPageHtml",
+    |browser|
+        browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting")?
 
-    html = browser |> Browser.getPageHtml!
-    html |> Assert.shouldContainText "<h1 class=\"heading\" data-testid=\"header\">Wait for elements</h1>"
+        html = browser |> Browser.get_page_html!?
+        html |> Assert.should_contain_text("<h1 class=\"heading\" data-testid=\"header\">Wait for elements</h1>"),
+)
