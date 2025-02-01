@@ -4,7 +4,8 @@ import cli.Cmd
 import cli.Stdout
 
 main! = |_args|
-    build_for_legacy_linker!({})
+    build_for_legacy_linker!({})?
+    build_for_surgical_linker!({})
 
 build_for_legacy_linker! = |{}|
     [MacosArm64, MacosX64, LinuxArm64, LinuxX64, WindowsArm64, WindowsX64]
@@ -12,7 +13,7 @@ build_for_legacy_linker! = |{}|
         |target|
             build_dot_a!(target) |> Result.map_ok(|_| {}) |> Result.map_err(|_| BuildForLegacyLinker),
     )
-# |> Result.map_err(|_| BuildForLegacyLinker)
+    |> Result.map_err(|_| BuildForLegacyLinker)
 
 build_dot_a! = |target|
     (goos, goarch, zig_target, prebuilt_binary) =
@@ -29,3 +30,21 @@ build_dot_a! = |target|
     |> Cmd.args(("build -C host -buildmode c-archive -o ../platform/${prebuilt_binary} -tags legacy,netgo" |> Str.split_on(" ")))
     |> Cmd.status!()
     |> Result.map_err(|err| BuildErr(target, Inspect.to_str(err)))
+
+build_for_surgical_linker! = |_|
+    build_libapp_so!({})?
+    build_dynhost!({})?
+    preprocess!({})
+
+build_libapp_so! = |_|
+    Cmd.exec!("roc", ("build --lib ./app.roc --output host/libapp.so" |> Str.split_on(" ")))
+
+build_dynhost! = |_|
+    Cmd.new("go")
+    |> Cmd.args(("build -C host -buildmode pie -o ../platform/dynhost" |> Str.split_on(" ")))
+    |> Cmd.envs([("GOOS", "linux"), ("GOARCH", "amd64"), ("CC", "zig cc")])
+    |> Cmd.status!
+    |> Result.map_ok(|_| {})
+
+preprocess! = |_|
+    Cmd.exec!("roc", ("preprocess-host platform/dynhost platform/main.roc host/libapp.so" |> Str.split_on(" ")))

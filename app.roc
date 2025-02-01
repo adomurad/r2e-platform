@@ -1,5 +1,4 @@
 # app [testCases, config] { r2e: platform "https://github.com/adomurad/r2e-platform/releases/download/0.8.0/o-YITMnvpJZg-zxL2xKiCxBFlJzlEoEwdRY5a39WFZ0.tar.br" }
-# app [main!] { r2e: platform "./platform/main.roc" }
 app [test_cases, config] { r2e: platform "./platform/main.roc" }
 
 import r2e.Test exposing [test]

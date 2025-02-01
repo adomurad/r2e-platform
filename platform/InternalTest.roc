@@ -116,7 +116,7 @@ run_tests! = |test_cases, config|
 
     print_result_summary!(results)?
 
-    any_failures = results |> List.any(|{ result }| result |> Result.is_err)
+    any_failures = results |> List.keep_if(|{ type }| type == FinalResult) |> List.any(|{ result }| result |> Result.is_err)
     if
         any_failures
     then
