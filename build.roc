@@ -12,10 +12,13 @@ main! = |_args|
     native = get_native_target!({})?
 
     # build the target
-    build_go_target!({ target: native, host_dir: "host", platform_dir: "platform" })
+    build_for_legacy_linker!({ target: native, host_dir: "host", platform_dir: "platform" })?
 
-build_go_target! : { target : RocTarget, host_dir : Str, platform_dir : Str } => Result {} _
-build_go_target! = |{ target, host_dir, platform_dir }|
+    # surgical is built only for linux 64 for now
+    build_for_surgical_linker!({})
+
+build_for_legacy_linker! : { target : RocTarget, host_dir : Str, platform_dir : Str } => Result {} _
+build_for_legacy_linker! = |{ target, host_dir, platform_dir }|
 
     (goos, goarch, prebuilt_binary) =
         when target is
@@ -29,7 +32,7 @@ build_go_target! = |{ target, host_dir, platform_dir }|
     _ =
         Cmd.new("go")
         |> Cmd.envs([("GOOS", goos), ("GOARCH", goarch), ("CC", "zig cc")])
-        |> Cmd.args(["build", "-C", host_dir, "-buildmode=c-archive", "-o", "libhost.a"])
+        |> Cmd.args(["build", "-C", host_dir, "-buildmode=c-archive", "-o", "libhost.a", "-tags=legacy,netgo"])
         |> Cmd.status!()
         |> Result.map_err(|err| BuildErr(goos, goarch, Inspect.to_str(err)))?
 
@@ -89,3 +92,21 @@ get_native_target! = |_|
         (Linux, Arm64) -> Ok(LinuxArm64)
         (Linux, X64) -> Ok(LinuxX64)
         _ -> Err(UnsupportedNative(os, arch))
+
+build_for_surgical_linker! = |_|
+    build_libapp_so!({})?
+    build_dynhost!({})?
+    preprocess!({})
+
+build_libapp_so! = |_|
+    Cmd.exec!("roc", ("build --lib ./app.roc --output host/libapp.so" |> Str.split_on(" ")))
+
+build_dynhost! = |_|
+    Cmd.new("go")
+    |> Cmd.args(("build -C host -buildmode pie -o ../platform/dynhost" |> Str.split_on(" ")))
+    |> Cmd.envs([("GOOS", "linux"), ("GOARCH", "amd64"), ("CC", "zig cc")])
+    |> Cmd.status!
+    |> Result.map_ok(|_| {})
+
+preprocess! = |_|
+    Cmd.exec!("roc", ("preprocess-host platform/dynhost platform/main.roc host/libapp.so" |> Str.split_on(" ")))

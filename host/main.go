@@ -1,8 +1,5 @@
 package main
 
-//#cgo CFLAGS: -Wno-main-return-type
-import "C"
-
 import (
 	"flag"
 	"os"
@@ -11,8 +8,7 @@ import (
 	"host/roc"
 )
 
-//export main
-func main() {
+func entry() {
 	setupOnly := flag.Bool("setup", false, "run only browser and driver setup (useful in CI)")
 	printBrowserVersionOnly := flag.Bool("print-browser-version-only", false, "print the version of used broweser (useful in CI)")
 	verbose := flag.Bool("verbose", false, "run with pauses between actions and visualize actions in browser")
