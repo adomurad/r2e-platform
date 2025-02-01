@@ -1,5 +1,5 @@
 ## `Report` module contains test reporters.
-module [runReporters!, ReporterCallback, ReporterDefinition, TestRunResult, TestRunMetadata]
+module [run_reporters!, ReporterCallback, ReporterDefinition, TestRunResult, TestRunMetadata]
 
 import Fs
 
@@ -16,54 +16,58 @@ TestRunMetadata : {
     duration : U64,
 }
 
-ReporterCallback err : List (TestRunResult err), TestRunMetadata -> List { filePath : Str, content : Str } where err implements Inspect
+ReporterCallback err : List (TestRunResult err), TestRunMetadata -> List { file_path : Str, content : Str } where err implements Inspect
 
 ReporterDefinition err : {
     name : Str,
     callback : ReporterCallback err,
 } where err implements Inspect
 
-runReporters! : List (ReporterDefinition err), List (TestRunResult err), Str, U64 => Result {} _
-runReporters! = \reporters, results, outDir, duration ->
+run_reporters! : List (ReporterDefinition err), List (TestRunResult err), Str, U64 => Result {} _
+run_reporters! = |reporters, results, out_dir, duration|
     reporters
-    |> forEach! \reporter ->
-        reporter |> runReporter! results outDir duration
+    |> for_each!(
+        |reporter|
+            reporter |> run_reporter!(results, out_dir, duration),
+    )
 
-forEach! = \list, callback! ->
+for_each! = |list, callback!|
     when list is
-        [] -> Ok {}
+        [] -> Ok({})
         [el, .. as rest] ->
-            callback! el |> try
-            forEach! rest callback!
+            callback!(el)?
+            for_each!(rest, callback!)
 
-runReporter! : ReporterDefinition err, List (TestRunResult err), Str, U64 => Result {} _
-runReporter! = \reporter, results, outDir, duration ->
-    Fs.createDirIfNotExist! outDir |> try
+run_reporter! : ReporterDefinition err, List (TestRunResult err), Str, U64 => Result {} _
+run_reporter! = |reporter, results, out_dir, duration|
+    Fs.create_dir_if_not_exist!(out_dir)?
 
     cb = reporter.callback
-    readyFiles = cb results { duration }
-    readyFiles
-    |> forEach! \{ filePath, content } ->
-        reporterDirName = reporter.name |> Str.replaceEach "/" "_"
-        reporterDir = joinPath outDir reporterDirName
-        finalPath = joinPath reporterDir filePath
-        createDirForFilePath! finalPath |> try
-        Fs.writeUtf8! finalPath content
+    ready_files = cb(results, { duration })
+    ready_files
+    |> for_each!(
+        |{ file_path, content }|
+            reporter_dir_name = reporter.name |> Str.replace_each("/", "_")
+            reporter_dir = join_path(out_dir, reporter_dir_name)
+            final_path = join_path(reporter_dir, file_path)
+            create_dir_for_file_path!(final_path)?
+            Fs.write_utf8!(final_path, content),
+    )
 
-joinPath = \path, filename ->
-    sanitizedPath = path |> removeTrailing "/"
+join_path = |path, filename|
+    sanitized_path = path |> remove_trailing("/")
 
-    "$(sanitizedPath)/$(filename)"
+    "${sanitized_path}/${filename}"
 
-createDirForFilePath! = \path ->
+create_dir_for_file_path! = |path|
     # TODO gracefully handle this error
-    { before } = path |> Str.splitLast "/" |> try
+    { before } = path |> Str.split_last("/")?
 
-    Fs.createDirIfNotExist! "$(before)/"
+    Fs.create_dir_if_not_exist!("${before}/")
 
-removeTrailing = \outDir, tail ->
-    shouldRemove = outDir |> Str.endsWith tail
-    if shouldRemove then
-        outDir |> Str.replaceLast tail ""
+remove_trailing = |out_dir, tail|
+    should_remove = out_dir |> Str.ends_with(tail)
+    if should_remove then
+        out_dir |> Str.replace_last(tail, "")
     else
-        outDir
+        out_dir

@@ -35,5 +35,5 @@ struct ResultListStr {
 };
 
 
-size_t roc__mainForHost_1_exposed_size();
-uint32_t roc__mainForHost_1_exposed();
+size_t roc__main_for_host_1_exposed_size();
+uint32_t roc__main_for_host_1_exposed();

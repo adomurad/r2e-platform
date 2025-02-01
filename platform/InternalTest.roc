@@ -1,4 +1,4 @@
-module [test, testWith, runTests!]
+module [test, test_with, run_tests!]
 
 import Internal exposing [Browser]
 import Debug
@@ -11,12 +11,12 @@ import Error
 # import Assert # without an even number of imports in this module, Roc compiler fails
 
 ConfigOverride : {
-    assertTimeout : [Inherit, Override U64],
-    pageLoadTimeout : [Inherit, Override U64],
-    scriptExecutionTimeout : [Inherit, Override U64],
-    elementImplicitTimeout : [Inherit, Override U64],
-    windowSize : [Inherit, Override [Size U64 U64]],
-    screenshotOnFail : [Inherit, Override [Yes, No]],
+    assert_timeout : [Inherit, Override U64],
+    page_load_timeout : [Inherit, Override U64],
+    script_execution_timeout : [Inherit, Override U64],
+    element_implicit_timeout : [Inherit, Override U64],
+    window_size : [Inherit, Override [Size U64 U64]],
+    screenshot_on_fail : [Inherit, Override [Yes, No]],
     attempts : [Inherit, Override U64],
 }
 
@@ -24,7 +24,7 @@ TestBody err : Browser => Result {} [WebDriverError Str]err
 
 TestCase err := {
     name : Str,
-    testBody : TestBody err,
+    test_body : TestBody err,
     config : ConfigOverride,
 }
 
@@ -37,234 +37,241 @@ TestCaseResult err : {
     type : [FinalResult, Attempt],
 } where err implements Inspect
 
-test = \name, testBody ->
-    @TestCase {
-        name,
-        testBody,
-        config: {
-            assertTimeout: Inherit,
-            pageLoadTimeout: Inherit,
-            scriptExecutionTimeout: Inherit,
-            elementImplicitTimeout: Inherit,
-            windowSize: Inherit,
-            screenshotOnFail: Inherit,
-            attempts: Inherit,
-        },
-    }
-
-testWith = \{ assertTimeout ? Inherit, pageLoadTimeout ? Inherit, scriptExecutionTimeout ? Inherit, elementImplicitTimeout ? Inherit, windowSize ? Inherit, screenshotOnFail ? Inherit, attempts ? Inherit } ->
-    \name, testBody ->
-        @TestCase {
+test = |name, test_body|
+    @TestCase(
+        {
             name,
-            testBody,
+            test_body,
             config: {
-                assertTimeout,
-                pageLoadTimeout,
-                scriptExecutionTimeout,
-                elementImplicitTimeout,
-                windowSize,
-                screenshotOnFail,
-                attempts,
+                assert_timeout: Inherit,
+                page_load_timeout: Inherit,
+                script_execution_timeout: Inherit,
+                element_implicit_timeout: Inherit,
+                window_size: Inherit,
+                screenshot_on_fail: Inherit,
+                attempts: Inherit,
             },
-        }
+        },
+    )
 
-runTests! : List (TestCase _), R2EConfiguration _ => Result {} _
-runTests! = \testCases, config ->
-    # Assert.shouldBe 1 1 |> try # suppressing the warning
+test_with = |{ assert_timeout ?? Inherit, page_load_timeout ?? Inherit, script_execution_timeout ?? Inherit, element_implicit_timeout ?? Inherit, window_size ?? Inherit, screenshot_on_fail ?? Inherit, attempts ?? Inherit }|
+    |name, test_body|
+        @TestCase(
+            {
+                name,
+                test_body,
+                config: {
+                    assert_timeout,
+                    page_load_timeout,
+                    script_execution_timeout,
+                    element_implicit_timeout,
+                    window_size,
+                    screenshot_on_fail,
+                    attempts,
+                },
+            },
+        )
 
-    Debug.printLine! "Starting test run..."
+run_tests! : List (TestCase _), R2EConfiguration _ => Result {} _
+run_tests! = |test_cases, config|
+    # Assert.shouldBe 1 1? # suppressing the warning
 
-    testFilter = Utils.getTestNameFilter! {}
-    printFilterWarning! testFilter
+    Debug.print_line!("Starting test run...")
 
-    startTime = Utils.getTimeMilis! {}
+    test_filter = Utils.get_test_name_filter!({})
+    print_filter_warning!(test_filter)
 
-    filteredTestCases =
-        testCases
-        |> List.keepIf (filterTestCase testFilter)
+    start_time = Utils.get_time_milis!({})
 
-    results = loop! { resultsL: [], testCasesL: filteredTestCases, indexL: 0, attempt: 1 } \{ resultsL, testCasesL, indexL, attempt } ->
-        when testCasesL is
-            [] -> Done resultsL
-            [testCase, .. as rest] ->
-                # TODO better tests
-                numberOfAttempts = getOrOverrideAttempts config testCase
+    filtered_test_cases =
+        test_cases
+        |> List.keep_if(filter_test_case(test_filter))
 
-                res = runTest! indexL attempt testCase config
-                if res.result |> Result.isOk then
-                    Step { resultsL: List.append resultsL res, testCasesL: rest, indexL: indexL + 1, attempt: 1 }
-                else if attempt < numberOfAttempts then
-                    attemptRes = { res & type: Attempt }
-                    Step { resultsL: List.append resultsL attemptRes, testCasesL: testCasesL, indexL: indexL, attempt: attempt + 1 }
-                else
-                    Step { resultsL: List.append resultsL res, testCasesL: rest, indexL: indexL + 1, attempt: 1 }
+    results = loop!(
+        { results_l: [], test_cases_l: filtered_test_cases, index_l: 0, attempt: 1 },
+        |{ results_l, test_cases_l, index_l, attempt }|
+            when test_cases_l is
+                [] -> Done(results_l)
+                [test_case, .. as rest] ->
+                    # TODO better tests
+                    number_of_attempts = get_or_override_attempts(config, test_case)
 
-    endTime = Utils.getTimeMilis! {}
-    duration = endTime - startTime
+                    res = run_test!(index_l, attempt, test_case, config)
+                    if res.result |> Result.is_ok then
+                        Step({ results_l: List.append(results_l, res), test_cases_l: rest, index_l: index_l + 1, attempt: 1 })
+                    else if attempt < number_of_attempts then
+                        attempt_res = { res & type: Attempt }
+                        Step({ results_l: List.append(results_l, attempt_res), test_cases_l: test_cases_l, index_l: index_l, attempt: attempt + 1 })
+                    else
+                        Step({ results_l: List.append(results_l, res), test_cases_l: rest, index_l: index_l + 1, attempt: 1 }),
+    )
+
+    end_time = Utils.get_time_milis!({})
+    duration = end_time - start_time
 
     reporters = config.reporters
-    outDir = config.resultsDirName
+    out_dir = config.results_dir_name
     # TODO - fail gracefully
-    InternalReporting.runReporters! reporters results outDir duration |> try
+    InternalReporting.run_reporters!(reporters, results, out_dir, duration)?
 
-    printResultSummary! results |> try
+    print_result_summary!(results)?
 
-    anyFailures = results |> List.any (\{ result } -> result |> Result.isErr)
+    any_failures = results |> List.any(|{ result }| result |> Result.is_err)
     if
-        anyFailures
+        any_failures
     then
-        Err TestRunFailed
+        Err(TestRunFailed)
     else
-        Ok {}
+        Ok({})
 
-loop! = \initialState, callback! ->
-    output = callback! initialState
+loop! = |initial_state, callback!|
+    output = callback!(initial_state)
     when output is
-        Done result -> result
-        Step result -> loop! result callback!
+        Done(result) -> result
+        Step(result) -> loop!(result, callback!)
 
-runTest! : U64, U64, TestCase _, R2EConfiguration _ => TestCaseResult [WebDriverError Str, AssertionError Str]_
-runTest! = \i, attempt, @TestCase { name, testBody, config: testConfigOverride }, config ->
-    indexStr = (i + 1) |> Num.toStr
+run_test! : U64, U64, TestCase _, R2EConfiguration _ => TestCaseResult [WebDriverError Str, AssertionError Str]_
+run_test! = |i, attempt, @TestCase({ name, test_body, config: test_config_override }), config|
+    index_str = (i + 1) |> Num.to_str
 
-    testConfigOverride.assertTimeout |> runIfOverride! Utils.setAssertTimeoutOverride!
-    testConfigOverride.pageLoadTimeout |> runIfOverride! Utils.setPageLoadTimeoutOverride!
-    testConfigOverride.scriptExecutionTimeout |> runIfOverride! Utils.setScriptTimeoutOverride!
-    testConfigOverride.elementImplicitTimeout |> runIfOverride! Utils.setImplicitTimeoutOverride!
-    testConfigOverride.windowSize |> runIfOverride! Utils.setWindowSizeOverride!
+    test_config_override.assert_timeout |> run_if_override!(Utils.set_assert_timeout_override!)
+    test_config_override.page_load_timeout |> run_if_override!(Utils.set_page_load_timeout_override!)
+    test_config_override.script_execution_timeout |> run_if_override!(Utils.set_script_timeout_override!)
+    test_config_override.element_implicit_timeout |> run_if_override!(Utils.set_implicit_timeout_override!)
+    test_config_override.window_size |> run_if_override!(Utils.set_window_size_override!)
 
-    mergedConfig =
-        when testConfigOverride.screenshotOnFail is
-            Override val -> { config & screenshotOnFail: val }
+    merged_config =
+        when test_config_override.screenshot_on_fail is
+            Override(val) -> { config & screenshot_on_fail: val }
             Inherit -> config
 
-    attemptStr =
+    attempt_str =
         if attempt > 1 then
-            " (attempt $(attempt |> Num.toStr))"
+            " (attempt ${attempt |> Num.to_str})"
         else
             ""
 
-    Debug.printLine! "" # empty line for readability
-    Debug.printLine! "$(color.gray)Test $(indexStr):$(color.end) \"$(name)\"$(attemptStr): Running..."
+    Debug.print_line!("") # empty line for readability
+    Debug.print_line!("${color.gray}Test ${index_str}:${color.end} \"${name}\"${attempt_str}: Running...")
 
-    Utils.resetTestLogBucket! {}
+    Utils.reset_test_log_bucket!({})
 
-    startTime = Utils.getTimeMilis! {}
-    resultWithMaybeScreenshot = runTestSafe! testBody mergedConfig
+    start_time = Utils.get_time_milis!({})
+    result_with_maybe_screenshot = run_test_safe!(test_body, merged_config)
 
-    endTime = Utils.getTimeMilis! {}
-    duration = endTime - startTime
+    end_time = Utils.get_time_milis!({})
+    duration = end_time - start_time
 
-    Utils.resetTestOverrides! {}
+    Utils.reset_test_overrides!({})
 
     { result, screenshot } =
-        when resultWithMaybeScreenshot is
-            Ok {} -> { result: Ok {}, screenshot: NoScreenshot }
-            Err (ResultWithoutScreenshot res) -> { result: Err res, screenshot: NoScreenshot }
-            Err (ResultWithScreenshot res screenBase64) -> { result: Err res, screenshot: Screenshot screenBase64 }
+        when result_with_maybe_screenshot is
+            Ok({}) -> { result: Ok({}), screenshot: NoScreenshot }
+            Err(ResultWithoutScreenshot(res)) -> { result: Err(res), screenshot: NoScreenshot }
+            Err(ResultWithScreenshot(res, screen_base64)) -> { result: Err(res), screenshot: Screenshot(screen_base64) }
 
-    testLogs = Utils.getLogsFromBucket! {}
+    test_logs = Utils.get_logs_from_bucket!({})
 
-    testCaseResult = {
+    test_case_result = {
         name,
         result,
         duration,
         screenshot,
-        logs: testLogs,
+        logs: test_logs,
         type: FinalResult,
     }
 
-    resultLogMessage =
+    result_log_message =
         when result is
-            Ok {} ->
-                "$(color.gray)Test $(indexStr):$(color.end) \"$(name)\": $(color.green)OK$(color.end)"
+            Ok({}) ->
+                "${color.gray}Test ${index_str}:${color.end} \"${name}\": ${color.green}OK${color.end}"
 
-            Err err ->
-                when Error.webDriverErrorToStr err is
-                    StringError strErr ->
-                        "$(color.gray)Test $(indexStr):$(color.end) \"$(name)\": $(color.red)$(strErr)$(color.end)"
+            Err(err) ->
+                when Error.web_driver_error_to_str(err) is
+                    StringError(str_err) ->
+                        "${color.gray}Test ${index_str}:${color.end} \"${name}\": ${color.red}${str_err}${color.end}"
 
-                    unhandledError ->
-                        "$(color.gray)Test $(indexStr):$(color.end) \"$(name)\": $(color.red)$(unhandledError |> Inspect.toStr)$(color.end)"
+                    unhandled_error ->
+                        "${color.gray}Test ${index_str}:${color.end} \"${name}\": ${color.red}${unhandled_error |> Inspect.to_str}${color.end}"
 
-    Debug.printLine! resultLogMessage
+    Debug.print_line!(result_log_message)
 
-    testCaseResult
+    test_case_result
 
-runTestSafe! = \testBody!, config ->
-    browser = Browser.openNewWindow! {} |> Result.mapErr ResultWithoutScreenshot |> try
+run_test_safe! = |test_body!, config|
+    browser = Browser.open_new_window!({}) |> Result.map_err(ResultWithoutScreenshot)?
 
-    testResult = testBody! browser
+    test_result = test_body!(browser)
 
-    shouldTakeScreenshot = (testResult |> Result.isErr) && (config.screenshotOnFail == Yes)
-    screenshotResult = shouldTakeScreenshot |> takeConditionalScreenshot! browser
+    should_take_screenshot = (test_result |> Result.is_err) and (config.screenshot_on_fail == Yes)
+    screenshot_result = should_take_screenshot |> take_conditional_screenshot!(browser)
 
-    Browser.closeWindow! browser |> Result.mapErr ResultWithoutScreenshot |> try
+    Browser.close_window!(browser) |> Result.map_err(ResultWithoutScreenshot)?
 
-    when testResult is
-        Ok {} -> Ok {}
-        Err res ->
-            when screenshotResult is
-                NoScreenshot -> Err (ResultWithoutScreenshot res)
-                ScreenshotBase64 screenshot -> Err (ResultWithScreenshot res screenshot)
-                err -> Err (ResultWithoutScreenshot err)
+    when test_result is
+        Ok({}) -> Ok({})
+        Err(res) ->
+            when screenshot_result is
+                NoScreenshot -> Err(ResultWithoutScreenshot(res))
+                ScreenshotBase64(screenshot) -> Err(ResultWithScreenshot(res, screenshot))
+                err -> Err(ResultWithoutScreenshot(err))
 
-takeConditionalScreenshot! : Bool, Browser => [ScreenshotBase64 Str, NoScreenshot, WebDriverError Str]
-takeConditionalScreenshot! = \shouldTakeScreenshot, browser ->
-    if shouldTakeScreenshot then
-        when browser |> Browser.takeScreenshotBase64! is
-            Ok screenshot ->
-                ScreenshotBase64 screenshot
+take_conditional_screenshot! : Bool, Browser => [ScreenshotBase64 Str, NoScreenshot, WebDriverError Str]
+take_conditional_screenshot! = |should_take_screenshot, browser|
+    if should_take_screenshot then
+        when browser |> Browser.take_screenshot_base64! is
+            Ok(screenshot) ->
+                ScreenshotBase64(screenshot)
 
-            Err err -> err
+            Err(err) -> err
     else
         NoScreenshot
 
-isFinalResult = \{ type } -> type == FinalResult
+is_final_result = |{ type }| type == FinalResult
 
-printResultSummary! : List (TestCaseResult _) => Result {} _
-printResultSummary! = \results ->
-    Debug.printLine! "" # empty line
-    Debug.printLine! "Summary:"
+print_result_summary! : List (TestCaseResult _) => Result {} _
+print_result_summary! = |results|
+    Debug.print_line!("") # empty line
+    Debug.print_line!("Summary:")
 
-    finalResults = results |> List.keepIf isFinalResult
-    totalCount = finalResults |> List.len
-    errorCount = finalResults |> List.countIf \{ result } -> result |> Result.isErr
-    successCount = totalCount - errorCount
-    totalCountStr = totalCount |> Num.toStr
-    errorCountStr = errorCount |> Num.toStr
-    successCountStr = successCount |> Num.toStr
+    final_results = results |> List.keep_if(is_final_result)
+    total_count = final_results |> List.len
+    error_count = final_results |> List.count_if(|{ result }| result |> Result.is_err)
+    success_count = total_count - error_count
+    total_count_str = total_count |> Num.to_str
+    error_count_str = error_count |> Num.to_str
+    success_count_str = success_count |> Num.to_str
 
-    msg = "Total:\t$(totalCountStr)\nPass:\t$(successCountStr)\nFail:\t$(errorCountStr)"
-    msgWithColor =
-        if errorCount > 0 then
-            "$(color.red)$(msg)$(color.end)"
+    msg = "Total:\t${total_count_str}\nPass:\t${success_count_str}\nFail:\t${error_count_str}"
+    msg_with_color =
+        if error_count > 0 then
+            "${color.red}${msg}${color.end}"
         else
-            "$(color.green)$(msg)$(color.end)"
+            "${color.green}${msg}${color.end}"
 
-    Debug.printLine! "$(msgWithColor)\n"
+    Debug.print_line!("${msg_with_color}\n")
 
-    Ok {}
+    Ok({})
 
-printFilterWarning! = \testFilter ->
-    when testFilter is
-        FilterTests str -> Debug.printLine! "\n$(color.yellow)FILTER: running only tests containing the str: \"$(str)\"$(color.end)"
+print_filter_warning! = |test_filter|
+    when test_filter is
+        FilterTests(str) -> Debug.print_line!("\n${color.yellow}FILTER: running only tests containing the str: \"${str}\"${color.end}")
         NoFilter -> {}
 
-getOrOverrideAttempts = \mainConfig, @TestCase testCase ->
-    when testCase.config.attempts is
-        Inherit -> mainConfig.attempts
-        Override num -> num
+get_or_override_attempts = |main_config, @TestCase(test_case)|
+    when test_case.config.attempts is
+        Inherit -> main_config.attempts
+        Override(num) -> num
 
-filterTestCase = \filter ->
-    \@TestCase { name } ->
+filter_test_case = |filter|
+    |@TestCase({ name })|
         when filter is
-            FilterTests str -> name |> Str.contains str
+            FilterTests(str) -> name |> Str.contains(str)
             NoFilter -> Bool.true
 
-runIfOverride! = \value, task! ->
+run_if_override! = |value, task!|
     when value is
-        Override val -> task! val
+        Override(val) -> task!(val)
         Inherit -> {}
 
 color = {

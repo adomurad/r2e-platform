@@ -1,56 +1,60 @@
 ## `Report` module contains test reporters.
-module [createReporter, rename, htmlEncode]
+module [create_reporter, rename, html_encode]
 
 import InternalReporting exposing [ReporterCallback, ReporterDefinition]
 
 ## Creates a custom reporter.
 ##
 ## ```
-## customReporter = Reporting.createReporter "myCustomReporter" \results, _meta ->
-##     lenStr = results |> List.len |> Num.toStr
-##     indexFile = { filePath: "index.html", content: "<h3>Test count: $(lenStr)</h3>" }
-##     testFile = { filePath: "test.txt", content: "this is just a test" }
-##     [indexFile, testFile]
+## custom_reporter = Reporting.create_reporter("myCustomReporter", |results, _meta|
+##     len_str = results |> List.len |> Num.to_str
+##     index_file = { file_path: "index.html", content: "<h3>Test count: $(lenStr)</h3>" }
+##     test_file = { file_path: "test.txt", content: "this is just a test" }
+##     [index_file, test_file]
+## )
 ## ```
-createReporter : Str, ReporterCallback err -> ReporterDefinition err
-createReporter = \name, callback ->
+create_reporter : Str, ReporterCallback err -> ReporterDefinition err
+create_reporter = |name, callback|
     { name, callback }
 
 ## Rename an existing reporter.
 ## The name of a reporter is also used to create the report dir in outDir.
 ##
 ## ```
-## customReporter =
+## custom_reporter =
 ##     Reporting.BasicHtmlReporter.reporter
-##     |> Reporting.rename "myCustomReporter"
+##     |> Reporting.rename("myCustomReporter")
 ## ```
 rename : ReporterDefinition err, Str -> ReporterDefinition err
-rename = \reporter, newName ->
-    { reporter & name: newName }
+rename = |reporter, new_name|
+    { reporter & name: new_name }
 
 ## Encode `Str` so it can be used in HTML.
 ##
 ## Useful util when writing a custom reporter.
-htmlEncode : Str -> Str
-htmlEncode = \str ->
-    strResult =
+html_encode : Str -> Str
+html_encode = |str|
+    str_result =
         str
-        |> Str.walkUtf8 [] \state, current ->
-            when current is
-                34 -> List.concat state (Str.toUtf8 "&quot;")
-                38 -> List.concat state (Str.toUtf8 "&amp;")
-                39 -> List.concat state (Str.toUtf8 "&#39;")
-                60 -> List.concat state (Str.toUtf8 "&lt;")
-                62 -> List.concat state (Str.toUtf8 "&gt;")
-                _ -> List.append state current
-        |> Str.fromUtf8
+        |> Str.walk_utf8(
+            [],
+            |state, current|
+                when current is
+                    34 -> List.concat(state, Str.to_utf8("&quot;"))
+                    38 -> List.concat(state, Str.to_utf8("&amp;"))
+                    39 -> List.concat(state, Str.to_utf8("&#39;"))
+                    60 -> List.concat(state, Str.to_utf8("&lt;"))
+                    62 -> List.concat(state, Str.to_utf8("&gt;"))
+                    _ -> List.append(state, current),
+        )
+        |> Str.from_utf8
 
-    when strResult is
-        Ok s -> s
-        Err _ -> crash "EscapeHtml: this error should not be possible."
+    when str_result is
+        Ok(s) -> s
+        Err(_) -> crash("EscapeHtml: this error should not be possible.")
 
-expect htmlEncode "test" == "test"
-expect htmlEncode "<h1>abc</h1>" == "&lt;h1&gt;abc&lt;/h1&gt;"
-expect htmlEncode "test&test" == "test&amp;test"
-expect htmlEncode "test\"test" == "test&quot;test"
-expect htmlEncode "test'test" == "test&#39;test"
+expect html_encode("test") == "test"
+expect html_encode("<h1>abc</h1>") == "&lt;h1&gt;abc&lt;/h1&gt;"
+expect html_encode("test&test") == "test&amp;test"
+expect html_encode("test\"test") == "test&quot;test"
+expect html_encode("test'test") == "test&#39;test"

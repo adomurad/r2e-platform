@@ -1,25 +1,25 @@
-module [R2EConfiguration, defaultConfig, defaultConfigWith]
+module [R2EConfiguration, default_config, default_config_with]
 
 import InternalReporting exposing [ReporterDefinition]
 import BasicHtmlReporter
 
-R2EConfiguration testError : {
+R2EConfiguration test_error : {
     # the directory name where the results will be stored
-    resultsDirName : Str,
+    results_dir_name : Str,
     # what reporters to use
-    reporters : List (ReporterDefinition testError),
+    reporters : List (ReporterDefinition test_error),
     # how long asserts wait for condition | Default: 3s
-    assertTimeout : U64,
+    assert_timeout : U64,
     # how long to wait for page | Default: 10s
-    pageLoadTimeout : U64,
+    page_load_timeout : U64,
     # how long to wait for JavaScript execution | Default: 10s
-    scriptExecutionTimeout : U64,
+    script_execution_timeout : U64,
     # how long to wait when searching for Elements, and for Elements to become interactive | Default: 5s
-    elementImplicitTimeout : U64,
+    element_implicit_timeout : U64,
     # starting browser dimensions
-    windowSize : [Size U64 U64],
+    window_size : [Size U64 U64],
     # should take a screenshot on test fail? | Default: Yes
-    screenshotOnFail : [Yes, No],
+    screenshot_on_fail : [Yes, No],
     # number of attempts | Default: 2
     attempts : U64,
 }
@@ -28,79 +28,79 @@ R2EConfiguration testError : {
 ##
 ## The defaults:
 ##
-## **resultsDirName** - *"testResults"*
+## **results_dir_name** - *"testResults"*
 ##
 ## **reporters** - *[BasicHtmlReporter.reporter]*
 ##
-## **assertTimeout** - *3s*
+## **assert_timeout** - *3s*
 ##
-## **pageLoadTimeout** - *10s*
+## **page_load_timeout** - *10s*
 ##
-## **scriptExecutionTimeout** - *10s*
+## **script_execution_timeout** - *10s*
 ##
-## **elementImplicitTimeout** - *5s*
+## **element_implicit_timeout** - *5s*
 ##
-## **windowSize** - *Size 1024 768*
+## **window_size** - *Size 1024 768*
 ##
-## **screenshotOnFail** - *Yes*
+## **screenshot_on_fail** - *Yes*
 ##
 ## **attempts** - *2*
 ##
 ## ```
-## app [testCases, config] { r2e: platform "..." }
+## app [test_cases, config] { r2e: platform "..." }
 ##
 ## import r2e.Test exposing [test]
 ## import r2e.Config
 ##
-## config = Config.defaultConfig
+## config = Config.default_config
 ##
 ## testCases = [
 ##     test1,
 ## ]
 ## ```
-defaultConfig : R2EConfiguration _
-defaultConfig = {
-    resultsDirName: "testResults",
+default_config : R2EConfiguration _
+default_config = {
+    results_dir_name: "testResults",
     reporters: [BasicHtmlReporter.reporter],
-    assertTimeout: 3_000,
-    pageLoadTimeout: 10_000,
-    scriptExecutionTimeout: 10_000,
-    elementImplicitTimeout: 5_000,
-    windowSize: Size 1024 768,
-    screenshotOnFail: Yes,
+    assert_timeout: 3_000,
+    page_load_timeout: 10_000,
+    script_execution_timeout: 10_000,
+    element_implicit_timeout: 5_000,
+    window_size: Size(1024, 768),
+    screenshot_on_fail: Yes,
     attempts: 2,
 }
 
 ## The default test configuration with overrides.
 ##
 ## ```
-## config = Config.defaultConfigWith {
-##     resultsDirName: "my-results",
-##     reporters: [BasicHtmlReporter.reporter, myJsonReporter],
-##     assertTimeout: 5_000,
-## }
+## config = Config.default_config_with({
+##     results_dir_name: "my-results",
+##     reporters: [BasicHtmlReporter.reporter, my_json_reporter],
+##     assert_timeout: 5_000,
+## })
 ## ```
-defaultConfigWith :
+default_config_with :
     {
-        resultsDirName ? Str,
-        reporters ? List (ReporterDefinition _),
-        assertTimeout ? U64,
-        pageLoadTimeout ? U64,
-        scriptExecutionTimeout ? U64,
-        elementImplicitTimeout ? U64,
-        windowSize ? [Size U64 U64],
-        screenshotOnFail ? [Yes, No],
-        attempts ? U64,
+        results_dir_name ?? Str,
+        reporters ?? List (ReporterDefinition _),
+        assert_timeout ?? U64,
+        page_load_timeout ?? U64,
+        script_execution_timeout ?? U64,
+        element_implicit_timeout ?? U64,
+        window_size ?? [Size U64 U64],
+        screenshot_on_fail ?? [Yes, No],
+        attempts ?? U64,
     }
     -> R2EConfiguration _
-defaultConfigWith = \{ resultsDirName ? defaultConfig.resultsDirName, reporters ? defaultConfig.reporters, assertTimeout ? 3_000, pageLoadTimeout ? 10_000, scriptExecutionTimeout ? 10_000, elementImplicitTimeout ? 5_000, windowSize ? Size 1024 768, screenshotOnFail ? Yes, attempts ? 2 } -> {
-    resultsDirName,
+default_config_with = |{ results_dir_name ?? default_config.results_dir_name, reporters ?? default_config.reporters, assert_timeout ?? 3_000, page_load_timeout ?? 10_000, script_execution_timeout ?? 10_000, element_implicit_timeout ?? 5_000, window_size ?? Size(1024, 768), screenshot_on_fail ?? Yes, attempts ?? 2 }| {
+    results_dir_name,
     reporters,
-    assertTimeout,
-    pageLoadTimeout,
-    scriptExecutionTimeout,
-    elementImplicitTimeout,
-    windowSize,
-    screenshotOnFail,
+    assert_timeout,
+    page_load_timeout,
+    script_execution_timeout,
+    element_implicit_timeout,
+    window_size,
+    screenshot_on_fail,
     attempts,
 }

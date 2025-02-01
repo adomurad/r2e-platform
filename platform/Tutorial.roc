@@ -21,25 +21,26 @@
 ## import r2e.Element
 ## import r2e.Assert
 ##
-## config = Config.defaultConfig
+## config = Config.default_config
 ##
-## testCases = [test1]
+## test_cases = [test1]
 ##
-## test1 = test "validation message" \browser ->
+## test1 = test("validation message", |browser|
 ##     # open the test page
-##     browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/" |> try
+##     browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/")?
 ##     # find the test count input by id
-##     testCountInput = browser |> Browser.findElement! (Css "#testCount") |> try
+##     test_count_input = browser |> Browser.find_element!(Css("#testCount"))?
 ##     # send text to input
-##     testCountInput |> Element.inputText! "2" |> try
+##     test_count_input |> Element.input_text!("2")?
 ##     # find the submit button
-##     submitButton = browser |> Browser.findElement! (Css "#submit-button") |> try
+##     submit_button = browser |> Browser.find_element!(Css("#submit-button"))?
 ##     # click the submit button
-##     submitButton |> Element.click! |> try
+##     submit_button |> Element.click!()?
 ##     # find the error message
-##     testCountError = browser |> Browser.findElement! (TestId "testCountError") |> try
+##     test_count_error = browser |> Browser.find_element!(TestId("testCountError"))?
 ##     # check the error message text
-##     testCountError |> Assert.elementShouldHaveText! "At least 5 tests are required"
+##     test_count_error |> Assert.element_should_have_text!("At least 5 tests are required")
+## )
 ## ```
 ## And run:
 ## ```
@@ -77,7 +78,7 @@
 ## in the moment of failure.
 ## You can test this by change the assert in the test to:
 ## ```
-## testCountError |> Assert.elementShouldHaveText! "wrong validation message" |> try
+## test_count_error |> Assert.element_should_have_text!("wrong validation message")?
 ## ```
 ##
 ## The test is self explanatory.
@@ -86,31 +87,31 @@
 ##
 ## If you want to interact with the browser, you use the `Browser` module:
 ## ```
-## Browser.findElement!
-## Browser.navigateTo!
-## Browser.getCookie!
-## Browser.getUrl!
+## Browser.find_element!
+## Browser.navigate_to!
+## Browser.get_cookie!
+## Browser.get_url!
 ## ```
 ## If you want to interact with elements on the page, you use the `Element` module:
 ## ```
 ## Element.click!
-## Element.inputText!
-## Element.getText!
-## Element.getValue!
+## Element.input_text!
+## Element.get_text!
+## Element.get_value!
 ## ```
 ## If you want to make assertions (expects) then you use the `Assert` module:
 ## ```
-## Assert.shouldBe
-## Assert.urlShouldBe!
-## Assert.elementShouldBeVisible!
-## Assert.elementShouldHaveText!
+## Assert.should_be
+## Assert.url_should_be!
+## Assert.element_should_be_visible!
+## Assert.element_should_have_text!
 ## ```
 ## If you need more tools to debug a test then you use the `Debug` module:
 ## ```
-## Debug.printLine!
+## Debug.print_line!
 ## Debug.wait!
-## Debug.waitForEnterKey!
-## Debug.showElement!
+## Debug.wait_for_enter_key!
+## Debug.show_element!
 ## ```
 ##
 ## # CLI
@@ -129,47 +130,47 @@
 ## Each R2E test program defines a `config` for the platform to setup the whole test run.
 ##
 ## ```
-## app [testCases, config] { r2e: platform "https://github.com/adomurad/r2e-platform/releases/download/0.8.0/o-YITMnvpJZg-zxL2xKiCxBFlJzlEoEwdRY5a39WFZ0.tar.br" }
+## app [test_cases, config] { r2e: platform "https://github.com/adomurad/r2e-platform/releases/download/0.8.0/o-YITMnvpJZg-zxL2xKiCxBFlJzlEoEwdRY5a39WFZ0.tar.br" }
 ##
 ## import r2e.Test exposing [test]
 ## import r2e.Config
 ##
-## config = Config.defaultConfig
+## config = Config.default_config
 ## ```
 ##
-## `Config.defaultConfig` - is the default configuration:
+## `Config.default_config` - is the default configuration:
 ##
 ## ```
-## defaultConfig : R2EConfiguration _
-## defaultConfig = {
+## default_config : R2EConfiguration _
+## default_config = {
 ##     # the directory name where the results will be stored
-##     resultsDirName: "testResults",
+##     results_dir_name: "testResults",
 ##     # what reporters to use (see the Reporters chapter)
 ##     reporters: [BasicHtmlReporter.reporter],
 ##     # timeout for the assertions
-##     assertTimeout: 3_000,
+##     assert_timeout: 3_000,
 ##     # timeout for the page loads
-##     pageLoadTimeout: 10_000,
+##     page_load_timeout: 10_000,
 ##     # timeout for the JavaScript executions
-##     scriptExecutionTimeout: 10_000,
+##     script_execution_timeout: 10_000,
 ##     # timeout for interaction with the browser (e.g. findElement)
-##     elementImplicitTimeout: 5_000,
+##     element_implicit_timeout: 5_000,
 ##     # browser window size
-##     windowSize: Size 1024 768,
-##     # should take a screenshot on test fail? | Default: Yes
-##     screenshotOnFail : [Yes, No],
-##     # number of attempts | Default: 2
-##     attempts : U64,
+##     window_size: Size(1024, 768),
+##     # should take a screenshot on test fail?
+##     screenshot_on_fail : Yes
+##     # number of attempts
+##     attempts : 2,
 ## }
 ## ```
 ##
 ## You can override any of the defaults:
 ##
 ## ```
-## config = Config.defaultConfigWith {
-##     resultsDirName: "my-results",
-##     reporters: [BasicHtmlReporter.reporter, myJsonReporter],
-##     assertTimeout: 5_000,
+## config = Config.default_config_with {
+##     results_dir_name: "my-results",
+##     reporters: [BasicHtmlReporter.reporter, my_json_reporter],
+##     assert_timeout: 5_000,
 ## }
 ## ```
 ##
@@ -182,28 +183,29 @@
 ## configuration for couple of tests.
 ##
 ## ```
-## longTest = Test.testWith {
-##     pageLoadTimeout: Override 30_000,
-##     scriptExecutionTimeout: Override 30_000,
-##     assertTimeout: Override 8000,
-##     screenshotOnFail: Override No,
-##     windowSize: Override (Size 1800 400),
-## }
+## long_test = Test.test_with({
+##     page_load_timeout: Override(30_000),
+##     script_execution_timeout: Override(30_000),
+##     assert_timeout: Override(8000),
+##     screenshot_on_fail: Override(No),
+##     window_size: Override(Size(1800, 400)),
+## })
 ##
-## test1 = longTest "this is flaky test" \browser ->
+## test1 = long_test("this is flaky test", |browser|
 ##     # open the test page
-##     browser |> Browser.navigateTo! "https://adomurad.github.io/e2e-test-page/" |> try
+##     browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/")?
+## )
 ## ```
 ##
 ## All possible overrides:
 ## ```
 ## ConfigOverride : {
-##     assertTimeout : [Inherit, Override U64],
-##     pageLoadTimeout : [Inherit, Override U64],
-##     scriptExecutionTimeout : [Inherit, Override U64],
-##     elementImplicitTimeout : [Inherit, Override U64],
-##     windowSize : [Inherit, Override [Size U64 U64]],
-##     screenshotOnFail : [Inherit, Override [Yes, No]],
+##     assert_timeout : [Inherit, Override U64],
+##     page_load_timeout : [Inherit, Override U64],
+##     script_execution_timeout : [Inherit, Override U64],
+##     element_implicit_timeout : [Inherit, Override U64],
+##     window_size : [Inherit, Override [Size U64 U64]],
+##     screenshot_on_fail : [Inherit, Override [Yes, No]],
 ##     attempts : [Inherit, Override U64],
 ## }
 ## ```
@@ -228,28 +230,28 @@
 ## There are 2 kinds of functions in the `Assert` module:
 ## - functions that assert `Roc` values:
 ##
-##   - `Assert.shouldBe`
-##   - `Assert.shouldBeEqualTo`
-##   - `Assert.shouldBeGreaterOrEqualTo`
-##   - `Assert.shouldBeGreaterThan`
-##   - `Assert.shouldBeLesserOrEqualTo`
-##   - `Assert.shouldBeLesserThan`
-##   - `Assert.shouldHaveLength`
+##   - `Assert.should_be`
+##   - `Assert.should_be_equal_to`
+##   - `Assert.should_be_greater_or_equal_to`
+##   - `Assert.should_be_greater_than`
+##   - `Assert.should_be_lesser_or_equal_to`
+##   - `Assert.should_be_lesser_than`
+##   - `Assert.should_have_length`
 ##
 ## - function that assert values in the browser:
 ##
-##   - `Assert.urlShouldBe!`
-##   - `Assert.titleShouldBe!`
-##   - `Assert.elementShouldBeVisible!`
-##   - `Assert.elementShouldHaveText!`
-##   - `Assert.elementShouldHaveValue!`
+##   - `Assert.url_should_be!`
+##   - `Assert.title_should_be!`
+##   - `Assert.element_should_be_visible!`
+##   - `Assert.element_should_have_text!`
+##   - `Assert.element_should_have_value!`
 ##
 ## The first group fails immediately when the assertion is not met.
 ##
 ## But the second group, will wait for the assertion to be met for a specified amount of time.
 ##
 ## The default wait time is **3s**, but can be changed in the **configuration**
-## by changing the `assertTimeout` in the config. (see the Config chapter)
+## by changing the `assert_timeout` in the config. (see the Config chapter)
 ##
 ## # Reporters
 ##
@@ -263,7 +265,7 @@
 ##
 ## `./testResults/basicHtmlReporter/index.html`
 ##
-## Where the first segment is the `resultsDirName`,
+## Where the first segment is the `results_dir_name`,
 ## and the second segment is the reporter name.
 ##
 ## ## Customizing existing reporters
@@ -271,12 +273,12 @@
 ## You can change the name of existing reporters.
 ##
 ## ```
-## customReporter =
+## custom_reporter =
 ##     Reporting.BasicHtmlReporter.reporter
 ##     |> Reporting.rename "myCustomReporter"
 ## ```
 ##
-## Using this new `customReporter` will save the report in:
+## Using this new `custom_reporter` will save the report in:
 ##
 ## `./testResults/myCustomReporter/index.html`
 ##
@@ -285,21 +287,22 @@
 ## You can create your own reporters like this:
 ##
 ## ```
-## customReporter = Reporting.createReporter "myCustomReporter" \results, _meta ->
-##     lenStr = results |> List.len |> Num.toStr
-##     indexFile = { filePath: "index.html", content: "<h3>Test count: $(lenStr)</h3>" }
-##     testFile = { filePath: "test.txt", content: "this is just a test" }
-##     [indexFile, testFile]
+## custom_reporter = Reporting.create_reporter("myCustomReporter", |results, _meta|
+##     len_str = results |> List.len |> Num.to_str
+##     index_file = { file_path: "index.html", content: "<h3>Test count: $(lenStr)</h3>" }
+##     test_file = { file_path: "test.txt", content: "this is just a test" }
+## )
+##     [index_file, test_file]
 ## ```
 ## A test reporter is just a function that takes the results and returns a `List` of files:
 ##
 ## ```
-## createReporter : Str, ReporterCallback err -> ReporterDefinition err
+## create_reporter : Str, ReporterCallback err -> ReporterDefinition err
 ##
 ## ReporterCallback err :
 ##         List (TestRunResult err),
 ##         TestRunMetadata
-##     -> List { filePath : Str, content : Str } where err implements Inspect
+##     -> List { file_path : Str, content : Str } where err implements Inspect
 ##
 ## TestRunResult err : {
 ##     # name of the test
@@ -333,11 +336,11 @@
 ## You can use the environment variables in R2E tests.
 ##
 ## ```
-##  empty = Env.get! "FAKE_ENV_FOR_SURE_EMPTY" |> try
-##  empty |> Assert.shouldBe "" |> try
+##  empty = Env.get!("FAKE_ENV_FOR_SURE_EMPTY")?
+##  empty |> Assert.should_be("")?
 ##
-##  env = Env.get! "SECRET_ENV_KEY" |> try
-##  env |> Assert.shouldBe! "secret_value" |> try
+##  env = Env.get!("SECRET_ENV_KEY")?
+##  env |> Assert.should_be!("secret_value")?
 ## ```
 ##
 ## # Roadmap

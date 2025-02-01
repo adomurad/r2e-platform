@@ -1,4 +1,4 @@
-module [printLine!, wait!, waitForEnterKey!, showElement!, showElements!, showCurrentFrame!]
+module [print_line!, wait!, wait_for_enter_key!, show_element!, show_elements!, show_current_frame!]
 
 import Effect
 import DebugMode
@@ -8,15 +8,11 @@ import Internal exposing [Element, Browser]
 ## followed by a newline.
 ##
 ## ```
-## Debug.printLine! "Hello World"
+## Debug.print_line!("Hello World")
 ## ```
-printLine! : Str => {}
-printLine! = \str ->
-    Effect.stdoutLine! str
-
-# readLine : Task Str []
-# readLine =
-#     Effect.stdinLine {} |> Task.mapErr \_ -> crash "stdin should not fail"
+print_line! : Str => {}
+print_line! = |str|
+    Effect.stdout_line!(str)
 
 ## Stops the test execution for specified amount of time.
 ##
@@ -24,72 +20,71 @@ printLine! = \str ->
 ##
 ## ```
 ## # wait for 3s
-## Debug.wait! 3000
+## Debug.wait!(3000)
 ## ```
 wait! : U64 => {}
-wait! = \timeout ->
-    Effect.wait! timeout
+wait! = |timeout|
+    Effect.wait!(timeout)
 
 ## Stops the test execution till the "enter" key is pressed in the terminal.
 ##
 ## ```
-## Debug.waitForEnterKey! {}
+## Debug.wait_for_enter_key!({})
 ## ```
-waitForEnterKey! : {} => {}
-waitForEnterKey! = \{} ->
+wait_for_enter_key! : {} => {}
+wait_for_enter_key! = |{}|
     # TODO how to test this?
-    printLine! "\nPress <enter> to continue the test run..."
-    _ = Effect.stdinLine! {}
+    print_line!("\nPress <enter> to continue the test run...")
+    _ = Effect.stdin_line!({})
     {}
-# Task.ok {}
 
 ## Blink an `Element` in the `Browser`.
 ##
 ## Can be useful for debugging and trouble shooting.
 ##
 ## ```
-## button |> Debug.showElement! |> try
+## button |> Debug.show_element!()?
 ## ```
-showElement! : Element => Result {} [WebDriverError Str, JsReturnTypeError Str]
-showElement! = \element ->
-    { sessionId, locator } = Internal.unpackElementData element
-    DebugMode.flashElements! sessionId locator Single |> try
+show_element! : Element => Result {} [WebDriverError Str, JsReturnTypeError Str]
+show_element! = |element|
+    { session_id, locator } = Internal.unpack_element_data(element)
+    DebugMode.flash_elements!(session_id, locator, Single)?
 
-    wait! 1500
+    wait!(1500)
 
-    Ok {}
+    Ok({})
 
 ## Blink a `List` of `Element`s in the `Browser`.
 ##
 ## Can be useful for debugging and trouble shooting.
 ##
 ## ```
-## checkboxes |> Debug.showElements! |> try
+## checkboxes |> Debug.show_elements!()?
 ## ```
-showElements! : List Element => Result {} [WebDriverError Str, JsReturnTypeError Str]
-showElements! = \elements ->
+show_elements! : List Element => Result {} [WebDriverError Str, JsReturnTypeError Str]
+show_elements! = |elements|
     when elements is
-        [] -> Ok {}
+        [] -> Ok({})
         [element, ..] ->
-            { sessionId, locator } = Internal.unpackElementData element
-            DebugMode.flashElements! sessionId locator All |> try
+            { session_id, locator } = Internal.unpack_element_data(element)
+            DebugMode.flash_elements!(session_id, locator, All)?
 
-            wait! 1500
+            wait!(1500)
 
-            Ok {}
+            Ok({})
 
 ## Blink the current active frame (iFrame or top level frame).
 ##
 ## Can be useful for debugging and trouble shooting.
 ##
 ## ```
-## browser |> Debug.showCurrentFrame! |> try
+## browser |> Debug.show_current_frame!()?
 ## ```
-showCurrentFrame! : Browser => Result {} [WebDriverError Str, JsReturnTypeError Str]
-showCurrentFrame! = \browser ->
-    { sessionId } = Internal.unpackBrowserData browser
-    DebugMode.flashCurrentFrame! sessionId |> try
+show_current_frame! : Browser => Result {} [WebDriverError Str, JsReturnTypeError Str]
+show_current_frame! = |browser|
+    { session_id } = Internal.unpack_browser_data(browser)
+    DebugMode.flash_current_frame!(session_id)?
 
-    wait! 1500
+    wait!(1500)
 
-    Ok {}
+    Ok({})
