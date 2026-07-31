@@ -29,4 +29,3 @@ tests/*
 !tests/*.sh
 !tests/*.roc
 
-platform/targets/
