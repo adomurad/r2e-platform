@@ -1,19 +1,20 @@
-app [main!] { pf: platform "../platform/main.roc" }
+app [test_cases, config] { pf: platform "../platform/main.roc" }
 
 import pf.Stdin
 import pf.Stdout
+import pf.Config
+import pf.TestCase exposing [test]
 
-# Demonstrates: Stdin.line!, interactive I/O, effectful functions
+config = Config.default_config()
 
-main! : List(Str) => Try({}, [Exit(I32), StdinErr(Str), StdoutErr(Str), ..])
-main! = |args| {
-	Stdout.line!("Enter something and I'll echo it back:")?
+test_cases = [test1]
 
-	dbg "wow this is a debug"
-	dbg args
+test1 = test(
+	"test1",
+	|_browser| {
+		# //
+		Stdout.line!("wow")?
 
-	input = Stdin.line!({})?
-	Stdout.line!("You entered: ${input}")?
-
-	Ok({})
-}
+		Try.Ok({})
+	},
+)
