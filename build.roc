@@ -20,14 +20,16 @@ main! = |_args|
 build_for_legacy_linker! : { target : RocTarget, host_dir : Str, platform_dir : Str } => Result {} _
 build_for_legacy_linker! = |{ target, host_dir, platform_dir }|
 
-    (goos, goarch, prebuilt_binary) =
+    (goos, goarch, prebuilt_dir, prebuilt_binary) =
         when target is
-            MacosArm64 -> ("darwin", "arm64", "macos-arm64.a")
-            MacosX64 -> ("darwin", "amd64", "macos-x64")
-            LinuxArm64 -> ("linux", "arm64", "linux-arm64.a")
-            LinuxX64 -> ("linux", "amd64", "linux-x64.a")
-            WindowsArm64 -> ("windows", "arm64", "windows-arm64.a")
-            WindowsX64 -> ("windows", "amd64", "windows-x64")
+            MacosArm64 -> ("darwin", "arm64", "arm64mac", "libhost.a")
+            MacosX64 -> ("darwin", "amd64", "x64mac", "libhost.a")
+            LinuxArm64 -> ("linux", "arm64", "arm64musl", "libhost.a")
+            LinuxX64 -> ("linux", "amd64", "x64musl", "libhost.a")
+            WindowsArm64 -> ("windows", "arm64", "arm64win", "host.lib")
+            WindowsX64 -> ("windows", "amd64", "x64win", "host.lib")
+
+    outdir = "${platform_dir}/targets/${prebuilt_dir}"
 
     _ =
         Cmd.new("go")
@@ -36,7 +38,10 @@ build_for_legacy_linker! = |{ target, host_dir, platform_dir }|
         |> Cmd.status!()
         |> Result.map_err(|err| BuildErr(goos, goarch, Inspect.to_str(err)))?
 
-    Cmd.exec!("cp", ["${host_dir}/libhost.a", "${platform_dir}/${prebuilt_binary}"])
+    Cmd.exec!("mkdir", ["-p", outdir])
+    |> Result.map_err(|err| MkdirErr(Inspect.to_str(err)))?
+
+    Cmd.exec!("cp", ["${host_dir}/libhost.a", "${outdir}/${prebuilt_binary}"])
     |> Result.map_err(|err| CpErr(Inspect.to_str(err)))
 
 RocTarget : [

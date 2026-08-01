@@ -1,7 +1,6 @@
 app [test_cases, config] { pf: platform "../platform/main.roc" }
 
-import pf.Stdin
-import pf.Stdout
+import pf.Debug
 import pf.Config
 import pf.TestCase exposing [test]
 
@@ -13,7 +12,7 @@ test1 = test(
 	"test1",
 	|_browser| {
 		# //
-		Stdout.line!("wow")?
+		Debug.print_line!("wow")
 
 		Try.Ok({})
 	},
