@@ -28,10 +28,9 @@ DebugMode :: [].{
 
 		if has_verbose_flag or has_debug_flag {
 			_ = task!({})
-			{}
-		} else {
-			{}
 		}
+
+		{}
 	}
 
 	run_if_debug_mode! : ({} => _) => {}
@@ -40,10 +39,9 @@ DebugMode :: [].{
 
 		if is_debug {
 			_ = task!({})
-			{}
-		} else {
-			{}
 		}
+
+		{}
 	}
 
 	# flash_elements! : Str, Locator, [All, Single] => Try({} ,[JsReturnTypeError( Str ), WebDriverError( Str )])

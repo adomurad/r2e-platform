@@ -86,11 +86,14 @@ import Config
 import TestRunner
 import TestCase
 import Debug
+import DebugMode
+import Browser
+import Element
 
 main_for_host! : () => I32
 main_for_host! = || {
 	# result = main!(args)
-	match TestRunner.run_tests!(test_cases) {
+	match TestRunner.run_tests!(test_cases, config) {
 		Ok({}) => 0
 		Err(_) => 1
 	}

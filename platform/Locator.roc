@@ -11,7 +11,7 @@
 ## `PartialLinkText Str` - e.g. PartialLinkText("Exam") in <a href="/examples-page">Examples</a>
 ##
 Locator := [
-	Css( Str ),
+	Css(Str),
 	TestId(Str),
 	XPath(Str),
 	LinkText(Str),

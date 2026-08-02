@@ -1,6 +1,7 @@
-Config := { results_dir_name : Str }.{
+Config := { results_dir_name : Str, attempts : U64, screenshot_on_fail : [Yes, No] }.{
 
-	default_config = || { results_dir_name: "testResults" }
+	default_config : () -> Config
+	default_config = || { results_dir_name: "testResults", screenshot_on_fail: Yes, attempts: 2 }
 
 }
 

@@ -9,16 +9,19 @@
 
 import Browser
 
-# TestBody(err) : Browser => Result({}, [WebDriverError(Str), err])
-TestBody(err) : Browser => Try({}, [WebDriverError(Str), ..err])
+# TestBody(err) : Browser => Try({}, [WebDriverError(Str), ..err])
 
-TestCase(err) :: {
+TestBody(err) : Browser => Try({}, [..err])
+
+# TestBody(err) : Browser => Try({}, [WebDriverError(Str), AssertionError(Str), ElementNotFound(Str), PropertyTypeError(Str), StringError(Str), ..err])
+
+TestCase(err) := {
 	name : Str,
 	test_body : TestBody(err),
 	# config: ConfigOverride
 }.{
 
-	test : Str, TestBody(err) -> TestCase
+	test : Str, TestBody(err) -> TestCase(err)
 	test = |name, test_body|
 		{ name, test_body }
 
