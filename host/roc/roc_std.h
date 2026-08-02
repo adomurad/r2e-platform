@@ -5,15 +5,21 @@
 #include <stdint.h>
 
 struct RocStr {
-    char* bytes;
-    size_t len;
-    size_t capacity;
+    uint8_t* bytes;
+    uintptr_t capacity_or_alloc_ptr;
+    uintptr_t length;
 };
 
 struct RocList {
-    char* bytes;
-    size_t len;
-    size_t capacity;
+    void* elements_ptr;
+    uintptr_t capacity_or_alloc_ptr;
+    uintptr_t length;
+};
+
+struct RocListStr {
+    struct RocStr* elements_ptr;
+    uintptr_t capacity_or_alloc_ptr;
+    uintptr_t length;
 };
 
 #endif

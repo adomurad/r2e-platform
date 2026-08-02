@@ -3,6 +3,7 @@
 struct ResultVoidI64 {
     union {int64_t exit_code;} payload;
     unsigned char disciminant;
+    unsigned char padding[7];
 };
 
 struct ResultI64Str {
@@ -11,6 +12,7 @@ struct ResultI64Str {
       struct RocStr str;
     } payload;
     unsigned char disciminant;
+    unsigned char padding[7];
 };
 
 struct ResultU64Str {
@@ -19,11 +21,13 @@ struct ResultU64Str {
       struct RocStr str;
     } payload;
     unsigned char disciminant;
+    unsigned char padding[7];
 };
 
 struct ResultVoidStr {
     union {struct RocStr str;} payload;
     unsigned char disciminant;
+    unsigned char padding[7];
 };
 
 struct ResultListStr {
@@ -32,8 +36,7 @@ struct ResultListStr {
       struct RocStr str;
     } payload;
     unsigned char disciminant;
+    unsigned char padding[7];
 };
 
-
-size_t roc__main_for_host_1_exposed_size();
-uint32_t roc__main_for_host_1_exposed();
+int32_t roc_main(void);

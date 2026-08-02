@@ -2,6 +2,7 @@ package roc
 
 /*
 #include "./roc_std.h"
+#include <string.h>
 */
 import "C"
 
@@ -21,7 +22,7 @@ const (
 // allocForRoc allocates memory. Prefixes that memory with a refcounter set to
 // one.
 func allocForRoc(size int) unsafe.Pointer {
-	refCountPtr := roc_alloc(C.size_t(size)+intBytes, intBytes)
+	refCountPtr := roc_alloc(C.size_t(size)+intBytes, C.size_t(intBytes))
 	ptr := unsafe.Add(refCountPtr, intBytes)
 	setRefCountToOne(ptr)
 	return ptr
@@ -70,19 +71,19 @@ func setRefCountToOne(ptr unsafe.Pointer) {
 }
 
 //export roc_alloc
-func roc_alloc(size C.size_t, alignment int) unsafe.Pointer {
+func roc_alloc(size C.size_t, alignment C.size_t) unsafe.Pointer {
 	_ = alignment
 	return C.malloc(size)
 }
 
 //export roc_realloc
-func roc_realloc(ptr unsafe.Pointer, newSize, _ C.size_t, alignment int) unsafe.Pointer {
+func roc_realloc(ptr unsafe.Pointer, newSize C.size_t, alignment C.size_t) unsafe.Pointer {
 	_ = alignment
 	return C.realloc(ptr, newSize)
 }
 
 //export roc_dealloc
-func roc_dealloc(ptr unsafe.Pointer, alignment int) {
+func roc_dealloc(ptr unsafe.Pointer, alignment C.size_t) {
 	_ = alignment
 	C.free(ptr)
 }
@@ -93,12 +94,22 @@ func roc_panic(msg *RocStr, tagID C.uint) {
 }
 
 //export roc_dbg
-func roc_dbg(loc *RocStr, msg *RocStr, src *RocStr) {
-	if src.String() == msg.String() {
-		fmt.Fprintf(os.Stderr, "[%s] %s\n", loc, msg)
-	} else {
-		fmt.Fprintf(os.Stderr, "[%s] %s = %s\n", loc, src, msg)
-	}
+func roc_dbg(bytes *C.uint8_t, length C.size_t) {
+	data := unsafe.Slice((*byte)(unsafe.Pointer(bytes)), length)
+	fmt.Fprintf(os.Stderr, "[ROC DBG] %s\n", string(data))
+}
+
+//export roc_expect_failed
+func roc_expect_failed(bytes *C.uint8_t, length C.size_t) {
+	data := unsafe.Slice((*byte)(unsafe.Pointer(bytes)), length)
+	fmt.Fprintf(os.Stderr, "[ROC EXPECT] %s\n", string(data))
+}
+
+//export roc_crashed
+func roc_crashed(bytes *C.uint8_t, length C.size_t) {
+	data := unsafe.Slice((*byte)(unsafe.Pointer(bytes)), length)
+	fmt.Fprintf(os.Stderr, "[ROC CRASHED] %s\n", string(data))
+	os.Exit(1)
 }
 
 // RocStr is a representation of a string in roc.
@@ -106,12 +117,20 @@ type RocStr C.struct_RocStr
 
 // NewRocStr creates a RocStr from a go-string.
 func NewRocStr(str string) RocStr {
+	if len(str) == 0 {
+		return emptyRocStr()
+	}
+
+	if len(str) < int(C.sizeof_struct_RocStr) {
+		return smallRocStr(str)
+	}
+
 	ptr := allocForRoc(len(str))
 
 	var rocStr RocStr
-	rocStr.len = C.size_t(len(str))
-	rocStr.capacity = rocStr.len
-	rocStr.bytes = (*C.char)(unsafe.Pointer(ptr))
+	rocStr.length = C.uintptr_t(len(str))
+	rocStr.capacity_or_alloc_ptr = rocStr.length << 1
+	rocStr.bytes = (*C.uint8_t)(unsafe.Pointer(ptr))
 
 	dataSlice := unsafe.Slice((*byte)(ptr), len(str))
 	copy(dataSlice, []byte(str))
@@ -119,31 +138,39 @@ func NewRocStr(str string) RocStr {
 	return rocStr
 }
 
+func emptyRocStr() RocStr {
+	var s RocStr
+	s.length = C.uintptr_t(1) << (intSize - 1)
+	return s
+}
+
+func smallRocStr(str string) RocStr {
+	var s RocStr
+	p := (*byte)(unsafe.Pointer(&s))
+	slice := unsafe.Slice(p, C.sizeof_struct_RocStr)
+	copy(slice, []byte(str))
+	slice[C.sizeof_struct_RocStr-1] = byte(len(str)) | 0x80
+	return s
+}
+
 // Small returns true, if the RocStr is represented as a small string, that does
 // not need a separate heap allocation.
 func (r RocStr) Small() bool {
-	return int(r.capacity) < 0
+	return int64(r.length) < 0
 }
 
-// String convertts a Roc string to a go string.
+// String converts a Roc string to a go string.
 func (r RocStr) String() string {
 	if r.Small() {
 		ptr := (*byte)(unsafe.Pointer(&r))
-
-		byteLen := 12
-		if is64Bit {
-			byteLen = 24
-		}
-
+		byteLen := C.sizeof_struct_RocStr
 		shortStr := unsafe.String(ptr, byteLen)
-		len := shortStr[byteLen-1] ^ 128
-		return shortStr[:len]
+		length := shortStr[byteLen-1] ^ 0x80
+		return shortStr[:length]
 	}
 
-	// Remove the bit for seamless string
-	len := (uint(r.len) << 1) >> 1
 	ptr := (*byte)(unsafe.Pointer(r.bytes))
-	return unsafe.String(ptr, len)
+	return unsafe.String(ptr, r.length)
 }
 
 // C returns the C-ABI representation of the string.
@@ -156,7 +183,7 @@ func (r *RocStr) CPtr() *C.struct_RocStr {
 	return (*C.struct_RocStr)(r)
 }
 
-// DecRef redruces the refcount of the data of the string. It frees the data, if
+// DecRef reduces the refcount of the data of the string. It frees the data, if
 // it reaches a ref count of 0.
 func (r RocStr) DecRef() {
 	ptr := unsafe.Pointer(r.bytes)
@@ -182,9 +209,9 @@ func NewRocList[t any](list []t) RocList[t] {
 
 	ptr := allocForRoc(len(list) * typeSize)
 
-	rocList.len = C.size_t(len(list))
-	rocList.capacity = rocList.len
-	rocList.bytes = (*C.char)(unsafe.Pointer(ptr))
+	rocList.length = C.uintptr_t(len(list))
+	rocList.capacity_or_alloc_ptr = rocList.length << 1
+	rocList.elements_ptr = unsafe.Pointer(ptr)
 
 	dataSlice := unsafe.Slice((*t)(ptr), len(list))
 	copy(dataSlice, list)
@@ -194,8 +221,8 @@ func NewRocList[t any](list []t) RocList[t] {
 
 // List converts the RocList to a go slice.
 func (r RocList[t]) List() []t {
-	ptr := (*t)(unsafe.Pointer(r.bytes))
-	return unsafe.Slice(ptr, r.len)
+	ptr := (*t)(unsafe.Pointer(r.elements_ptr))
+	return unsafe.Slice(ptr, r.length)
 }
 
 // C returns the C-ABI representation of the list.
@@ -208,12 +235,12 @@ func (r *RocList[t]) CPtr() *C.struct_RocList {
 	return (*C.struct_RocList)(r)
 }
 
-// DecRef redruces the refcount of the data of the list. It frees the data, if
+// DecRef reduces the refcount of the data of the list. It frees the data, if
 // it reaches a ref count of 0.
 //
 // If go-type of the elements of the list has a method `DecRef`, it gets called for every element.
 func (r RocList[t]) DecRef() {
-	ptr := unsafe.Pointer(r.bytes)
+	ptr := unsafe.Pointer(r.elements_ptr)
 	if ptr == nil {
 		return
 	}

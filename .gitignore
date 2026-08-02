@@ -10,7 +10,8 @@ app
 *.ll
 *.so
 *.o
-*.h 
+*.h
+!host/roc_abi.h
 *.obj
 
 host/libhost.h

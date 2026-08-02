@@ -16,18 +16,18 @@ build_for_legacy_linker! = |{}|
     |> Result.map_err(|_| BuildForLegacyLinker)
 
 build_dot_a! = |target|
-    (goos, goarch, zig_target, prebuilt_binary) =
+    (goos, goarch, zig_target, prebuilt_dir, prebuilt_binary) =
         when target is
-            MacosArm64 -> ("darwin", "arm64", "aarch64-macos", "macos-arm64.a")
-            MacosX64 -> ("darwin", "amd64", "x86_64-macos", "macos-x64.a")
-            LinuxArm64 -> ("linux", "arm64", "aarch64-linux", "linux-arm64.a")
-            LinuxX64 -> ("linux", "amd64", " x86_64-linux", "linux-x64.a")
-            WindowsArm64 -> ("windows", "arm64", "aarch64-windows", "windows-arm64.obj")
-            WindowsX64 -> ("windows", "amd64", "x86_64-windows", "windows-x64.obj")
+            MacosArm64 -> ("darwin", "arm64", "aarch64-macos", "arm64mac", "libhost.a")
+            MacosX64 -> ("darwin", "amd64", "x86_64-macos", "x64mac", "libhost.a")
+            LinuxArm64 -> ("linux", "arm64", "aarch64-linux-musl", "arm64musl", "libhost.a")
+            LinuxX64 -> ("linux", "amd64", "x86_64-linux-musl", "x64musl", "libhost.a")
+            WindowsArm64 -> ("windows", "arm64", "aarch64-windows", "arm64win", "host.lib")
+            WindowsX64 -> ("windows", "amd64", "x86_64-windows", "x64win", "host.lib")
     Stdout.line!("build host for ${Inspect.to_str(target)}")?
     Cmd.new("go")
     |> Cmd.envs([("GOOS", goos), ("GOARCH", goarch), ("CC", "zig cc -target ${zig_target}"), ("CGO_ENABLED", "1")])
-    |> Cmd.args(("build -C host -buildmode c-archive -o ../platform/${prebuilt_binary} -tags legacy,netgo" |> Str.split_on(" ")))
+    |> Cmd.args(("build -C host -buildmode c-archive -o ../platform/targets/${prebuilt_dir}/${prebuilt_binary} -tags legacy,netgo" |> Str.split_on(" ")))
     |> Cmd.status!()
     |> Result.map_err(|err| BuildErr(target, Inspect.to_str(err)))
 
