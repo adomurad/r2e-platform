@@ -1,7 +1,25 @@
-Config := { results_dir_name : Str, attempts : U64, screenshot_on_fail : [Yes, No] }.{
+Config := {
+	results_dir_name : Str,
+	attempts : U64,
+	screenshot_on_fail : [Yes, No],
+	assert_timeout : U64,
+	page_load_timeout : U64,
+	script_execution_timeout : U64,
+	element_implicit_timeout : U64,
+	window_size : [Size(U64, U64)],
+}.{
 
 	default_config : () -> Config
-	default_config = || { results_dir_name: "testResults", screenshot_on_fail: Yes, attempts: 2 }
+	default_config = || {
+		results_dir_name: "testResults",
+		screenshot_on_fail: Yes,
+		attempts: 2,
+		assert_timeout: 3_000,
+		page_load_timeout: 30_000,
+		script_execution_timeout: 30_000,
+		element_implicit_timeout: 5_000,
+		window_size: Size(1024, 768),
+	}
 
 }
 

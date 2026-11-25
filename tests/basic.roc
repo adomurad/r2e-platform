@@ -1,4 +1,4 @@
-app [test_cases, config] { pf: platform "../platform/main.roc" }
+app [config, test_cases] { pf: platform "../platform/main.roc" }
 
 import pf.Debug
 import pf.Config
@@ -10,9 +10,12 @@ test_cases = [test1]
 
 test1 = test(
 	"test1",
-	|_browser| {
+	|browser| {
 		# //
 		Debug.print_line!("wow")
+		browser.navigate_to!("https://devexpress.github.io/testcafe/example/")?
+
+		Debug.wait!(5000)
 
 		Try.Ok({})
 	},

@@ -11,3 +11,5 @@
 # 		locator : Locator,
 # 	}.{}
 # }
+
+Internal :: [].{}

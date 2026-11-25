@@ -19,15 +19,16 @@ TestRunner :: [].{
 		filtered_test_cases =
 			test_cases.keep_if(filter_test_case(test_filter))
 
+		var $results : List(TestCaseResult([WebDriverError(Str), AssertionError(Str), ElementNotFound(Str), StringError(Str), PropertyTypeError(Str)]))
 		var $results = []
 		var $test_index = 0
 
 		for test_case in filtered_test_cases {
 			# //
 			$test_index = $test_index + 1
-			number_of_attempts = get_or_override_attempts(config, test_case)
+			# number_of_attempts = get_or_override_attempts(config, test_case)
 
-			attempt = 1
+			attempt = $test_index
 
 			test_result = run_test!($test_index, attempt, test_case, config)
 			$results = $results.append(test_result)
@@ -36,9 +37,9 @@ TestRunner :: [].{
 		end_time = Utils.get_time_milis!({})
 		duration = end_time - start_time
 
-		print_result_summary!($results)?
+		# print_result_summary!($results)
 
-		any_failures = $results.keep_if(|res| res.type == FinalResult) |> List.any(|res| res.result.is_err())
+		any_failures = $results.keep_if(|res| res.type == FinalResult).any(|res| res.result.is_err())
 		if any_failures {
 			Err(TestRunFailed)
 		} else {
@@ -60,7 +61,7 @@ TestCaseResult(err) : {
 run_test! : U64, U64, TestCase, Config => TestCaseResult
 run_test! = |index, attempt, test_case, config| {
 	index_str = index.to_str()
-	attempt_str = if attempt > 1 " (attempt ${attempt.to_str()})" else ""
+	attempt_str = if (attempt > 1) " (attempt ${attempt.to_str()})" else ""
 
 	merged_config = config
 
@@ -76,7 +77,6 @@ run_test! = |index, attempt, test_case, config| {
 
 	Utils.reset_test_overrides!({})
 
-	# TODO: screenshot
 	{ result, screenshot } =
 		match result_with_maybe_screenshot {
 			Ok({}) => { result: Ok({}), screenshot: NoScreenshot }
@@ -107,8 +107,8 @@ run_test! = |index, attempt, test_case, config| {
 
 					unhandled_error =>
 						"${color.gray}Test ${index_str}:${color.end} \"${test_case.name}\": ${color.red}${Str.inspect(unhandled_error)}${color.end}"
-					}
-			}
+				}
+		}
 
 	Debug.print_line!(result_log_message)
 
@@ -148,7 +148,7 @@ run_test_safe! = |test_body!, config| {
 				NoScreenshot => Err(ResultWithoutScreenshot(res))
 				ScreenshotBase64(screenshot) => Err(ResultWithScreenshot(res, screenshot))
 			}
-		}
+	}
 }
 
 filter_test_case = |filter|
@@ -184,28 +184,27 @@ color = {
 
 is_final_result = |test_case| test_case.type == FinalResult
 
-print_result_summary! : List(TestCaseResult) => Try({}, _)
+print_result_summary! : List(TestCaseResult) => {}
 print_result_summary! = |results| {
 	Debug.print_line!("") # empty line
 	Debug.print_line!("Summary:")
 
-	final_results = results.keep_if(is_final_result)
-	total_count = final_results.len()
-	error_count = final_results.count_if(|res| res.result.is_err())
-	success_count = total_count - error_count
-	total_count_str = total_count.to_str()
-	error_count_str = error_count.to_str()
-	success_count_str = success_count.to_str()
+	# final_results = results.keep_if(is_final_result)
+	# total_count = final_results.len()
+	# error_count = final_results.count_if(|res| res.result.is_err())
+	# success_count = total_count - error_count
+	# total_count_str = total_count.to_str()
+	# error_count_str = error_count.to_str()
+	# success_count_str = success_count.to_str()
 
-	msg = "Total:\t${total_count_str}\nPass:\t${success_count_str}\nFail:\t${error_count_str}"
-	msg_with_color =
-		if error_count > 0 {
-			"${color.red}${msg}${color.end}"
-		} else {
-			"${color.green}${msg}${color.end}"
-		}
+	# msg = "Total:\t${total_count_str}\nPass:\t${success_count_str}\nFail:\t${error_count_str}"
+	# msg_with_color =
+	# 	if error_count > 0 {
+	# 		"${color.red}${msg}${color.end}"
+	# 	} else {
+	# 		"${color.green}${msg}${color.end}"
+	# 	}
 
-	Debug.print_line!("${msg_with_color}\n")
-
-	Ok({})
+	# Debug.print_line!("${msg_with_color}\n")
+	Debug.print_line!("test")
 }
