@@ -1,9 +1,21 @@
 platform ""
 	requires {
 		config : Config,
-		test_cases : List(TestCase)
+		test_cases : List(Test.TestCase)
 	}
-	exposes [Config, Debug, TestCase]
+	exposes [
+		Tutorial,
+		Test,
+		Browser,
+		Element,
+		Assert,
+		Debug,
+		Config,
+		Env,
+		Error,
+		Reporting,
+		BasicHtmlReporter,
+	]
 	packages {}
 	provides { "roc_main": main_for_host! }
 	hosted {
@@ -83,8 +95,14 @@ platform ""
 
 import Host
 import Config
+import Tutorial
+import Assert
+import Env
+import Error
+import Reporting
+import BasicHtmlReporter
 import TestRunner
-import TestCase
+import Test
 import Debug
 import DebugMode
 import Browser
@@ -101,18 +119,8 @@ main_for_host! = || {
 	})
 	Utils.set_window_size!(config.window_size)
 
-	# result = main!(args)
 	match TestRunner.run_tests!(test_cases, config) {
 		Ok({}) => 0
 		Err(_) => 1
 	}
-
-	# match result {
-	# 	Ok({}) => 0
-	# 	Err(Exit(code)) => code
-	# 	Err(other) => {
-	# 		_ = Stderr.line!("ERROR: ${Str.inspect(other)}")
-	# 		-1
-	# 	}
-	# }
 }

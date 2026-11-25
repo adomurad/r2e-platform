@@ -1,81 +1,49 @@
 import Host
-
-JsValue : [String(Str), Number(F64), Boolean(Bool), Null]
+import PropertyDecoder
+import InternalError
 
 ExecuteJs :: [].{
-	test = 5
+	JsValue : [String(Str), Number(F64), Boolean(Bool), Null]
 
-	# execute_js! : Browser, Str => Try(a, [WebDriverError Str, JsReturnTypeError Str]) where a implements Decoding
-	# execute_js! = |browser, script| {
-	#     { session_id } = Internal.unpack_browser_data(browser)
-	#
-	#     result_str = Host.execute_js!(session_id, script, "[]") |> Result.map_err(|err| WebDriverError(err))?
-	#     result_utf8 = result_str |> Str.to_utf8
-	#
-	#     decoded : Result a _
-	#     decoded = Decode.from_bytes(result_utf8, PropertyDecoder.utf8)
-	#
-	#     match decoded {
-	#         Ok(val) => Ok(val)
-	#         Err(_) => Err(JsReturnTypeError("unsupported return type from js: \"${result_str}\""))
-	#         }
-	# }
-	#
-	# execute_js_with_args! : Browser, Str, List JsValue => Try(a, [WebDriverError Str, JsReturnTypeError Str]) where a implements Decoding
-	# execute_js_with_args! = |browser, script, arguments|
-	#     { session_id } = Internal.unpack_browser_data(browser)
-	#
-	#     arguments_str = arguments |> js_arguments_to_str
-	#
-	#     result_str = Host.execute_js!(session_id, script, arguments_str) |> Result.map_err(WebDriverError)?
-	#     result_utf8 = result_str |> Str.to_utf8
-	#
-	#     decoded : Result a _
-	#     decoded = Decode.from_bytes(result_utf8, PropertyDecoder.utf8)
-	#
-	#     match decoded {
-	#         Ok(val) => Ok(val)
-	#         Err(_) => Err(JsReturnTypeError("unsupported return type from js: \"${result_str}\""))
-	#
+	execute_js! : Str, Str => Try(a, [WebDriverError(Str), JsReturnTypeError(Str)])
+		where [a.PropertyDecoder.Parseable(PropertyDecoder.PropertyError)]
+	execute_js! = |session_id, script| {
+		result_str = Host.execute_js!(session_id, script, "[]")
+			.map_err(InternalError.host_error_to_web_driver_error)?
 
+		match PropertyDecoder.parse(result_str) {
+			Ok(val) => Ok(val)
+			Err(_) => Err(JsReturnTypeError("unsupported return type from js: \"${result_str}\""))
+		}
+	}
+
+	execute_js_with_args! : Str, Str, List(JsValue) => Try(a, [WebDriverError(Str), JsReturnTypeError(Str)])
+		where [a.PropertyDecoder.Parseable(PropertyDecoder.PropertyError)]
+	execute_js_with_args! = |session_id, script, arguments| {
+		arguments_str = js_arguments_to_str(arguments)
+
+		result_str = Host.execute_js!(session_id, script, arguments_str)
+			.map_err(InternalError.host_error_to_web_driver_error)?
+
+		match PropertyDecoder.parse(result_str) {
+			Ok(val) => Ok(val)
+			Err(_) => Err(JsReturnTypeError("unsupported return type from js: \"${result_str}\""))
+		}
+	}
+
+	js_arguments_to_str : List(JsValue) -> Str
+	js_arguments_to_str = |args| {
+		items =
+			args.map(
+				|arg|
+					match arg {
+						String(str) => Json.to_str(str)
+						Number(num) => num.to_str()
+						Boolean(bool) => if bool { "true" } else { "false" }
+						Null => "null"
+					},
+			)
+
+		"[${Str.join_with(items, ",")}]"
+	}
 }
-
-# js_arguments_to_str : List JsValue -> Str
-# js_arguments_to_str = |args| {
-#     args_str =
-#         args
-#         |> List.walk(
-#             "",
-#             |state, arg|
-#                 match arg {
-#                     String(str) =>
-#                         escaped_str = EncodeDecode.encode_json_string(str)
-#                         state |> Str.concat(",${escaped_str}")
-#
-#                     Number(num) => state |> Str.concat(",${num |> Num.to_str}")
-#                     Null => state |> Str.concat(",null")
-#                     Boolean(bool) => {
-#
-#                         if bool {
-#                             state |> Str.concat(",true")
-#                         } else {
-#                             state |> Str.concat(",false"),
-#   }
-#   }
-# }
-#         )
-#
-#     "[${args_str |> Str.drop_prefix(",")}]"
-# }
-#
-# expect
-#     input = []
-#     expected = "[]"
-#     output = js_arguments_to_str(input)
-#     output == expected
-#
-# expect
-#     input = [String("wow"), Number(78.2), Number(0), Boolean(True), Boolean(False), Null]
-#     expected = "[\"wow\",78.2,0,true,false,null]"
-#     output = js_arguments_to_str(input)
-#     output == expected

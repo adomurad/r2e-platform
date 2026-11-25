@@ -77,12 +77,23 @@ test1 = test(
 
 ## Local Development
 
-```sh
-roc build.roc
-```
+Build the Go host for the current target (linux/amd64 by default):
 
 ```sh
-roc --prebuilt-platform app.roc
+./host/build_libhost.sh
+```
+
+Run a test app with the current Roc compiler:
+
+```sh
+roc tests/minimal.roc --headless
+roc tests/element-tests.roc --headless
+```
+
+Run the whole suite:
+
+```sh
+./tests/run-all-tests.sh
 ```
 
 ## Compatibility

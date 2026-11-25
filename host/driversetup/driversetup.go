@@ -2,6 +2,7 @@ package driversetup
 
 import (
 	"archive/zip"
+	"errors"
 	"fmt"
 	"host/setup"
 	"host/utils"
@@ -80,8 +81,9 @@ func WaitForDriverReady(timeout time.Duration) error {
 // handleCleanup ensures chromedriver is killed when the app exits
 func HandleCleanup(cmd *exec.Cmd) error {
 	if cmd != nil && cmd.Process != nil {
-		// Kill the process if it's running
-		if err := cmd.Process.Kill(); err != nil {
+		// Kill the process if it's running. The driver may already have
+		// exited on its own, which is not a cleanup failure.
+		if err := cmd.Process.Kill(); err != nil && !errors.Is(err, os.ErrProcessDone) {
 			return err
 		}
 	}

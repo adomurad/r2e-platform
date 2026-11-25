@@ -12,14 +12,14 @@ struct RocStr {
 
 struct RocList {
     void* elements_ptr;
-    uintptr_t capacity_or_alloc_ptr;
     uintptr_t length;
+    uintptr_t capacity_or_alloc_ptr;
 };
 
 struct RocListStr {
     struct RocStr* elements_ptr;
-    uintptr_t capacity_or_alloc_ptr;
     uintptr_t length;
+    uintptr_t capacity_or_alloc_ptr;
 };
 
 #endif

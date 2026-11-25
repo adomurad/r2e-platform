@@ -9,6 +9,7 @@ import "C"
 import (
 	"fmt"
 	"os"
+	"reflect"
 	"unsafe"
 )
 
@@ -67,7 +68,7 @@ func setRefCountToInfinity(ptr unsafe.Pointer) {
 // the value. Roc will free the value, when its finished.
 func setRefCountToOne(ptr unsafe.Pointer) {
 	refcountPtr := unsafe.Add(ptr, -intBytes)
-	*(*uint)(refcountPtr) = 0
+	*(*uint)(refcountPtr) = 1
 }
 
 //export roc_alloc
@@ -153,6 +154,25 @@ func smallRocStr(str string) RocStr {
 	return s
 }
 
+func containsPointers(t reflect.Type) bool {
+	if t == nil {
+		return false
+	}
+	switch t.Kind() {
+	case reflect.Pointer, reflect.String, reflect.Slice, reflect.Map, reflect.Interface, reflect.Func, reflect.UnsafePointer:
+		return true
+	case reflect.Struct:
+		for i := 0; i < t.NumField(); i++ {
+			if containsPointers(t.Field(i).Type) {
+				return true
+			}
+		}
+	case reflect.Array:
+		return containsPointers(t.Elem())
+	}
+	return false
+}
+
 // Small returns true, if the RocStr is represented as a small string, that does
 // not need a separate heap allocation.
 func (r RocStr) Small() bool {
@@ -207,7 +227,20 @@ func NewRocList[t any](list []t) RocList[t] {
 	var zero t
 	typeSize := int(unsafe.Sizeof(zero))
 
-	ptr := allocForRoc(len(list) * typeSize)
+	refcountedElements := containsPointers(reflect.TypeOf(zero))
+	headerBytes := intBytes
+	if refcountedElements {
+		// The current Roc runtime reserves a second header word for the
+		// element count when list elements are refcounted (e.g. List(Str)).
+		headerBytes = 2 * intBytes
+	}
+
+	raw := roc_alloc(C.size_t(len(list)*typeSize+headerBytes), C.size_t(intBytes))
+	ptr := unsafe.Add(raw, headerBytes)
+	*(*uint)(unsafe.Add(ptr, -intBytes)) = 1
+	if refcountedElements {
+		*(*uint)(unsafe.Add(ptr, -2*intBytes)) = uint(len(list))
+	}
 
 	rocList.length = C.uintptr_t(len(list))
 	rocList.capacity_or_alloc_ptr = rocList.length << 1

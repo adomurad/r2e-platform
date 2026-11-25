@@ -1,13 +1,26 @@
 import Host
 import ExecuteJs
+import PropertyDecoder
 import Locator
 import DebugMode
 import Debug
 import Internal
 import Element
 import InternalError
+import Error
 
 Browser := { session_id : Str }.{
+
+	## Build a `Browser` value from a WebDriver session id.
+	##
+	## Used by the platform to pass the browser into callbacks without
+	## introducing an import cycle between `Browser` and `Element`.
+	from_session_id : Str -> Browser
+	from_session_id = |session_id| Browser.{ session_id: session_id }
+
+	## Get the underlying WebDriver session id.
+	get_session_id : Browser -> Str
+	get_session_id = |browser| browser.session_id
 
 	## Opens a new `Browser` window.
 	##
@@ -19,7 +32,7 @@ Browser := { session_id : Str }.{
 	## ...
 	## newBrowser |> Browser.close_window!()?
 	## ```
-	open_new_window! : {} => Try(Browser, [WebDriverError(Str), ..])
+	open_new_window! : {} => Try(Browser, [WebDriverError(Str)])
 	open_new_window! = |{}|
 	# DebugMode.run_if_verbose!(
 	#     |{}| Debug.print_line!("Opening new browser window"),
@@ -41,7 +54,7 @@ Browser := { session_id : Str }.{
 	##     browser2 |> Browser.navigate_to!("https://www.roc-lang.org/")
 	## )
 	## ```
-	# open_new_window_with_cleanup! : (Browser => Try(val, [WebDriverError(Str),..err])) => Try(val, [WebDriverError(Str), ..err])
+	open_new_window_with_cleanup! : (Browser => Try(val, [WebDriverError(Str), ..err])) => Try(val, [WebDriverError(Str), ..err])
 	open_new_window_with_cleanup! = |callback!| {
 		browser = open_new_window!({})?
 		result = callback!(browser)
@@ -59,7 +72,7 @@ Browser := { session_id : Str }.{
 	## ...
 	## newBrowser |> Browser.close_window!
 	## ```
-	close_window! : Browser => Try({}, [WebDriverError(Str), ..])
+	close_window! : Browser => Try({}, [WebDriverError(Str)])
 	close_window! = |browser| {
 		DebugMode.run_if_verbose!(
 			|{}|
@@ -76,7 +89,7 @@ Browser := { session_id : Str }.{
 	## # open google.com
 	## browser |> Browser.navigate_to!("http://google.com")?
 	## ```
-	navigate_to! : Browser, Str => Try({}, [WebDriverError(Str), ..])
+	navigate_to! : Browser, Str => Try({}, [WebDriverError(Str)])
 	navigate_to! = |browser, url| {
 		DebugMode.run_if_verbose!(
 			|{}|
@@ -102,7 +115,7 @@ Browser := { session_id : Str }.{
 	## title = browser |> Browser.get_title!()?
 	## # title = "Google"
 	## ```
-	get_title! : Browser => Try(Str, [WebDriverError(Str), ..])
+	get_title! : Browser => Try(Str, [WebDriverError(Str)])
 	get_title! = |browser| {
 		DebugMode.run_if_verbose!(
 			|{}|
@@ -121,7 +134,7 @@ Browser := { session_id : Str }.{
 	## url = browser |> Browser.get_url!()?
 	## # url = "https://google.com/"
 	## ```
-	get_url! : Browser => Try(Str, [WebDriverError(Str), ..])
+	get_url! : Browser => Try(Str, [WebDriverError(Str)])
 	get_url! = |browser| {
 
 		DebugMode.run_if_verbose!(
@@ -168,7 +181,7 @@ Browser := { session_id : Str }.{
 	## # find the html element with an attribute [data-testid="my-element"]
 	## button = browser |> Browser.find_element!(TestId("my-element"))?
 	## ```
-	find_element! : Browser, Locator => Try(Element, [WebDriverError(Str), ElementNotFound(Str), ..])
+	find_element! : Browser, Locator => Try(Element, [WebDriverError(Str), ElementNotFound(Str)])
 	find_element! = |browser, locator| {
 		(using, value) = Locator.get_locator(locator)
 
@@ -219,7 +232,7 @@ Browser := { session_id : Str }.{
 	##         button_text = el |> Element.get_text!
 	##         Stdout.line!("Button found with text: $(button_text)")
 	## ```
-	try_find_element! : Browser, Locator => Try([Found(Element), NotFound], [WebDriverError(Str), ElementNotFound(Str), ..])
+	try_find_element! : Browser, Locator => Try([Found(Element), NotFound], [WebDriverError(Str), ElementNotFound(Str)])
 	try_find_element! = |browser, locator| {
 		find_element!(browser, locator)
 			.map_ok(|el| Found(el))
@@ -244,7 +257,7 @@ Browser := { session_id : Str }.{
 	## ```
 	## button = browser |> Browser.find_single_element!(Css("#submit-button"))?
 	## ```
-	find_single_element! : Browser, Locator => Try(Element, [AssertionError(Str), ElementNotFound(Str), WebDriverError(Str), ..])
+	find_single_element! : Browser, Locator => Try(Element, [AssertionError(Str), ElementNotFound(Str), WebDriverError(Str)])
 	find_single_element! = |browser, locator| {
 		elements = find_elements!(browser, locator)?
 		match List.len(elements) {
@@ -270,6 +283,58 @@ Browser := { session_id : Str }.{
 		}
 	}
 
+	## Switch the browser context into an iFrame, run a callback, then switch back.
+	##
+	## ```
+	## frame = browser.find_element!(Css("iframe"))?
+	## browser.use_iframe!(frame, |frameBrowser|
+	##     frameBrowser.find_element!(Css("#span-inside-frame"))?
+	## )
+	## ```
+	use_iframe! : Browser, Element, (Browser => Try({}, Error.PlatformError)) => Try({}, Error.PlatformError)
+	use_iframe! = |browser, element, callback!| {
+		session_id = browser.session_id
+		selector_text = element.selector_text
+
+		DebugMode.run_if_verbose!(
+			|{}|
+				Debug.print_line!("Switching context to iFrame: ${selector_text}"),
+		)
+
+		Host.switch_to_frame_by_element_id!(session_id, element.element_id)
+			.map_err(InternalError.host_error_to_web_driver_error)?
+
+		DebugMode.run_if_debug_mode!(
+			|{}| {
+				DebugMode.show_debug_message_in_browser!(session_id, "Switched to iFrame ${selector_text}")?
+				DebugMode.flash_current_frame!(session_id)?
+				DebugMode.wait!({})
+				Ok({})
+			},
+		)
+
+		result = callback!(Browser.from_session_id(session_id))
+
+		DebugMode.run_if_verbose!(
+			|{}|
+				Debug.print_line!("Switching back to iFrame parent"),
+		)
+
+		Host.switch_to_parent_frame!(session_id)
+			.map_err(InternalError.host_error_to_web_driver_error)?
+
+		DebugMode.run_if_debug_mode!(
+			|{}| {
+				DebugMode.show_debug_message_in_browser!(session_id, "Switched back to iFrame parent")?
+				DebugMode.flash_current_frame!(session_id)?
+				DebugMode.wait!({})
+				Ok({})
+			},
+		)
+
+		result
+	}
+
 	## Find all `Elements` in the `Browser`.
 	##
 	## When there are no elements found, then the list will be empty.
@@ -281,7 +346,7 @@ Browser := { session_id : Str }.{
 	## listItems = browser |> Browser.find_elements!(Css("#my-list li"))?
 	## ```
 	##
-	find_elements! : Browser, Locator => Try((List(Element)), [WebDriverError(Str), ElementNotFound(Str), ..])
+	find_elements! : Browser, Locator => Try((List(Element)), [WebDriverError(Str), ElementNotFound(Str)])
 	find_elements! = |browser, locator| {
 		(using, value) = Locator.get_locator(locator)
 
@@ -334,7 +399,7 @@ Browser := { session_id : Str }.{
 	## ```
 	## base64PngStr = browser |> Browser.take_screenshot_base64!()?
 	## ```
-	take_screenshot_base64! : Browser => Try(Str, [WebDriverError(Str), ..])
+	take_screenshot_base64! : Browser => Try(Str, [WebDriverError(Str)])
 	take_screenshot_base64! = |browser| {
 		DebugMode.run_if_verbose!(
 			|{}|
@@ -461,34 +526,33 @@ Browser := { session_id : Str }.{
 	## newRect = browser |> Browser.set_window_rect!(MoveAndResize({ x: 400, y: 600, width: 800, height: 750 }))?
 	## # newRect is { x: 406, y: 627, width: 800, height: 750 }
 	## ```
-	# set_window_rect! : Browser, SetWindowRectOptions => Try(WindowRect, [WebDriverError(Str)])
-	# set_window_rect! = |browser, set_rect_options| {
-	# 	DebugMode.run_if_verbose!(
-	# 		|{}|
-	# 			match set_rect_options {
-	# 				Move({ x, y }) => Debug.print_line!("Moving browser window to: (${x.to_str()}, ${y.to_str()})")
-	# 				Resize({ width, height }) => Debug.print_line!("Resizing browser window to: (${width.to_str()}, ${height.to_str()})")
-	# 				MoveAndResize({ x, y, width, height }) => Debug.print_line!("Moving browser window to: (${x.to_str()}, ${y.to_str()}), and resizing to: (${width.to_str()}, ${height |> Num.to_str})")
-	# 			},
-	# 	)
-	#
-	# 	{ disciminant, new_x, new_y, new_width, new_height } = match set_rect_options {
-	# 		Move({ x, y }) => {{ disciminant: 1, new_x: x, new_y: y, new_width: 0, new_height: 0 }},
-	# 		Resize({ width, height }) => {{ disciminant: 2, new_x: 0, new_y: 0, new_width: width.to_i64(), new_height: height.to_i64() }},
-	# 		MoveAndResize({ x, y, width, height }) => {{ disciminant: 3, new_x: x, new_y: y, new_width: width.to_i64(), new_height: height.to_i64() }},
-	# 	}
-	#
-	# 	Host.browser_set_window_rect!(browser.session_id, disciminant, new_x, new_y, new_width, new_height)
-	# 		|> Try.map_ok(
-	# 			|list|
-	# 				match list {
-	# 					[x_val, y_val, width_val, height_val] => { x: x_val, y: y_val, width: width_val.to_u32(), height: height_val.to_u32() }
-	# 					_ => {
-	# 						crash "the contract with host should not fail"
-	# 					}
-	# 				},
-	# 		)
-	# }
+	set_window_rect! : Browser, SetWindowRectOptions => Try(WindowRect, [WebDriverError(Str)])
+	set_window_rect! = |browser, set_rect_options| {
+		DebugMode.run_if_verbose!(
+			|{}|
+				match set_rect_options {
+					Move({ x, y }) => Debug.print_line!("Moving browser window to: (${x.to_str()}, ${y.to_str()})")
+					Resize({ width, height }) => Debug.print_line!("Resizing browser window to: (${width.to_str()}, ${height.to_str()})")
+					MoveAndResize({ x, y, width, height }) => Debug.print_line!("Moving browser window to: (${x.to_str()}, ${y.to_str()}), and resizing to: (${width.to_str()}, ${height.to_str()})")
+				},
+		)
+
+		{ disciminant, new_x, new_y, new_width, new_height } = match set_rect_options {
+			Move({ x, y }) => { disciminant: 1, new_x: x, new_y: y, new_width: 0, new_height: 0 },
+			Resize({ width, height }) => { disciminant: 2, new_x: 0, new_y: 0, new_width: width.to_i64(), new_height: height.to_i64() },
+			MoveAndResize({ x, y, width, height }) => { disciminant: 3, new_x: x, new_y: y, new_width: width.to_i64(), new_height: height.to_i64() },
+		}
+
+		Host.browser_set_window_rect!(browser.session_id, disciminant, new_x, new_y, new_width, new_height)
+			.map_err(InternalError.host_error_to_web_driver_error)
+			.map_ok(
+				|list|
+					match list {
+						[x_val, y_val, width_val, height_val] => { x: x_val, y: y_val, width: width_val.to_u32_wrap(), height: height_val.to_u32_wrap() }
+						_ => crash "the contract with host should not fail"
+					},
+			)
+	}
 
 	## Get browser window position and size.
 	##
@@ -504,32 +568,30 @@ Browser := { session_id : Str }.{
 	## rect = browser |> Browser.get_window_rect!()?
 	## # rect is { x: 406, y: 627, width: 400, height: 600 }
 	## ```
-	# get_window_rect! : Browser => Try(WindowRect, [WebDriverError(Str)])
-	# get_window_rect! = |browser| {
-	# 	DebugMode.run_if_verbose!(
-	# 		|{}|
-	# 			Debug.print_line!("Getting browser position and size"),
-	# 	)
-	#
-	# 	Host.browser_get_window_rect!(browser.session_id)
-	# 		.map_err(InternalError.host_error_to_web_driver_error)
-	# 		.map_ok(
-	# 			|list|
-	# 				match list {
-	# 					[x_val, y_val, width_val, height_val] => { x: x_val, y: y_val, width: width_val.to_u32(), height: height_val |> Num.to_u32 }
-	# 					_ => {
-	# 						crash "the contract with host should not fail"
-	# 					}
-	# 				},
-	# 		)
-	# }
+	get_window_rect! : Browser => Try(WindowRect, [WebDriverError(Str)])
+	get_window_rect! = |browser| {
+		DebugMode.run_if_verbose!(
+			|{}|
+				Debug.print_line!("Getting browser position and size"),
+		)
+
+		Host.browser_get_window_rect!(browser.session_id)
+			.map_err(InternalError.host_error_to_web_driver_error)
+			.map_ok(
+				|list|
+					match list {
+						[x_val, y_val, width_val, height_val] => { x: x_val, y: y_val, width: width_val.to_u32_wrap(), height: height_val.to_u32_wrap() }
+						_ => crash "the contract with host should not fail"
+					},
+			)
+	}
 
 	## Navigate back in the browser history.
 	##
 	## ```
 	## browser |> Browser.navigate_back!()?
 	## ```
-	navigate_back! : Browser => Try({}, [WebDriverError(Str), ..])
+	navigate_back! : Browser => Try({}, [WebDriverError(Str)])
 	navigate_back! = |browser| {
 		DebugMode.run_if_verbose!(
 			|{}|
@@ -551,7 +613,7 @@ Browser := { session_id : Str }.{
 	## ```
 	## browser |> Browser.navigate_forward!()?
 	## ```
-	navigate_forward! : Browser => Try({}, [WebDriverError(Str), ..])
+	navigate_forward! : Browser => Try({}, [WebDriverError(Str)])
 	navigate_forward! = |browser| {
 
 		DebugMode.run_if_verbose!(
@@ -574,7 +636,7 @@ Browser := { session_id : Str }.{
 	## ```
 	## browser |> Browser.reload_page!()?
 	## ```
-	reload_page! : Browser => Try({}, [WebDriverError(Str), ..])
+	reload_page! : Browser => Try({}, [WebDriverError(Str)])
 	reload_page! = |browser| {
 
 		DebugMode.run_if_verbose!(
@@ -599,25 +661,23 @@ Browser := { session_id : Str }.{
 	## ```
 	## new_rect = browser |> Browser.maximize_window!()?
 	## ```
-	# maximize_window! : Browser => Try(WindowRect, [WebDriverError(Str)])
-	# maximize_window! = |browser| {
-	# 	DebugMode.run_if_verbose!(
-	# 		|{}|
-	# 			Debug.print_line!("Maximizing browser window"),
-	# 	)
-	#
-	# 	Host.browser_maximize!(browser.session_id)
-	# 		.map_err(InternalError.host_error_to_web_driver_error)
-	# 		.map_ok(
-	# 			|list|
-	# 				match list {
-	# 					[x_val, y_val, width_val, height_val] => { x: x_val, y: y_val, width: width_val |> Num.to_u32, height: height_val |> Num.to_u32 }
-	# 					_ => {
-	# 						crash "the contract with host should not fail"
-	# 					}
-	# 				},
-	# 		)
-	# }
+	maximize_window! : Browser => Try(WindowRect, [WebDriverError(Str)])
+	maximize_window! = |browser| {
+		DebugMode.run_if_verbose!(
+			|{}|
+				Debug.print_line!("Maximizing browser window"),
+		)
+
+		Host.browser_maximize!(browser.session_id)
+			.map_err(InternalError.host_error_to_web_driver_error)
+			.map_ok(
+				|list|
+					match list {
+						[x_val, y_val, width_val, height_val] => { x: x_val, y: y_val, width: width_val.to_u32_wrap(), height: height_val.to_u32_wrap() }
+						_ => crash "the contract with host should not fail"
+					},
+			)
+	}
 
 	## Minimize the `Browser` window.
 	##
@@ -626,25 +686,23 @@ Browser := { session_id : Str }.{
 	## ```
 	## new_rect = browser |> Browser.minimize_window!()?
 	## ```
-	# minimize_window! : Browser => Try(WindowRect, [WebDriverError(Str)])
-	# minimize_window! = |browser| {
-	#
-	# 	DebugMode.run_if_verbose!(
-	# 		|{}|
-	# 			Debug.print_line!("Minimizing browser window"),
-	# 	)
-	#
-	# 	Host.browser_minimize!(session_id)
-	# 		|> Try.map_ok(
-	# 			|list|
-	# 				match list {
-	# 					[x_val, y_val, width_val, height_val] => { x: x_val, y: y_val, width: width_val |> Num.to_u32, height: height_val |> Num.to_u32 }
-	# 					_ => {
-	# 						crash ("the contract with host should not fail")
-	# 					}
-	# 				},
-	# 		)
-	# }
+	minimize_window! : Browser => Try(WindowRect, [WebDriverError(Str)])
+	minimize_window! = |browser| {
+		DebugMode.run_if_verbose!(
+			|{}|
+				Debug.print_line!("Minimizing browser window"),
+		)
+
+		Host.browser_minimize!(browser.session_id)
+			.map_err(InternalError.host_error_to_web_driver_error)
+			.map_ok(
+				|list|
+					match list {
+						[x_val, y_val, width_val, height_val] => { x: x_val, y: y_val, width: width_val.to_u32_wrap(), height: height_val.to_u32_wrap() }
+						_ => crash "the contract with host should not fail"
+					},
+			)
+	}
 
 	## Make the `Browser` window full screen.
 	##
@@ -653,48 +711,46 @@ Browser := { session_id : Str }.{
 	## ```
 	## new_rect = browser |> Browser.full_screen_window!()?
 	## ```
-	# full_screen_window! : Browser => Try(WindowRect, [WebDriverError(Str)])
-	# full_screen_window! = |browser| {
-	# 	DebugMode.run_if_verbose!(
-	# 		|{}|
-	# 			Debug.print_line!("Making browser window full screen"),
-	# 	)
-	#
-	# 	Host.browser_full_screen!(browser.session_id)
-	# 		|> Try.map_ok(
-	# 			|list|
-	# 				match list {
-	# 					[x_val, y_val, width_val, height_val] => { x: x_val, y: y_val, width: width_val |> Num.to_u32, height: height_val |> Num.to_u32 }
-	# 					_ => {
-	# 						crash ("the contract with host should not fail")
-	# 					}
-	# 				},
-	# 		)
-	# }
+	full_screen_window! : Browser => Try(WindowRect, [WebDriverError(Str)])
+	full_screen_window! = |browser| {
+		DebugMode.run_if_verbose!(
+			|{}|
+				Debug.print_line!("Making browser window full screen"),
+		)
+
+		Host.browser_full_screen!(browser.session_id)
+			.map_err(InternalError.host_error_to_web_driver_error)
+			.map_ok(
+				|list|
+					match list {
+						[x_val, y_val, width_val, height_val] => { x: x_val, y: y_val, width: width_val.to_u32_wrap(), height: height_val.to_u32_wrap() }
+						_ => crash "the contract with host should not fail"
+					},
+			)
+	}
 
 	## Execute JavaScript in the `Browser`.
 	##
 	## ```
 	## browser |> Browser.execute_js!("console.log('wow')")?
 	## ```
-	# execute_js! : Browser, Str => Try({}, [WebDriverError( Str ), JsReturnTypeError( Str )]) where a implements Decoding
-	# execute_js! : Browser, Str => Try({}, [WebDriverError(Str), JsReturnTypeError(Str)])
-	# execute_js! = |browser, script| {
-	# 	DebugMode.run_if_verbose!(
-	# 		|{}|
-	# 			Debug.print_line!("Executing JavaScript in the browser"),
-	# 	)
-	#
-	# 	_output : Str
-	# 	_output = ExecuteJs.execute_js!(browser, script)?
-	#
-	# 	DebugMode.run_if_debug_mode!(
-	# 		|{}|
-	# 			DebugMode.wait!({}),
-	# 	)
-	#
-	# 	Ok({})
-	# }
+	execute_js! : Browser, Str => Try({}, [WebDriverError(Str), JsReturnTypeError(Str)])
+	execute_js! = |browser, script| {
+		DebugMode.run_if_verbose!(
+			|{}|
+				Debug.print_line!("Executing JavaScript in the browser"),
+		)
+
+		_output : Str
+		_output = ExecuteJs.execute_js!(browser.session_id, script)?
+
+		DebugMode.run_if_debug_mode!(
+			|{}|
+				DebugMode.wait!({}),
+		)
+
+		Ok({})
+	}
 
 	## Execute JavaScript in the `Browser` and get the response.
 	##
@@ -709,42 +765,42 @@ Browser := { session_id : Str }.{
 	## The output will be casted to expected Roc type:
 	##
 	## ```
-	##  response = browser |> Browser.execute_js_with_output!("return 50 + 5;")?
+	##  response = browser.execute_js_with_output!("return 50 + 5;")?
 	##  response |> Assert.should_be(55)
 	##
-	##  response = browser |> Browser.execute_js_with_output!("return 50.5 + 5;")?
+	##  response = browser.execute_js_with_output!("return 50.5 + 5;")?
 	##  response |> Assert.should_be(55.5)
 	##
-	##  response = browser |> Browser.execute_js_with_output!("return 50.5 + 5;")?
+	##  response = browser.execute_js_with_output!("return 50.5 + 5;")?
 	##  response |> Assert.should_be("55.5")
 	##
-	##  response = browser |> Browser.execute_js_with_output!("return true")?
+	##  response = browser.execute_js_with_output!("return true")?
 	##  response |> Assert.should_be("true")
 	##
-	##  response = browser |> Browser.execute_js_with_output!("return true")?
+	##  response = browser.execute_js_with_output!("return true")?
 	##  response |> Assert.should_be(True)
 	## ```
 	##
 	## The function can return a `Promise`.
-	# execute_js_with_output! : Browser, Str => Try(a, [WebDriverError Str, JsReturnTypeError Str]) where a implements Decoding
-	# execute_js_with_output! : Browser, Str => Try(a, [WebDriverError, Str, JsReturnTypeError, Str])
-	# execute_js_with_output! = |browser, script| {
-	# 	DebugMode.run_if_verbose!(
-	# 		|{}|
-	# 			Debug.print_line!("Executing JavaScript in the browser"),
-	# 	)
-	#
-	# 	result = ExecuteJs.execute_js!(browser, script)?
-	#
-	# 	DebugMode.run_if_debug_mode!(
-	# 		|{}|
-	# 			DebugMode.wait!({}),
-	# 	)
-	#
-	# 	Ok(result)
-	# }
+	execute_js_with_output! : Browser, Str => Try(a, [WebDriverError(Str), JsReturnTypeError(Str)])
+		where [
+			a.parser_for : PropertyDecoder.ElementProperty -> (PropertyDecoder.PropertyState -> Try({ value : a, rest : PropertyDecoder.PropertyState }, PropertyDecoder.PropertyError)),
+		]
+	execute_js_with_output! = |browser, script| {
+		DebugMode.run_if_verbose!(
+			|{}|
+				Debug.print_line!("Executing JavaScript in the browser"),
+		)
 
-	JsValue : [String, Str, Number, F64, Boolean, Bool, Null]
+		result = ExecuteJs.execute_js!(browser.session_id, script)?
+
+		DebugMode.run_if_debug_mode!(
+			|{}|
+				DebugMode.wait!({}),
+		)
+
+		Ok(result)
+	}
 
 	## Execute JavaScript in the `Browser` with arguments and get the response.
 	##
@@ -767,43 +823,33 @@ Browser := { session_id : Str }.{
 	## The output will be casted to expected Roc type:
 	##
 	## ```
-	##  response = browser |> Browser.execute_js_with_args!("return 50 + 5;", [])?
-	##  response |> Assert.should_Be(55)
+	##  response = browser.execute_js_with_args!("return 50 + 5;", [])?
+	##  response |> Assert.should_be(55)
 	##
-	##  response = browser |> Browser.execute_js_with_args!("return 50.5 + 5;", [Number 55.5, String "5"])?
+	##  response = browser.execute_js_with_args!("return 50.5 + 5;", [Number(55.5), String("5")])?
 	##  response |> Assert.should_be(55.5)
 	## ```
 	##
 	## The function can return a `Promise`.
-	# execute_js_with_args! : Browser, Str, List( JsValue ) => Try(a, [WebDriverError Str, JsReturnTypeError Str]) where a implements Decoding
-	# execute_js_with_args! : Browser, Str, List(JsValue) => Try(a, [WebDriverError, Str, JsReturnTypeError, Str])
-	# execute_js_with_args! = |browser, script, arguments| {
-	# 	DebugMode.run_if_verbose!(
-	# 		|{}|
-	# 			Debug.print_line!("Executing JavaScript in the browser"),
-	# 	)
-	#
-	# 	result = ExecuteJs.execute_js_with_args!(browser, script, arguments)?
-	#
-	# 	DebugMode.run_if_debug_mode!(
-	# 		|{}|
-	# 			DebugMode.wait!({}),
-	# 	)
-	#
-	# 	Ok(result)
-	# }
+	execute_js_with_args! : Browser, Str, List(ExecuteJs.JsValue) => Try(a, [WebDriverError(Str), JsReturnTypeError(Str)])
+		where [
+			a.parser_for : PropertyDecoder.ElementProperty -> (PropertyDecoder.PropertyState -> Try({ value : a, rest : PropertyDecoder.PropertyState }, PropertyDecoder.PropertyError)),
+		]
+	execute_js_with_args! = |browser, script, arguments| {
+		DebugMode.run_if_verbose!(
+			|{}|
+				Debug.print_line!("Executing JavaScript in the browser"),
+		)
 
-	# COOKIES
-	# NewCookie : {
-	#     name : Str,
-	#     value : Str,
-	#     domain ?? Str,
-	#     path ?? Str,
-	#     same_site ?? SameSiteOption,
-	#     secure ?? Bool,
-	#     http_only ?? Bool,
-	#     expiry ?? CookieExpiry,
-	# }
+		result = ExecuteJs.execute_js_with_args!(browser.session_id, script, arguments)?
+
+		DebugMode.run_if_debug_mode!(
+			|{}|
+				DebugMode.wait!({}),
+		)
+
+		Ok(result)
+	}
 
 	## R2E cookie representation
 	##
@@ -820,7 +866,7 @@ Browser := { session_id : Str }.{
 	## }
 	##
 	## # MaxAge is a Epoch Timestamp (browsers accepts max 400 days in the future)
-	## CookieExpiry : [Session, MaxAge U32]
+	## CookieExpiry : [Session, MaxAge(U32)]
 	##
 	## SameSiteOption : [None, Lax, Strict]
 	## ```
@@ -835,37 +881,48 @@ Browser := { session_id : Str }.{
 		expiry : CookieExpiry,
 	}
 
-	CookieExpiry : [Session, MaxAge, U32]
+	CookieExpiry : [Session, MaxAge(U32)]
 
 	SameSiteOption : [None, Lax, Strict]
 
-	# same_site_option_to_str : SameSiteOption -> Str
-	# same_site_option_to_str = |option|
-	#     match option {
-	#         None => "None"
-	#         Lax => "Lax"
-	#         Strict => "Strict"
-	#
-	# same_site_str_to_option = |str| {
-	#     match str {
-	#         "None" => None
-	#         "Lax" => Lax
-	#         "Strict" => Strict
-	#         # TODO - hmm
-	#         _ => None
-	# }
-	# }
-	#
-	# bool_to_int = |bool|
-	#     if bool { 1 } else { 0 }
+	NewCookie := {
+		name : Str,
+		value : Str,
+		domain : Str ?? "",
+		path : Str ?? "",
+		same_site : SameSiteOption ?? None,
+		secure : Bool ?? False,
+		http_only : Bool ?? False,
+		expiry : CookieExpiry ?? Session,
+	}
+
+	same_site_option_to_str : SameSiteOption -> Str
+	same_site_option_to_str = |option|
+		match option {
+			None => "None"
+			Lax => "Lax"
+			Strict => "Strict"
+		}
+
+	same_site_str_to_option : Str -> SameSiteOption
+	same_site_str_to_option = |str|
+		match str {
+			"None" => None
+			"Lax" => Lax
+			"Strict" => Strict
+			_ => None
+		}
+
+	bool_to_int : Bool -> I64
+	bool_to_int = |bool| if bool { 1 } else { 0 }
 
 	## Add a cookie in the `Browser`.
 	##
 	## ```
-	## browser |> Browser.add_cookie!({ name: "myCookie", value: "value1" })?
+	## browser.add_cookie!({ name: "myCookie", value: "value1" })?
 	## ```
 	## ```
-	## browser |> Browser.add_cookie!({
+	## browser.add_cookie!({
 	##     name: "myCookie",
 	##     value: "value1",
 	##     domain: "my-top-level-domain.com",
@@ -876,105 +933,101 @@ Browser := { session_id : Str }.{
 	##     expiry: MaxAge(2865848396), # unix epoch
 	## }?
 	## ```
-	# add_cookie! : Browser, NewCookie => Try({}, [WebDriverError Str])
-	# add_cookie! = |browser, { name, value, domain ?? "", path ?? "", same_site ?? None, secure ?? False, http_only ?? False, expiry ?? Session }|
-	#     { session_id } = Internal.unpack_browser_data(browser)
-	#
-	#     same_site_str = same_site |> same_site_option_to_str
-	#     secure_int = secure |> bool_to_int
-	#     http_only_int = http_only |> bool_to_int
-	#     expiry_i64 =
-	#         match expiry {
-	#             Session => -1
-	#             MaxAge(n) => n |> Num.to_i64
-	#
-	#     Host.add_cookie!(session_id, name, value, domain, path, same_site_str, http_only_int, secure_int, expiry_i64)
-	#     |> Try.map_err(WebDriverError)
-	#
-	# ## Delete a cookie in the `Browser` by name.
-	# ##
-	# ## ```
-	# ## browser |> Browser.delete_cookie!("myCookieName")?
-	# ## ```
-	# delete_cookie! : Browser, Str => Try({}, [WebDriverError Str, CookieNotFound Str])
-	# delete_cookie! = |browser, name|
-	#     { session_id } = Internal.unpack_browser_data(browser)
-	#
-	#     Host.delete_cookie!(session_id, name) |> Try.map_err(InternalError.handle_cookie_error)
-	#
-	# ## Delete all cookies in the `Browser`.
-	# ##
-	# ## ```
-	# ## browser |> Browser.delete_all_cookies!?
-	# ## ```
-	# delete_all_cookies! : Browser => Try({}, [WebDriverError Str])
-	# delete_all_cookies! = |browser|
-	#     { session_id } = Internal.unpack_browser_data(browser)
-	#
-	#     Host.delete_all_cookies!(session_id) |> Try.map_err(WebDriverError)
-	#
-	# ## Get a cookie from the `Browser` by name.
-	# ##
-	# ## ```
-	# ## cookie1 = browser |> Browser.get_cookie!("myCookie")?
-	# ## cookie1 |> Assert.should_be({
-	# ##     name: "myCookie",
-	# ##     value: "value1",
-	# ##     domain: ".my-domain.io",
-	# ##     path: "/",
-	# ##     same_site: Lax,
-	# ##     expiry: Session,
-	# ##     secure: True,
-	# ##     http_only: False,
-	# ## })
-	# ## ```
-	# get_cookie! : Browser, Str => Try(Cookie, [WebDriverError Str, CookieNotFound Str])
-	# get_cookie! = |browser, cookie_name|
-	#     { session_id } = Internal.unpack_browser_data(browser)
-	#
-	#     cookie_array = Host.get_cookie!(session_id, cookie_name) |> Try.map_err(InternalError.handle_cookie_error)?
-	#     cookie_array |> cookie_array_to_roc_cookie
-	#
-	# ## Get all cookies from the `Browser`.
-	# ##
-	# ## ```
-	# ## cookies = browser |> Browser.get_all_cookies!()?
-	# ## cookies |> List.len |> Assert.should_be(3)
-	# ## ```
-	# get_all_cookies! : Browser => Try((List Cookie), [WebDriverError Str, CookieNotFound Str])
-	# get_all_cookies! = |browser|
-	#     { session_id } = Internal.unpack_browser_data(browser)
-	#
-	#     cookies = Host.get_all_cookies!(session_id) |> Try.map_err(InternalError.handle_cookie_error)?
-	#     roc_cookies =
-	#         cookies
-	#         |> List.map(cookie_array_to_roc_cookie) # TODO - right now I'm ignoring errors
-	#         |> List.keep_oks(|e| e)
-	#
-	#     roc_cookies |> Ok
-	#
-	# cookie_array_to_roc_cookie : List Str -> Result Cookie [WebDriverError Str]
-	# cookie_array_to_roc_cookie = |cookie_array|
-	#     match cookie_array {
-	#         [name, value, domain, path, http_only_str, secure_str, same_site_str, expiry_str] ->
-	#             http_only = if http_only_str == "true" { True } else { False }
-	#             secure = if secure_str == "true" { True } else { False }
-	#             same_site = same_site_str |> same_site_str_to_option
-	#             expiry =
-	#                 expiry_str
-	#                 |> expiry_str_to_roc
-	#                 |> Try.map_err(|_| WebDriverError("could not parse cookie: probabably a bug in R2E"))?
-	#
-	#             Ok({ name, value, domain, path, expiry, http_only, same_site, secure })
-	#
-	#         _ => Err(WebDriverError("could not parse cookie: probably a bug in R2E"))
-	#
-	# expiry_str_to_roc = |exp_str|
-	#     if exp_str |> Str.is_empty {
-	#         Session |> Ok
-	#     } else {
-	#         u32 = exp_str |> Str.to_u32?
-	#         u32 |> MaxAge |> Ok
+	add_cookie! : Browser, NewCookie => Try({}, [WebDriverError(Str)])
+	add_cookie! = |browser, cookie| {
+		same_site_str = same_site_option_to_str(cookie.same_site)
+		secure_int = bool_to_int(cookie.secure)
+		http_only_int = bool_to_int(cookie.http_only)
+		expiry_i64 : I64
+		expiry_i64 = match cookie.expiry {
+			Session => -1
+			MaxAge(n) => n.to_i64()
+		}
+
+		Host.add_cookie!(browser.session_id, cookie.name, cookie.value, cookie.domain, cookie.path, same_site_str, http_only_int, secure_int, expiry_i64)
+			.map_err(InternalError.host_error_to_web_driver_error)
+	}
+
+	## Delete a cookie in the `Browser` by name.
+	##
+	## ```
+	## browser.delete_cookie!("myCookieName")?
+	## ```
+	delete_cookie! : Browser, Str => Try({}, [WebDriverError(Str), CookieNotFound(Str)])
+	delete_cookie! = |browser, name|
+		Host.delete_cookie!(browser.session_id, name)
+			.map_err(InternalError.handle_cookie_error)
+
+	## Delete all cookies in the `Browser`.
+	##
+	## ```
+	## browser.delete_all_cookies!()?
+	## ```
+	delete_all_cookies! : Browser => Try({}, [WebDriverError(Str)])
+	delete_all_cookies! = |browser|
+		Host.delete_all_cookies!(browser.session_id)
+			.map_err(InternalError.host_error_to_web_driver_error)
+
+	## Get a cookie from the `Browser` by name.
+	##
+	## ```
+	## cookie1 = browser.get_cookie!("myCookie")?
+	## cookie1 |> Assert.should_be({
+	##     name: "myCookie",
+	##     value: "value1",
+	##     domain: ".my-domain.io",
+	##     path: "/",
+	##     same_site: Lax,
+	##     expiry: Session,
+	##     secure: True,
+	##     http_only: False,
+	## })
+	## ```
+	get_cookie! : Browser, Str => Try(Cookie, [WebDriverError(Str), CookieNotFound(Str)])
+	get_cookie! = |browser, cookie_name| {
+		cookie_array = Host.get_cookie!(browser.session_id, cookie_name)
+			.map_err(InternalError.handle_cookie_error)?
+		cookie_array_to_roc_cookie(cookie_array)
+	}
+
+	## Get all cookies from the `Browser`.
+	##
+	## ```
+	## cookies = browser.get_all_cookies!()?
+	## cookies.len() |> Assert.should_be(3)
+	## ```
+	get_all_cookies! : Browser => Try(List(Cookie), [WebDriverError(Str), CookieNotFound(Str)])
+	get_all_cookies! = |browser| {
+		cookies = Host.get_all_cookies!(browser.session_id)
+			.map_err(InternalError.handle_cookie_error)?
+
+		roc_cookies = List.keep_oks(cookies.map(cookie_array_to_roc_cookie), |result| result)
+		Ok(roc_cookies)
+	}
+
+	cookie_array_to_roc_cookie : List(Str) -> Try(Cookie, [WebDriverError(Str)])
+	cookie_array_to_roc_cookie = |cookie_array|
+		match cookie_array {
+			[name, value, domain, path, http_only_str, secure_str, same_site_str, expiry_str] => {
+				http_only = http_only_str == "true"
+				secure = secure_str == "true"
+				same_site = same_site_str_to_option(same_site_str)
+				expiry = expiry_str_to_roc(expiry_str)?
+				Ok({ name, value, domain, path, expiry, http_only, same_site, secure })
+			}
+
+			_ => Err(WebDriverError("could not parse cookie: probably a bug in R2E")),
+		}
+
+	expiry_str_to_roc : Str -> Try(CookieExpiry, [WebDriverError(Str)])
+	expiry_str_to_roc = |exp_str|
+		if exp_str.is_empty() {
+			Ok(Session)
+		} else {
+			u32 = U32.from_str(exp_str)
+				.map_err(|_| WebDriverError("could not parse cookie: probably a bug in R2E"))?
+			Ok(MaxAge(u32))
+		}
 
 	## Get alert/prompt text.
 	##
@@ -982,7 +1035,7 @@ Browser := { session_id : Str }.{
 	## text = browser |> Browser.get_alert_text!()?
 	## text |> Assert.should_be("Are you sure to close tab?")
 	## ```
-	get_alert_text! : Browser => Try(Str, [WebDriverError(Str), AlertNotFound(Str), ..])
+	get_alert_text! : Browser => Try(Str, [WebDriverError(Str), AlertNotFound(Str)])
 	get_alert_text! = |browser| {
 		DebugMode.run_if_verbose!(
 			|{}|
@@ -998,7 +1051,7 @@ Browser := { session_id : Str }.{
 	## browser |> Browser.send_text_to_alert!("my reply")?
 	## browser |> Browser.accept_alert!()?
 	## ```
-	send_text_to_alert! : Browser, Str => Try({}, [WebDriverError(Str), AlertNotFound(Str), ..])
+	send_text_to_alert! : Browser, Str => Try({}, [WebDriverError(Str), AlertNotFound(Str)])
 	send_text_to_alert! = |browser, text| {
 		DebugMode.run_if_verbose!(
 			|{}|
@@ -1013,7 +1066,7 @@ Browser := { session_id : Str }.{
 	## ```
 	## browser |> Browser.accept_alert!()?
 	## ```
-	accept_alert! : Browser => Try({}, [WebDriverError(Str), AlertNotFound(Str), ..])
+	accept_alert! : Browser => Try({}, [WebDriverError(Str), AlertNotFound(Str)])
 	accept_alert! = |browser| {
 
 		DebugMode.run_if_verbose!(
@@ -1036,7 +1089,7 @@ Browser := { session_id : Str }.{
 	## ```
 	## browser |> Browser.dismiss_alert!()?
 	## ```
-	dismiss_alert! : Browser => Try({}, [WebDriverError(Str), AlertNotFound(Str), ..])
+	dismiss_alert! : Browser => Try({}, [WebDriverError(Str), AlertNotFound(Str)])
 	dismiss_alert! = |browser| {
 		DebugMode.run_if_verbose!(
 			|{}|
@@ -1059,7 +1112,7 @@ Browser := { session_id : Str }.{
 	## html = browser |> Browser.get_page_html!()?
 	## html |> Assert.should_contain_text("<h1>Header</h1>")
 	## ```
-	get_page_html! : Browser => Try(Str, [WebDriverError(Str), ..])
+	get_page_html! : Browser => Try(Str, [WebDriverError(Str)])
 	get_page_html! = |browser| {
 		DebugMode.run_if_verbose!(
 			|{}|

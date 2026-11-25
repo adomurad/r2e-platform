@@ -2,9 +2,9 @@ app [config, test_cases] { pf: platform "../platform/main.roc" }
 
 import pf.Debug
 import pf.Config
-import pf.TestCase exposing [test]
+import pf.Test exposing [test]
 
-config = Config.default_config()
+config = Config.default_config
 
 test_cases = [test1]
 
@@ -17,6 +17,6 @@ test1 = test(
 
 		Debug.wait!(5000)
 
-		Try.Ok({})
+		Ok({})
 	},
 )

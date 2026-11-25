@@ -17,54 +17,56 @@ test_cases = [
 
 test1 = test(
     "debug selectors",
-    |browser|
-        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/")?
+    |browser| {
+        browser.navigate_to!("https://devexpress.github.io/testcafe/example/")?
 
-        _h1 = browser |> Browser.find_element!(TestId("name-input"))?
-        _h2 = browser |> Browser.find_element!(Css("h1"))?
-        _h3 = browser |> Browser.find_element!(XPath("//div"))?
+        _h1 = browser.find_element!(TestId("name-input"))?
+        _h2 = browser.find_element!(Css("h1"))?
+        _h3 = browser.find_element!(XPath("//div"))?
 
-        _h10 = browser |> Browser.find_elements!(Css("input"))?
-        _h12 = browser |> Browser.find_elements!(TestId("name-input"))?
-        _h11 = browser |> Browser.find_elements!(XPath("//div"))?
+        _h10 = browser.find_elements!(Css("input"))?
+        _h12 = browser.find_elements!(TestId("name-input"))?
+        _h11 = browser.find_elements!(XPath("//div"))?
 
-        browser |> Browser.navigate_to!("https://www.roc-lang.org/")?
-        _h5 = browser |> Browser.find_elements!(LinkText("examples"))?
-        _h4 = browser |> Browser.find_element!(LinkText("examples"))?
-        _h7 = browser |> Browser.find_elements!(PartialLinkText("xam"))?
-        _h6 = browser |> Browser.find_element!(PartialLinkText("xam"))?
+        browser.navigate_to!("https://www.roc-lang.org/")?
+        _h5 = browser.find_elements!(LinkText("Examples"))?
+        _h4 = browser.find_element!(LinkText("Examples"))?
+        _h7 = browser.find_elements!(PartialLinkText("xam"))?
+        _h6 = browser.find_element!(PartialLinkText("xam"))?
 
-        Assert.should_be(1, 1),
+        Assert.should_be(1, 1)
+    },
 )
 
 test2 = test(
     "showElements",
-    |browser|
-        browser |> Browser.navigate_to!("https://devexpress.github.io/testcafe/example/")?
+    |browser| {
+        browser.navigate_to!("https://devexpress.github.io/testcafe/example/")?
 
-        browser |> Debug.show_current_frame!?
-        browser |> Debug.show_current_frame!?
+        browser |> Debug.show_current_frame!()?
+        browser |> Debug.show_current_frame!()?
 
-        el1 = browser |> Browser.find_element!(TestId("name-input"))?
-        el1 |> Debug.show_element!?
-        [el1] |> Debug.show_elements!?
+        el1 = browser.find_element!(TestId("name-input"))?
+        el1 |> Debug.show_element!()?
+        [el1] |> Debug.show_elements!()?
 
-        el2 = browser |> Browser.find_element!(Css("h1"))?
-        el2 |> Debug.show_element!?
-        [el2] |> Debug.show_elements!?
+        el2 = browser.find_element!(Css("h1"))?
+        el2 |> Debug.show_element!()?
+        [el2] |> Debug.show_elements!()?
 
-        el3 = browser |> Browser.find_element!(XPath("//div"))?
-        el3 |> Debug.show_element!?
-        [el3] |> Debug.show_elements!?
+        el3 = browser.find_element!(XPath("//div"))?
+        el3 |> Debug.show_element!()?
+        [el3] |> Debug.show_elements!()?
 
-        browser |> Browser.navigate_to!("https://www.roc-lang.org/")?
+        browser.navigate_to!("https://www.roc-lang.org/")?
 
-        el4 = browser |> Browser.find_element!(LinkText("examples"))?
-        el4 |> Debug.show_element!?
-        [el4] |> Debug.show_elements!?
+        el4 = browser.find_element!(LinkText("Examples"))?
+        el4 |> Debug.show_element!()?
+        [el4] |> Debug.show_elements!()?
 
-        el5 = browser |> Browser.find_element!(PartialLinkText("xam"))?
-        el5 |> Debug.show_element!?
-        [el5] |> Debug.show_elements!,
+        el5 = browser.find_element!(PartialLinkText("xam"))?
+        el5 |> Debug.show_element!()?
+        [el5] |> Debug.show_elements!
+    },
 )
 

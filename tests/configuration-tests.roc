@@ -12,21 +12,27 @@ renamed_reporter = BasicHtmlReporter.reporter |> Reporting.rename("basicRenamed"
 
 custom_reporter = Reporting.create_reporter(
     "myCustomReporter",
-    |results, _meta|
-        len_str = results |> List.len |> Num.to_str
+    |results, _meta| {
+        len_str = results.len().to_str()
         index_file = { file_path: "index.html", content: "<h3>Test count: ${len_str}</h3>" }
         test_file = { file_path: "test.txt", content: "this is just a test" }
         screenshot_count =
             results
             |> List.count_if(
-                |{ screenshot }|
-                    when screenshot is
-                        Screenshot(_) -> Bool.true
-                        NoScreenshot -> Bool.false,
+                |{ screenshot, .. }|
+                    match screenshot {
+                        Screenshot(_) => {
+                            True
+                        }
+                        NoScreenshot => {
+                            False
+                        }
+                    }
             )
-        screenshot_file = { file_path: "screens-${screenshot_count |> Num.to_str}.txt", content: "empty" }
+        screenshot_file = { file_path: "screens-${screenshot_count.to_str()}.txt", content: "empty" }
 
-        [index_file, test_file, screenshot_file],
+        [index_file, test_file, screenshot_file]
+    },
 )
 
 config = Config.default_config_with(
@@ -62,15 +68,23 @@ test1_override = Test.test_with(
 )
 test1 = test1_override(
     "assertTimeout test",
-    |browser|
-        browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting")?
+    |browser| {
+        browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting")?
 
-        div1 = browser |> Browser.find_element!(Css(".hide-by-opacity"))?
+        div1 = browser.find_element!(Css(".hide-by-opacity"))?
         res = div1 |> Assert.element_should_be_visible!
-        when res is
-            Ok(_) -> Assert.fail_with("should fail")
-            Err(AssertionError(err)) -> err |> Assert.should_be("Expected element (Css \".hide-by-opacity\") to be visible (waited for 1000ms)")
-            Err(_) -> Assert.fail_with("should fail for different reason"),
+        match res {
+            Ok(_) => {
+                Assert.fail_with("should fail")
+            }
+            Err(AssertionError(err)) => {
+                err |> Assert.should_be("Expected element Css(\".hide-by-opacity\") to be visible (waited for 1000ms)")
+            }
+            Err(_) => {
+                Assert.fail_with("should fail for different reason")
+            }
+        }
+    },
 )
 
 # TODO - compiler error
@@ -83,65 +97,76 @@ test1 = test1_override(
 
 test3 = test(
     "elementImplicitTimeout",
-    |browser|
-        browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting")?
+    |browser| {
+        browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting")?
 
-        input1 = browser |> Browser.find_element!(Css("#create-element-input"))?
-        input1 |> Element.clear!?
-        input1 |> Element.input_text!("1")?
+        input1 = browser.find_element!(Css("#create-element-input"))?
+        input1.clear!()?
+        input1.input_text!("1")?
 
-        button1 = browser |> Browser.find_element!(Css("#create-element-btn"))?
-        button1 |> Element.click!?
+        button1 = browser.find_element!(Css("#create-element-btn"))?
+        button1.click!()?
 
-        _ = browser |> Browser.find_element!(Css(".created-el"))?
+        _ = browser.find_element!(Css(".created-el"))?
 
-        browser |> Browser.reload_page!?
+        browser.reload_page!()?
 
-        input = browser |> Browser.find_element!(Css("#create-element-input"))?
-        input |> Element.clear!?
-        input |> Element.input_text!("100")?
+        input = browser.find_element!(Css("#create-element-input"))?
+        input.clear!()?
+        input.input_text!("100")?
 
-        button = browser |> Browser.find_element!(Css("#create-element-btn"))?
-        button |> Element.click!?
+        button = browser.find_element!(Css("#create-element-btn"))?
+        button.click!()?
 
-        res = browser |> Browser.find_element!(Css(".created-el"))
+        res = browser.find_element!(Css(".created-el"))
 
-        when res is
-            Ok(_) -> Assert.fail_with("should fail")
-            Err(ElementNotFound(_)) -> Ok({})
-            Err(_) -> Assert.fail_with("should fail for different reason"),
+        match res {
+            Ok(_) => {
+                Assert.fail_with("should fail")
+            }
+            Err(ElementNotFound(_)) => {
+                Ok({})
+            }
+            Err(_) => {
+                Assert.fail_with("should fail for different reason")
+            }
+        }
+    },
 )
 
 test4 = test(
     "scriptExecutionTimeout",
-    |browser|
-        browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting")?
+    |browser| {
+        browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting")?
 
         res =
-            browser
-            |> Browser.execute_js!(
-                """
-                return new Promise(res => {
-                    setTimeout(() => res(), 15)
-                })
-                """,
+            browser.execute_js!(
+                \\return new Promise(res => {
+                \\setTimeout(() => res(), 15)
+                \\})
             )
 
-        when res is
-            Ok(_) -> Assert.fail_with("should fail")
-            Err(err) ->
-                if err |> Inspect.to_str |> Str.contains("script timeout") then
+        match res {
+            Ok(_) => {
+                Assert.fail_with("should fail")
+            }
+            Err(err) => {
+                if err |> Str.inspect |> Str.contains("script timeout") {
                     Ok({})
-                else
-                    Assert.fail_with((err |> Inspect.to_str)),
+                } else {
+                    Assert.fail_with((err |> Str.inspect))
+                }
+            }
+        }
+    },
 )
 
 test5 = test(
     "windowSize",
-    |browser|
-        browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting")?
+    |browser| {
+        browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting")?
 
-        { width, height } = browser |> Browser.get_window_rect!?
+        { width, height, .. } = browser.get_window_rect!()?
 
         width |> Assert.should_be_greater_than(499)?
         width |> Assert.should_be_lesser_than(530)?
@@ -149,7 +174,8 @@ test5 = test(
         height |> Assert.should_be_greater_than(499)?
         height |> Assert.should_be_lesser_than(530)?
 
-        Ok({}),
+        Ok({})
+    },
 )
 
 custom_test = Test.test_with(
@@ -166,10 +192,10 @@ custom_test = Test.test_with(
 
 test6 = custom_test(
     "windowSize override",
-    |browser|
-        browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting")?
+    |browser| {
+        browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting")?
 
-        { width, height } = browser |> Browser.get_window_rect!?
+        { width, height, .. } = browser.get_window_rect!()?
 
         width |> Assert.should_be_greater_than(1799)?
         width |> Assert.should_be_lesser_than(1830)?
@@ -177,51 +203,60 @@ test6 = custom_test(
         height |> Assert.should_be_greater_than(999)?
         height |> Assert.should_be_lesser_than(1030)?
 
-        Ok({}),
+        Ok({})
+    },
 )
 
 test7 = custom_test(
     "assertTimeout override",
-    |browser|
-        browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting")?
+    |browser| {
+        browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting")?
 
-        div1 = browser |> Browser.find_element!(Css(".hide-by-opacity"))?
+        div1 = browser.find_element!(Css(".hide-by-opacity"))?
         res = div1 |> Assert.element_should_be_visible!
-        when res is
-            Ok(_) -> Assert.fail_with("should fail")
-            Err(AssertionError(err)) -> err |> Assert.should_be("Expected element (Css \".hide-by-opacity\") to be visible (waited for 1ms)")
-            Err(_) -> Assert.fail_with("should fail for different reason"),
+        match res {
+            Ok(_) => {
+                Assert.fail_with("should fail")
+            }
+            Err(AssertionError(err)) => {
+                err |> Assert.should_be("Expected element Css(\".hide-by-opacity\") to be visible (waited for 1ms)")
+            }
+            Err(_) => {
+                Assert.fail_with("should fail for different reason")
+            }
+        }
+    },
 )
 
 test8 = custom_test(
     "scriptExecutionTimeout override",
-    |browser|
-        browser |> Browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting")?
+    |browser| {
+        browser.navigate_to!("https://adomurad.github.io/e2e-test-page/waiting")?
 
-        browser
-        |> Browser.execute_js!(
-            """
-            return new Promise(res => {
-                setTimeout(() => res(), 180)
-            })
-            """,
+        browser.execute_js!(
+            \\return new Promise(res => {
+            \\setTimeout(() => res(), 180)
+            \\})
         )?
 
         res =
-            browser
-            |> Browser.execute_js!(
-                """
-                return new Promise(res => {
-                    setTimeout(() => res(), 210)
-                })
-                """,
+            browser.execute_js!(
+                \\return new Promise(res => {
+                \\setTimeout(() => res(), 210)
+                \\})
             )
 
-        when res is
-            Ok(_) -> Assert.fail_with("should fail")
-            Err(err) ->
-                if err |> Inspect.to_str |> Str.contains("script timeout") then
+        match res {
+            Ok(_) => {
+                Assert.fail_with("should fail")
+            }
+            Err(err) => {
+                if err |> Str.inspect |> Str.contains("script timeout") {
                     Ok({})
-                else
-                    Assert.fail_with((err |> Inspect.to_str)),
+                } else {
+                    Assert.fail_with((err |> Str.inspect))
+                }
+            }
+        }
+    },
 )
